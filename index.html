@@ -776,8 +776,9 @@
             <div @click="setManualStatus(20, false)" class="context-item"> 處置 (20分)</div>
         </div>
 
-        <div v-if="showSellModal" class="fixed inset-0 bg-slate-900/70 backdrop-blur-sm flex justify-center items-end sm:items-center z-50 p-0 sm:p-6 transition-all duration-300 overflow-y-auto">
-            <div class="bg-white rounded-t-[2rem] sm:rounded-[2rem] p-4 sm:p-8 w-full max-w-md shadow-2xl relative border-2 border-white max-h-[100svh] sm:max-h-[calc(100vh-3rem)] flex flex-col">
+        <!-- Sell modal: mobile uses bottom-sheet layout to maximize usable height; content scrolls inside, actions stay visible -->
+        <div v-if="showSellModal" class="fixed inset-0 bg-slate-900/70 backdrop-blur-sm flex justify-center items-end sm:items-center z-50 p-0 sm:p-6 transition-all duration-300 overflow-hidden">
+            <div class="bg-white rounded-t-[2rem] sm:rounded-[2rem] p-4 sm:p-8 w-full sm:max-w-md shadow-2xl relative border-2 border-white flex flex-col h-[calc(100svh-0.5rem)] sm:h-auto max-h-[calc(100svh-0.5rem)] sm:max-h-[calc(100vh-3rem)]" style="padding-bottom: calc(1rem + env(safe-area-inset-bottom));">
                 <button @click="showSellModal = false" class="absolute top-3 right-3 sm:top-5 sm:right-5 text-slate-400 hover:text-slate-600 w-9 h-9 flex items-center justify-center rounded-full hover:bg-slate-100 transition"><i class="fa-solid fa-times text-xl"></i></button>
                 <h3 class="text-xl sm:text-2xl font-extrabold text-slate-800 mb-4 sm:mb-6 flex items-center"><i class="fa-solid fa-sack-dollar text-green-500 mr-3 text-2xl sm:text-3xl"></i> 股票賣出</h3>
                 <div class="flex-1 overflow-y-auto pr-1 -mr-1">
