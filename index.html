@@ -346,13 +346,13 @@
                         </span>
                         新增交易紀錄
                     </h2>
-                    <label v-if="newTx.type === 'sell'" class="flex items-center gap-2 text-sm font-bold text-slate-600 cursor-pointer select-none">
-                        <input type="checkbox" v-model="newTx.isDayTrade" class="w-4 h-4 accent-rose-600">
-                        當沖（賣出稅率 {{ settings.dayTradeTaxRate }}%）
+                    <label class="flex items-center gap-2 text-sm font-bold text-slate-600 cursor-pointer select-none">
+                        <input type="checkbox" v-model="newTx.dayTradeEligible" class="w-4 h-4 accent-amber-500">
+                        參與當沖配對（配對成功的賣出部分稅率 {{ settings.dayTradeTaxRate }}%）
                     </label>
                 </div>
 
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
                     <div class="input-group">
                         <label class="text-xs font-bold text-slate-500 mb-2 ml-1">交易日期</label>
                         <div class="relative flex items-center">
@@ -369,6 +369,19 @@
                                 <option value="sell">🟩 賣出 / 融券(做空)</option>
                             </select>
                             <i class="fa-solid fa-right-left absolute left-4 text-slate-400 text-lg pointer-events-none"></i>
+                            <i class="fa-solid fa-chevron-down absolute right-4 text-slate-300 text-xs pointer-events-none"></i>
+                        </div>
+                    </div>
+
+                    <div class="input-group">
+                        <label class="text-xs font-bold text-slate-500 mb-2 ml-1">交易身分</label>
+                        <div class="relative flex items-center">
+                            <select v-model="newTx.mode" class="w-full h-[50px] pl-11 pr-10 bg-white border border-slate-300 rounded-xl text-slate-700 font-bold text-lg outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-50/50 transition-all shadow-sm appearance-none cursor-pointer">
+                                <option value="cash">💵 現股</option>
+                                <option value="margin">🏦 融資</option>
+                                <option value="short">📉 融券</option>
+                            </select>
+                            <i class="fa-solid fa-layer-group absolute left-4 text-slate-400 text-lg pointer-events-none"></i>
                             <i class="fa-solid fa-chevron-down absolute right-4 text-slate-300 text-xs pointer-events-none"></i>
                         </div>
                     </div>
@@ -425,7 +438,7 @@
                             <i class="fa-solid fa-check"></i>
                             {{ newTx.type === 'buy' ? '確認新增買入 / 回補' : '確認新增賣出 / 做空' }}
                         </button>
-                        <div v-if="newTx.type === 'sell'" class="mt-2 text-[11px] text-slate-400 font-bold leading-relaxed">提示：若賣出股數大於現有庫存，系統會自動視為「融券/做空」並出現負庫存（空單）。</div>
+                        <div v-if="newTx.type === 'sell'" class="mt-2 text-[11px] text-slate-400 font-bold leading-relaxed">提示：若賣出股數大於可用庫存，請改選「融券」或勾選「當沖」並在同日新增回補（先賣後買）。</div>
                         <button type="button" @click="showAddModal = false"
                             class="mt-3 w-full h-[46px] rounded-xl font-bold bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 active:scale-[0.98] transition">
                             取消 / 關閉
@@ -445,13 +458,13 @@
                         </span>
                         新增交易紀錄
                     </h2>
-                    <label v-if="newTx.type === 'sell'" class="flex items-center gap-2 text-sm font-bold text-slate-600 cursor-pointer select-none">
-                        <input type="checkbox" v-model="newTx.isDayTrade" class="w-4 h-4 accent-rose-600">
-                        當沖（賣出稅率 {{ settings.dayTradeTaxRate }}%）
+                    <label class="flex items-center gap-2 text-sm font-bold text-slate-600 cursor-pointer select-none">
+                        <input type="checkbox" v-model="newTx.dayTradeEligible" class="w-4 h-4 accent-amber-500">
+                        參與當沖配對（配對成功的賣出部分稅率 {{ settings.dayTradeTaxRate }}%）
                     </label>
                 </div>
 
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
                     <div class="input-group">
                         <label class="text-xs font-bold text-slate-500 mb-2 ml-1">交易日期</label>
                         <div class="relative flex items-center">
@@ -468,6 +481,19 @@
                                 <option value="sell">🟩 賣出 / 融券(做空)</option>
                             </select>
                             <i class="fa-solid fa-right-left absolute left-4 text-slate-400 text-lg pointer-events-none"></i>
+                            <i class="fa-solid fa-chevron-down absolute right-4 text-slate-300 text-xs pointer-events-none"></i>
+                        </div>
+                    </div>
+
+                    <div class="input-group">
+                        <label class="text-xs font-bold text-slate-500 mb-2 ml-1">交易身分</label>
+                        <div class="relative flex items-center">
+                            <select v-model="newTx.mode" class="w-full h-[50px] pl-11 pr-10 bg-white border border-slate-300 rounded-xl text-slate-700 font-bold text-lg outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-50/50 transition-all shadow-sm appearance-none cursor-pointer">
+                                <option value="cash">💵 現股</option>
+                                <option value="margin">🏦 融資</option>
+                                <option value="short">📉 融券</option>
+                            </select>
+                            <i class="fa-solid fa-layer-group absolute left-4 text-slate-400 text-lg pointer-events-none"></i>
                             <i class="fa-solid fa-chevron-down absolute right-4 text-slate-300 text-xs pointer-events-none"></i>
                         </div>
                     </div>
@@ -524,7 +550,7 @@
                             <i class="fa-solid fa-check"></i>
                             {{ newTx.type === 'buy' ? '確認新增買入 / 回補' : '確認新增賣出 / 做空' }}
                         </button>
-                        <div v-if="newTx.type === 'sell'" class="mt-2 text-[11px] text-slate-400 font-bold leading-relaxed">提示：若賣出股數大於現有庫存，系統會自動視為「融券/做空」並出現負庫存（空單）。</div>
+                        <div v-if="newTx.type === 'sell'" class="mt-2 text-[11px] text-slate-400 font-bold leading-relaxed">提示：若賣出股數大於可用庫存，請改選「融券」或勾選「當沖」並在同日新增回補（先賣後買）。</div>
                     </div>
                 </div>
             </div>
@@ -750,42 +776,56 @@
             <div @click="setManualStatus(20, false)" class="context-item"> 處置 (20分)</div>
         </div>
 
-        <div v-if="showSellModal" class="fixed inset-0 bg-slate-900/70 backdrop-blur-sm flex justify-center items-center z-50 p-4 transition-all duration-300">
-            <div class="bg-white rounded-[2rem] p-8 w-full max-w-md shadow-2xl relative border-2 border-white">
-                <button @click="showSellModal = false" class="absolute top-6 right-6 text-slate-400 hover:text-slate-600 w-8 h-8 flex items-center justify-center rounded-full hover:bg-slate-100 transition"><i class="fa-solid fa-times text-xl"></i></button>
+        <div v-if="showSellModal" class="fixed inset-0 bg-slate-900/70 backdrop-blur-sm flex justify-center items-start sm:items-center z-50 p-4 sm:p-6 transition-all duration-300 overflow-y-auto">
+            <div class="bg-white rounded-[2rem] p-6 sm:p-8 w-full max-w-md shadow-2xl relative border-2 border-white max-h-[calc(100vh-2rem)] sm:max-h-[calc(100vh-3rem)] flex flex-col">
+                <button @click="showSellModal = false" class="absolute top-5 right-5 text-slate-400 hover:text-slate-600 w-9 h-9 flex items-center justify-center rounded-full hover:bg-slate-100 transition"><i class="fa-solid fa-times text-xl"></i></button>
                 <h3 class="text-2xl font-extrabold text-slate-800 mb-6 flex items-center"><i class="fa-solid fa-sack-dollar text-green-500 mr-3 text-3xl"></i> 股票賣出</h3>
+                <div class="flex-1 overflow-y-auto pr-1 -mr-1">
                 <div class="bg-slate-50 p-5 rounded-2xl mb-6 border border-slate-200 flex justify-between items-center shadow-inner">
                     <div><div class="font-black text-xl text-slate-800">{{ sellTx.name }}</div><div class="text-sm text-blue-600 font-bold">{{ sellTx.code }}</div></div>
                     <div class="text-right"><div class="text-xs text-slate-400 font-bold uppercase mb-1">庫存股數</div><div class="font-black text-2xl text-slate-800">{{ formatCurrency(sellTx.maxQty) }}</div></div>
                 </div>
                 <div class="space-y-6">
                     <div class="input-group"><label class="text-xs font-bold text-slate-500 mb-2 ml-1">交易日期</label><div class="relative flex items-center"><input type="date" v-model="sellTx.date" class="w-full h-[50px] pl-11 pr-4 bg-white border border-slate-300 rounded-xl text-slate-700 font-bold text-lg outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-50/50 transition-all shadow-sm"><i class="fa-regular fa-calendar-days absolute left-4 text-slate-400 text-lg pointer-events-none"></i></div></div>
+                    <div class="input-group">
+                        <label class="text-xs font-bold text-slate-500 mb-2 ml-1">交易身分</label>
+                        <div class="relative flex items-center">
+                            <select v-model="sellTx.mode" class="w-full h-[50px] pl-11 pr-10 bg-white border border-slate-300 rounded-xl text-slate-700 font-bold text-lg outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-50/50 transition-all shadow-sm appearance-none cursor-pointer">
+                                <option value="cash">現股</option>
+                                <option value="margin">融資</option>
+                            </select>
+                            <i class="fa-solid fa-user-tag absolute left-4 text-slate-400 text-base pointer-events-none"></i>
+                            <i class="fa-solid fa-chevron-down absolute right-4 text-slate-400 text-xs pointer-events-none"></i>
+                        </div>
+                        <div class="text-[11px] text-slate-400 font-bold mt-2">＊融券放空/回補請使用上方「新增交易紀錄」</div>
+                    </div>
                     <div class="input-group"><label class="text-xs font-bold text-slate-500 mb-2 ml-1">賣出價格</label><div class="relative flex items-center"><input type="number" step="0.01" v-model.number="sellTx.price" class="w-full h-[50px] pl-11 pr-4 bg-white border border-slate-300 rounded-xl text-slate-700 font-bold text-lg outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-50/50 transition-all shadow-sm text-green-600"><i class="fa-solid fa-dollar-sign absolute left-4 text-slate-400 text-base pointer-events-none"></i></div></div>
                     <div class="input-group"><label class="text-xs font-bold text-slate-500 mb-2 ml-1">賣出股數</label><div class="relative flex items-center"><input type="number" v-model.number="sellTx.qty" class="w-full h-[50px] pl-11 pr-4 bg-white border border-slate-300 rounded-xl text-slate-700 font-bold text-lg outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-50/50 transition-all shadow-sm" :max="sellTx.maxQty"><i class="fa-solid fa-cubes absolute left-4 text-slate-400 text-base pointer-events-none"></i></div><div class="flex justify-end mt-2"><button @click="sellTx.qty = sellTx.maxQty" class="text-xs bg-blue-50 text-blue-600 px-2 py-1 rounded font-bold hover:bg-blue-100">全部賣出</button></div>
                     <div class="flex items-center justify-between bg-amber-50 border border-amber-200 rounded-xl px-4 py-3">
                         <div class="flex items-center gap-3">
                             <i class="fa-solid fa-bolt text-amber-500 text-lg"></i>
                             <div>
-                                <div class="font-black text-slate-800">當沖賣出</div>
-                                <div class="text-xs text-slate-500 font-bold">使用當沖證交稅率 {{ settings.dayTradeTaxRate }}%</div>
+                                <div class="font-black text-slate-800">參與當沖配對</div>
+                                <div class="text-xs text-slate-500 font-bold">配對成功的賣出部分使用稅率 {{ settings.dayTradeTaxRate }}%</div>
                             </div>
                         </div>
                         <label class="inline-flex items-center cursor-pointer">
-                            <input type="checkbox" v-model="sellTx.isDayTrade" class="sr-only peer">
+                            <input type="checkbox" v-model="sellTx.dayTradeEligible" class="sr-only peer">
                             <div class="w-11 h-6 bg-slate-200 rounded-full peer peer-checked:bg-amber-500 relative after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:border after:border-slate-200 after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-5"></div>
                         </label>
                     </div>
 </div>
                 </div>
-                <div class="flex gap-4 mt-8">
-                    <button @click="showSellModal = false" class="h-[54px] w-1/3 rounded-xl font-bold text-slate-500 bg-white border-2 border-slate-200 hover:bg-slate-50 hover:border-slate-400 transition-all duration-200 active:scale-95">取消</button>
-                    <button @click="confirmSell" class="h-[54px] w-2/3 rounded-xl font-bold text-white bg-gradient-to-r from-emerald-400 to-teal-600 shadow-xl shadow-emerald-300 hover:shadow-2xl hover:shadow-emerald-400 hover:-translate-y-1 transition-all duration-300 active:scale-95 flex items-center justify-center">確認賣出 <i class="fa-solid fa-check ml-2"></i></button>
+                </div>
+                <div class="flex gap-4 mt-6 pt-4 border-t border-slate-100">
+                    <button @click="showSellModal = false" class="h-[52px] w-1/3 rounded-xl font-bold text-slate-500 bg-white border-2 border-slate-200 hover:bg-slate-50 hover:border-slate-400 transition-all duration-200 active:scale-95">取消</button>
+                    <button @click="confirmSell" class="h-[52px] w-2/3 rounded-xl font-bold text-white bg-gradient-to-r from-emerald-400 to-teal-600 shadow-xl shadow-emerald-300 hover:shadow-2xl hover:shadow-emerald-400 hover:-translate-y-1 transition-all duration-300 active:scale-95 flex items-center justify-center">確認賣出 <i class="fa-solid fa-check ml-2"></i></button>
                 </div>
             </div>
         </div>
 
         <div v-if="showEditBuyModal" class="fixed inset-0 bg-slate-900/70 backdrop-blur-sm flex justify-center items-center z-50 p-4 transition-all duration-300">
-          <div class="bg-white rounded-[2rem] p-8 w-full max-w-md shadow-2xl relative border-2 border-white">
+          <div class="bg-white rounded-[2rem] p-6 sm:p-8 w-full max-w-md shadow-2xl relative border-2 border-white max-h-[calc(100vh-2rem)] sm:max-h-[calc(100vh-3rem)] flex flex-col">
             <button @click="closeEditBuyModal" class="absolute top-5 right-5 w-10 h-10 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 flex items-center justify-center transition"><i class="fa-solid fa-xmark text-lg"></i></button>
             <h3 class="text-2xl font-black text-slate-800 mb-2">編輯買入紀錄</h3>
             <p class="text-sm text-slate-500 font-medium mb-6">可修正日期、價格、股數與分類。儲存後系統會重新計算費用與持倉成本。</p>
@@ -809,32 +849,29 @@
         </div>
 
         <div v-if="showEditTxModal" class="fixed inset-0 bg-slate-900/70 backdrop-blur-sm flex justify-center items-center z-50 p-4 transition-all duration-300">
-            <div class="bg-white rounded-[2rem] p-8 w-full max-w-md shadow-2xl relative border-2 border-white">
+            <div class="bg-white rounded-[2rem] p-6 sm:p-8 w-full max-w-md shadow-2xl relative border-2 border-white max-h-[calc(100vh-2rem)] sm:max-h-[calc(100vh-3rem)] flex flex-col">
                 <button @click="closeEditTxModal" class="absolute top-5 right-5 w-10 h-10 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 flex items-center justify-center transition"><i class="fa-solid fa-xmark text-lg"></i></button>
                 <h3 class="text-2xl font-black text-slate-800 mb-2">編輯交易紀錄</h3>
                 <p class="text-sm text-slate-500 font-medium mb-6">可修正日期、股名/代號、價格、股數與分類。儲存後系統會重新計算費用與賣出損益。</p>
                 <div class="space-y-4">
                     <div><label class="block text-xs font-bold text-slate-500 mb-1">日期</label><input v-model="editTx.date" type="date" class="w-full px-4 py-3 rounded-xl border-2 border-slate-200 focus:border-blue-400 focus:ring-0 outline-none bg-white font-bold text-slate-700"/></div>
-                    <div class="grid grid-cols-2 gap-3">
+                    <div class="grid grid-cols-3 gap-3">
                         <div><label class="block text-xs font-bold text-slate-500 mb-1">買賣</label><select v-model="editTx.type" disabled class="w-full px-4 py-3 rounded-xl border-2 border-slate-200 bg-slate-50 font-bold text-slate-500"><option value="buy">買入</option><option value="sell">賣出</option></select></div>
                         <div><label class="block text-xs font-bold text-slate-500 mb-1">分類</label><select v-model="editTx.category" class="w-full px-4 py-3 rounded-xl border-2 border-slate-200 focus:border-blue-400 focus:ring-0 outline-none bg-white font-bold text-slate-700"><option value="core">主力</option><option value="rotation">輪動</option></select></div>
+                        <div><label class="block text-xs font-bold text-slate-500 mb-1">交易身分</label><select v-model="editTx.mode" class="w-full px-4 py-3 rounded-xl border-2 border-slate-200 focus:border-blue-400 focus:ring-0 outline-none bg-white font-bold text-slate-700"><option value="cash">現股</option><option value="margin">融資</option><option value="short">融券</option></select></div>
                     </div>
-                    <div v-if="editTx.type === 'sell'" class="flex items-center justify-between bg-amber-50 border border-amber-200 rounded-xl px-4 py-3">
+                    <div class="flex items-center justify-between bg-amber-50 border border-amber-200 rounded-xl px-4 py-3">
                         <div class="flex items-center gap-3">
                             <i class="fa-solid fa-bolt text-amber-500"></i>
                             <div>
-                                <div class="font-black text-slate-800">當沖賣出</div>
-                                <div class="text-xs text-slate-500 font-bold">使用當沖證交稅率 {{ settings.dayTradeTaxRate }}%</div>
+                                <div class="font-black text-slate-800">當沖（同日沖銷）</div>
+                                <div class="text-xs text-slate-500 font-bold">勾選後，同日同檔買賣會互相配對；配對成功的賣出部分套用稅率 {{ settings.dayTradeTaxRate }}%</div>
                             </div>
                         </div>
                         <label class="inline-flex items-center cursor-pointer">
-                            <input type="checkbox" v-model="editTx.isDayTrade" class="sr-only peer">
+                            <input type="checkbox" v-model="editTx.dayTradeEligible" class="sr-only peer">
                             <div class="w-11 h-6 bg-slate-200 rounded-full peer peer-checked:bg-amber-500 relative after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:border after:border-slate-200 after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-5"></div>
                         </label>
-                    </div>
-                    <div class="grid grid-cols-2 gap-3">
-                        <div><label class="block text-xs font-bold text-slate-500 mb-1">股票代號</label><input v-model="editTx.code" type="text" class="w-full px-4 py-3 rounded-xl border-2 border-slate-200 focus:border-blue-400 focus:ring-0 outline-none bg-white font-bold text-slate-700"/></div>
-                        <div><label class="block text-xs font-bold text-slate-500 mb-1">股票名稱</label><input v-model="editTx.name" type="text" class="w-full px-4 py-3 rounded-xl border-2 border-slate-200 focus:border-blue-400 focus:ring-0 outline-none bg-white font-bold text-slate-700"/></div>
                     </div>
                     <div class="grid grid-cols-2 gap-3">
                         <div><label class="block text-xs font-bold text-slate-500 mb-1">價格</label><input v-model.number="editTx.price" type="number" step="0.01" class="w-full px-4 py-3 rounded-xl border-2 border-slate-200 focus:border-blue-400 focus:ring-0 outline-none bg-white font-bold text-slate-700"/></div>
@@ -1148,10 +1185,10 @@ createApp({
             gdriveClientId: localStorage.getItem('tw_stock_gdrive_client_id_v1') || '', gdriveClientIdInput: localStorage.getItem('tw_stock_gdrive_client_id_v1') || '',
             isLoggedIn: false, authMode: 'login', authInput: { username: '', password: '', confirmPassword: '' }, rememberUser: false, authError: '', securityConfig: { enabled: true, username: '', passwordHash: '' }, showSecurityModal: false, showChangePasswordModal: false, changePassInput: { old: '', new: '' },
             currentTab: 'inventory', showStockDetails: false, selectedStock: null,
-            transactions: [], newTx: { date: new Date().toISOString().split('T')[0], code: '', name: '', type: 'buy', price: null, qty: 1000, category: 'core', isDayTrade: false },
-            showSellModal: false, sellTx: { date: '', code: '', name: '', price: 0, qty: 0, maxQty: 0, category: '', isDayTrade: false },
+            transactions: [], newTx: { date: new Date().toISOString().split('T')[0], code: '', name: '', type: 'buy', mode: 'cash', price: null, qty: 1000, category: 'core', dayTradeEligible: false },
+            showSellModal: false, sellTx: { date: '', code: '', name: '', price: 0, qty: 0, maxQty: 0, category: '', mode: 'cash', dayTradeEligible: false },
             showEditBuyModal: false, editBuyTx: { id: null, date: '', code: '', name: '', price: null, qty: 0, category: 'core' },
-            showEditTxModal: false, editTx: { id: null, date: '', code: '', name: '', type: 'buy', price: null, qty: 0, category: 'core', isDayTrade: false },
+            showEditTxModal: false, editTx: { id: null, date: '', code: '', name: '', type: 'buy', mode: 'cash', price: null, qty: 0, category: 'core', dayTradeEligible: false },
             showAddModal: false, searchText: '', isSearching: false,
             settings: { feeRate: 0.1425, discount: 0.28, taxRate: 0.3, dayTradeTaxRate: 0.15, minFee: 20 },
             showSettings: false, showExportModal: false, backupTab: 'download', exportFileName: '', restoreFileName: '', restoreFileObject: null, restoreBusy: false,
@@ -1257,11 +1294,11 @@ createApp({
         globalUpdateHintText() { const lv = this.globalUpdateHintLevel; if (lv === 'never') return '尚未更新全球指數（夜）'; if (lv === 'error') return '，沿用上次資料'; if (lv === 'partial') { const miss = this.globalIndicesMissingCount || 0; return miss > 0 ? `部分更新成功：${miss} 檔未更新（沿用上次資料）` : '部分更新成功（部分資料沿用上次資料）'; } if (lv === 'stale') return `指數（${this.globalUpdateAgeText}）`; if (lv === 'ok') return `指數（${this.globalUpdateAgeText}）`; return ''; },
         gdriveLastActionLabel() { const a = (this.gdriveCloudMeta && this.gdriveCloudMeta.lastAction) ? this.gdriveCloudMeta.lastAction : ''; if (a === 'upload') return '雲端上傳'; if (a === 'restore') return '雲端回復'; if (a === 'download') return '本機下載'; return '—'; },
         fullStockMap() { return [...this.baseStockMap, ...this.customStocks]; },
-        sortedTransactions() { return [...this.transactions].sort((a, b) => new Date(b.date) - new Date(a.date)); },
+        sortedTransactions() { return [...this.transactions].sort((a, b) => (new Date(b.date) - new Date(a.date)) || (Number(b.id || 0) - Number(a.id || 0))); },
         filteredTransactions() { if (this.dateFilterMode === 'all') return this.sortedTransactions; const start = new Date(this.filterStart).setHours(0,0,0,0); const end = new Date(this.filterEnd).setHours(23,59,59,999); return this.sortedTransactions.filter(tx => { const txDate = new Date(tx.date).getTime(); return txDate >= start && txDate <= end; }); },
         displayedHistoryTransactions() { if (this.historyTypeFilter === 'all') return this.filteredTransactions; return this.filteredTransactions.filter(tx => tx.type === this.historyTypeFilter); },
         filteredStats() { let realizedPnL = 0, fees = 0, buyAmount = 0, sellAmount = 0; this.filteredTransactions.forEach(tx => { fees += (Number(tx.fee || 0) + Number(tx.tax || 0)); if (tx.type === 'buy') buyAmount += Number(tx.totalAmount || 0); else if (tx.type === 'sell') sellAmount += Number(tx.totalAmount || 0); if (tx.realizedPnL !== null && tx.realizedPnL !== undefined) realizedPnL += Number(tx.realizedPnL) || 0; }); return { realizedPnL, fees, buyAmount, sellAmount }; },
-        holdings() { const ordered = [...this.transactions].sort((a, b) => new Date(a.date) - new Date(b.date)); const state = {}; const realized = {}; ordered.forEach(tx => { if (!tx || !tx.code) return; const code = String(tx.code).trim(); if (!state[code]) state[code] = { qty: 0, cost: 0, category: tx.category, name: tx.name }; if (!realized[code]) realized[code] = 0; realized[code] += (tx.realizedPnL !== null && tx.realizedPnL !== undefined) ? Number(tx.realizedPnL) : 0; const qty = Number(tx.qty) || 0; const totalAmount = Number(tx.totalAmount) || 0; if (qty <= 0 || totalAmount < 0) return; // should already be normalized by recompute
+        holdings() { const ordered = [...this.transactions].sort((a, b) => new Date(a.date) - new Date(b.date)); const state = {}; const realized = {}; ordered.forEach(tx => { if (!tx || !tx.code) return; const code = String(tx.code).trim(); if (!state[code]) state[code] = { qty: 0, cost: 0, category: tx.category, name: tx.name }; if (!realized[code]) realized[code] = 0; realized[code] += (tx.realizedPnL !== null && tx.realizedPnL !== undefined) ? Number(tx.realizedPnL) : 0; const qty = Number(tx.posQty ?? tx.qty) || 0; const totalAmount = Number(tx.posAmount ?? tx.totalAmount) || 0; if (qty <= 0 || totalAmount < 0) return; // should already be normalized by recompute
                 // Update open position state (supports long & short)
                 if (tx.type === 'buy') { if (state[code].qty >= 0) { state[code].qty += qty; state[code].cost += totalAmount; } else { const absShort = Math.abs(state[code].qty); const coverQty = Math.min(qty, absShort); const avgEntry = state[code].cost / state[code].qty; const coverAmount = totalAmount * (coverQty / qty); state[code].qty += coverQty; state[code].cost += avgEntry * coverQty; const remain = qty - coverQty; if (remain > 0) { const remainAmount = totalAmount - coverAmount; state[code].qty += remain; state[code].cost += remainAmount; } } } else if (tx.type === 'sell') { if (state[code].qty <= 0) { state[code].qty -= qty; state[code].cost -= totalAmount; } else { const closeQty = Math.min(qty, state[code].qty); const avgEntry = state[code].cost / state[code].qty; const closeAmount = totalAmount * (closeQty / qty); state[code].qty -= closeQty; state[code].cost -= avgEntry * closeQty; const remain = qty - closeQty; if (remain > 0) { const remainAmount = totalAmount - closeAmount; state[code].qty -= remain; state[code].cost -= remainAmount; } } } if (Math.abs(state[code].qty) < 1e-9) { state[code].qty = 0; state[code].cost = 0; } state[code].category = tx.category || state[code].category; state[code].name = tx.name || state[code].name; }); return Object.entries(state).filter(([code, s]) => s.qty !== 0).map(([code, s]) => { const entryAvgPrice = s.cost / s.qty; const currentPrice = this.latestPrices[code] || entryAvgPrice; const absQty = Math.abs(s.qty); const marketValueAbs = currentPrice * absQty; let unrealizedPnL = 0; if (s.qty > 0) { unrealizedPnL = (currentPrice * s.qty) - s.cost; } else { unrealizedPnL = (-s.cost) - marketValueAbs; } const investedBase = Math.abs(s.cost); const roi = investedBase > 0 ? ((unrealizedPnL / investedBase) * 100).toFixed(2) : 0; const status = this.latestStatus[code] || { isWarning: false, disposition: 0 }; return { code, name: s.name, qty: s.qty, category: s.category || 'core', realizedPnL: (realized[code] || 0), totalCost: s.cost, buyAvgPrice: entryAvgPrice, entryAvgPrice, investedBase, currentPrice, unrealizedPnL, roi, isWarning: status.isWarning, disposition: status.disposition }; }).sort((a,b) => (b.category || '').localeCompare(a.category || '') || a.code.localeCompare(b.code)); },
         filteredHoldings() { return this.filter === 'all' ? this.holdings : this.holdings.filter(h => h.category === this.filter); },
@@ -1274,16 +1311,30 @@ createApp({
     methods: {
         txTypeLabel(tx) {
             if (!tx) return '';
+            const mode = String(tx.mode || 'cash');
+            const isDT = !!tx.isDayTrade;
+
             if (tx.type === 'buy') {
-                if (typeof tx.flow === 'string' && tx.flow.startsWith('cover')) return '回補';
-                return '買入';
+                const isCover = (typeof tx.flow === 'string' && tx.flow.startsWith('cover'));
+                let label = '';
+                if (isCover || mode === 'short') {
+                    label = (mode === 'short') ? '融券回補' : '回補';
+                } else {
+                    label = (mode === 'margin') ? '融資買入' : '買入';
+                }
+                if (isDT) label += '(當沖)';
+                return label;
             }
+
             if (tx.type === 'sell') {
-                const isShort = (typeof tx.flow === 'string' && (tx.flow === 'short' || tx.flow.endsWith('+short') || tx.flow.includes('short')) && !tx.flow.startsWith('sell'));
-                if (isShort) return tx.isDayTrade ? '融券賣出(當沖)' : '融券賣出';
-                if (tx.flow === 'sell+short') return tx.isDayTrade ? '賣出+融券(當沖)' : '賣出+融券';
-                return tx.isDayTrade ? '賣出(當沖)' : '賣出';
+                const isShortSell = (mode === 'short') || (typeof tx.flow === 'string' && tx.flow.includes('short') && tx.flow !== 'sell');
+                let label = '';
+                if (isShortSell) label = '融券賣出';
+                else label = (mode === 'margin') ? '融資賣出' : '賣出';
+                if (isDT) label += '(當沖)';
+                return label;
             }
+
             return String(tx.type || '');
         },
         // --- NEW: Analysis Methods ---
@@ -1314,18 +1365,38 @@ createApp({
             this.closeEditBuyModal();
             this.openInfoModal('', '買入紀錄已成功更新。');
         },
-        openEditTxModal(tx) { if (!tx || !tx.id) { this.openInfoModal('無法編輯', '找不到這筆交易紀錄'); return; } this.editTx = { id: tx.id, date: tx.date, code: tx.code, name: tx.name, type: tx.type, price: Number(tx.price), qty: Number(tx.qty), category: tx.category || 'core', isDayTrade: !!tx.isDayTrade }; this.showEditTxModal = true; },
-        closeEditTxModal() { this.showEditTxModal = false; this.editTx = { id: null, date: '', code: '', name: '', type: 'buy', price: null, qty: 0, category: 'core', isDayTrade: false }; },
-        saveEditedTxFromHistory() { if (!this.editTx.id || !this.editTx.date || !this.editTx.code || !this.editTx.name) { this.openInfoModal('資料不完整', '請輸入日期、股票代號與名稱'); return; } if (!this.editTx.price || !this.editTx.qty || this.editTx.price <= 0 || this.editTx.qty <= 0) { this.openInfoModal('資料不正確', '價格與股數需大於 0'); return; } const idx = this.transactions.findIndex(t => t.id === this.editTx.id); if (idx === -1) { this.openInfoModal('無法儲存', '找不到對應的交易紀錄'); return; } const backup = JSON.parse(JSON.stringify(this.transactions)); this.transactions[idx] = { ...this.transactions[idx], date: this.editTx.date, code: String(this.editTx.code).trim(), name: String(this.editTx.name).trim(), category: this.editTx.category || this.transactions[idx].category || 'core', price: Number(this.editTx.price), qty: Number(this.editTx.qty), isDayTrade: (this.editTx.type === 'sell' ? !!this.editTx.isDayTrade : false) }; const ok = this.recomputeAllTradesAndValidate(); if (!ok) { this.transactions = backup; return; } this.saveData(); this.closeEditTxModal(); this.openInfoModal('', '交易紀錄已成功更新。'); },
+        openEditTxModal(tx) { if (!tx || !tx.id) { this.openInfoModal('無法編輯', '找不到這筆交易紀錄'); return; } this.editTx = { id: tx.id, date: tx.date, code: tx.code, name: tx.name, type: tx.type, mode: (tx.mode || 'cash'), price: Number(tx.price), qty: Number(tx.qty), category: tx.category || 'core', dayTradeEligible: !!(tx.dayTradeEligible ?? tx.isDayTrade) }; this.showEditTxModal = true; },
+        closeEditTxModal() { this.showEditTxModal = false; this.editTx = { id: null, date: '', code: '', name: '', type: 'buy', mode: 'cash', price: null, qty: 0, category: 'core', dayTradeEligible: false }; },
+        saveEditedTxFromHistory() { if (!this.editTx.id || !this.editTx.date || !this.editTx.code || !this.editTx.name) { this.openInfoModal('資料不完整', '請輸入日期、股票代號與名稱'); return; } if (!this.editTx.price || !this.editTx.qty || this.editTx.price <= 0 || this.editTx.qty <= 0) { this.openInfoModal('資料不正確', '價格與股數需大於 0'); return; } const idx = this.transactions.findIndex(t => t.id === this.editTx.id); if (idx === -1) { this.openInfoModal('無法儲存', '找不到對應的交易紀錄'); return; } const backup = JSON.parse(JSON.stringify(this.transactions)); this.transactions[idx] = { ...this.transactions[idx], date: this.editTx.date, code: String(this.editTx.code).trim(), name: String(this.editTx.name).trim(), category: this.editTx.category || this.transactions[idx].category || 'core', price: Number(this.editTx.price), qty: Number(this.editTx.qty), mode: (this.editTx.mode || this.transactions[idx].mode || 'cash'), dayTradeEligible: !!this.editTx.dayTradeEligible }; const ok = this.recomputeAllTradesAndValidate(); if (!ok) { this.transactions = backup; return; } this.saveData(); this.closeEditTxModal(); this.openInfoModal('', '交易紀錄已成功更新。'); },
         recomputeAllTradesAndValidate() {
-            const ordered = this.sortedTransactions.slice().reverse(); // oldest -> newest
-            const state = {};
+            // Chronological order (oldest -> newest), stable within the same day
+            const ordered = [...this.transactions].sort((a, b) => {
+                const da = new Date(a.date).getTime();
+                const db = new Date(b.date).getTime();
+                if (da !== db) return da - db;
+                return (Number(a.id || 0) - Number(b.id || 0));
+            });
 
+            const state = {}; // per code: { qty, cost }
+
+            // -------- Pass 1: normalize + compute subtotal/fee --------
             for (const tx of ordered) {
                 if (!tx || !tx.code) continue;
                 const code = String(tx.code).trim();
                 tx.code = code;
-                if (!state[code]) state[code] = { qty: 0, cost: 0 };
+
+                if (tx.type !== 'buy' && tx.type !== 'sell') tx.type = 'buy';
+
+                // mode: cash | margin | short
+                if (!tx.mode) tx.mode = 'cash';
+                tx.mode = String(tx.mode || 'cash');
+                if (!['cash', 'margin', 'short'].includes(tx.mode)) tx.mode = 'cash';
+
+                // dayTradeEligible: user intent (NOT whether day trade actually成立)
+                if (tx.dayTradeEligible === undefined || tx.dayTradeEligible === null) {
+                    tx.dayTradeEligible = !!tx.isDayTrade; // backward compatibility
+                }
+                tx.dayTradeEligible = !!tx.dayTradeEligible;
 
                 const qty = Number(tx.qty) || 0;
                 const price = Number(tx.price) || 0;
@@ -1340,84 +1411,222 @@ createApp({
                     Math.round(this.settings.minFee || 0)
                 );
 
-                if (tx.type !== 'buy' && tx.type !== 'sell') tx.type = 'buy';
+                tx._subTotal = subTotal;
+                tx.fee = fee;
 
-                // Recompute totals
-                if (tx.type === 'buy') {
-                    tx.fee = fee;
-                    tx.tax = 0;
-                    tx.isDayTrade = false;
-                    tx.totalAmount = subTotal + fee;
-                } else {
-                    tx.fee = fee;
-                    const taxRate = (tx.isDayTrade ? (this.settings.dayTradeTaxRate ?? 0.15) : this.settings.taxRate);
-                    const tax = Math.round(subTotal * (taxRate / 100));
-                    tx.tax = tax;
-                    tx.totalAmount = subTotal - fee - tax;
-                }
+                // init derived
+                tx.dayTradeMatchedQty = 0;
+                tx.isDayTrade = false;
+                tx.tax = 0;
+                tx.totalAmount = 0;
+                tx.posQty = qty;
+                tx.posAmount = 0;
 
                 // Reset derived fields (recomputed)
                 tx.realizedPnL = null;
                 tx.flow = null;
                 tx.closedQty = null;
                 tx.closedBase = null;
+            }
 
-                // Apply to position state (supports long/short + flips)
+            const dtTaxRate = Number(this.settings.dayTradeTaxRate ?? 0.15);
+            const normalTaxRate = Number(this.settings.taxRate ?? 0.3);
+
+            // helpers (proportional fee allocation)
+            const buyCostChunk = (tx, q) => (tx.price * q) + (tx.fee * (q / tx.qty));
+            const sellNetChunk = (tx, q, taxRatePercent) => (tx.price * q) - (tx.fee * (q / tx.qty)) - (tx.price * q * (taxRatePercent / 100));
+
+            // -------- Pass 2: same-day day-trade matching (supports buy-first & sell-first) --------
+            const groups = new Map();
+            for (const tx of ordered) {
+                if (!tx || !tx.code) continue;
+                if (!tx.dayTradeEligible) continue;
+                const key = `${tx.code}|${tx.date}|${tx.mode}`;
+                if (!groups.has(key)) groups.set(key, []);
+                groups.get(key).push(tx);
+            }
+
+            for (const [, list] of groups.entries()) {
+                const pendingBuys = [];  // { tx, remain }
+                const pendingSells = []; // { tx, remain }
+
+                for (const tx of list) {
+                    let remaining = (Number(tx.qty) || 0) - (Number(tx.dayTradeMatchedQty) || 0);
+                    if (remaining <= 0) continue;
+
+                    if (tx.type === 'buy') {
+                        // match with earlier sells (sell-first day trade)
+                        while (remaining > 0 && pendingSells.length) {
+                            const ps = pendingSells[0];
+                            const m = Math.min(remaining, ps.remain);
+
+                            tx.dayTradeMatchedQty += m;
+                            ps.tx.dayTradeMatchedQty += m;
+
+                            const pnl = sellNetChunk(ps.tx, m, dtTaxRate) - buyCostChunk(tx, m);
+
+                            // closing leg = current buy
+                            tx.realizedPnL = (tx.realizedPnL == null ? 0 : Number(tx.realizedPnL)) + pnl;
+                            tx.closedQty = (tx.closedQty == null ? 0 : Number(tx.closedQty)) + m;
+                            tx.closedBase = (tx.closedBase == null ? 0 : Number(tx.closedBase)) + Math.abs(sellNetChunk(ps.tx, m, dtTaxRate));
+
+                            if (tx.flow == null) tx.flow = 'cover';
+
+                            remaining -= m;
+                            ps.remain -= m;
+                            if (ps.remain <= 0) pendingSells.shift();
+                        }
+
+                        if (remaining > 0) {
+                            pendingBuys.push({ tx, remain: remaining });
+                        }
+                    } else {
+                        // sell: match with earlier buys (buy-first day trade)
+                        while (remaining > 0 && pendingBuys.length) {
+                            const pb = pendingBuys[0];
+                            const m = Math.min(remaining, pb.remain);
+
+                            tx.dayTradeMatchedQty += m;
+                            pb.tx.dayTradeMatchedQty += m;
+
+                            const pnl = sellNetChunk(tx, m, dtTaxRate) - buyCostChunk(pb.tx, m);
+
+                            // closing leg = current sell
+                            tx.realizedPnL = (tx.realizedPnL == null ? 0 : Number(tx.realizedPnL)) + pnl;
+                            tx.closedQty = (tx.closedQty == null ? 0 : Number(tx.closedQty)) + m;
+                            tx.closedBase = (tx.closedBase == null ? 0 : Number(tx.closedBase)) + Math.abs(buyCostChunk(pb.tx, m));
+
+                            if (tx.flow == null) tx.flow = 'sell';
+
+                            remaining -= m;
+                            pb.remain -= m;
+                            if (pb.remain <= 0) pendingBuys.shift();
+                        }
+
+                        if (remaining > 0) {
+                            pendingSells.push({ tx, remain: remaining });
+                        }
+                    }
+                }
+            }
+
+            // -------- Pass 3: compute tax/totalAmount + position-effective qty/amount --------
+            for (const tx of ordered) {
+                if (!tx || !tx.code) continue;
+                const qty = Number(tx.qty) || 0;
+                const matched = Math.max(0, Math.min(qty, Number(tx.dayTradeMatchedQty) || 0));
+                const subTotal = Number(tx._subTotal) || 0;
+                const fee = Number(tx.fee) || 0;
+
+                tx.isDayTrade = matched > 0;
+
+                if (tx.type === 'buy') {
+                    tx.tax = 0;
+                    tx.totalAmount = subTotal + fee;
+                } else {
+                    // split tax: matched part uses day-trade tax rate; rest uses normal
+                    const dtTax = tx.price * matched * (dtTaxRate / 100);
+                    const normalQty = qty - matched;
+                    const normalTax = tx.price * normalQty * (normalTaxRate / 100);
+                    tx.tax = Math.round(dtTax + normalTax);
+                    tx.totalAmount = subTotal - fee - tx.tax;
+                }
+
+                const posQty = qty - matched;
+                if (posQty <= 0) {
+                    tx.posQty = 0;
+                    tx.posAmount = 0;
+                } else {
+                    const feePart = fee * (posQty / qty);
+                    if (tx.type === 'buy') {
+                        tx.posQty = posQty;
+                        tx.posAmount = (tx.price * posQty) + feePart;
+                    } else {
+                        const taxPart = tx.price * posQty * (normalTaxRate / 100);
+                        tx.posQty = posQty;
+                        tx.posAmount = (tx.price * posQty) - feePart - taxPart;
+                    }
+                }
+            }
+
+            // -------- Pass 4: apply position state (avg cost) using posQty/posAmount --------
+            for (const tx of ordered) {
+                if (!tx || !tx.code) continue;
+                const code = tx.code;
+                if (!state[code]) state[code] = { qty: 0, cost: 0 };
+
+                const qty = Number(tx.posQty) || 0;
+                if (qty <= 0) continue; // no position impact (pure day-trade matched)
+
+                const amount = Number(tx.posAmount) || 0;
+
+                const basePnL = (tx.realizedPnL == null ? 0 : Number(tx.realizedPnL));
+                const baseClosedQty = (tx.closedQty == null ? 0 : Number(tx.closedQty));
+                const baseClosedBase = (tx.closedBase == null ? 0 : Number(tx.closedBase));
+
                 if (tx.type === 'buy') {
                     if (state[code].qty >= 0) {
                         state[code].qty += qty;
-                        state[code].cost += tx.totalAmount;
-                        tx.flow = 'buy';
+                        state[code].cost += amount;
+                        if (tx.flow == null) tx.flow = 'buy';
                     } else {
                         const absShort = Math.abs(state[code].qty);
                         const coverQty = Math.min(qty, absShort);
                         const avgEntry = state[code].cost / state[code].qty; // positive
-                        const coverAmount = tx.totalAmount * (coverQty / qty);
+                        const coverAmount = amount * (coverQty / qty);
 
                         const pnl = (avgEntry * coverQty) - coverAmount;
-                        tx.realizedPnL = pnl;
-                        tx.closedQty = coverQty;
-                        tx.closedBase = avgEntry * coverQty;
+                        tx.realizedPnL = basePnL + pnl;
+                        tx.closedQty = baseClosedQty + coverQty;
+                        tx.closedBase = baseClosedBase + (avgEntry * coverQty);
                         tx.flow = (qty > coverQty) ? 'cover+buy' : 'cover';
 
-                        // remove covered portion
                         state[code].qty += coverQty;
                         state[code].cost += avgEntry * coverQty;
 
-                        // remaining opens long
                         const remain = qty - coverQty;
                         if (remain > 0) {
-                            const remainAmount = tx.totalAmount - coverAmount;
+                            const remainAmount = amount - coverAmount;
                             state[code].qty += remain;
                             state[code].cost += remainAmount;
                         }
                     }
                 } else {
+                    // sell
                     if (state[code].qty <= 0) {
+                        // opening/increasing short is only allowed if mode is 'short'
+                        if (tx.mode !== 'short') {
+                            this.openInfoModal('庫存不足', `${tx.name || code} ${tx.date}：賣出會造成（或增加）空單。請改選『融券』或取消『當沖』勾選/補上同日回補。`);
+                            return false;
+                        }
                         state[code].qty -= qty;
-                        state[code].cost -= tx.totalAmount;
-                        tx.flow = 'short';
+                        state[code].cost -= amount;
+                        if (tx.flow == null) tx.flow = 'short';
                     } else {
                         const closeQty = Math.min(qty, state[code].qty);
-                        const avgEntry = state[code].cost / state[code].qty; // positive
-                        const closeAmount = tx.totalAmount * (closeQty / qty);
+                        const avgEntry = state[code].cost / state[code].qty;
+                        const closeAmount = amount * (closeQty / qty);
 
                         const pnl = closeAmount - (avgEntry * closeQty);
-                        tx.realizedPnL = pnl;
-                        tx.closedQty = closeQty;
-                        tx.closedBase = avgEntry * closeQty;
-                        tx.flow = (qty > closeQty) ? 'sell+short' : 'sell';
+                        tx.realizedPnL = basePnL + pnl;
+                        tx.closedQty = baseClosedQty + closeQty;
+                        tx.closedBase = baseClosedBase + (avgEntry * closeQty);
 
-                        // remove sold portion
                         state[code].qty -= closeQty;
                         state[code].cost -= avgEntry * closeQty;
 
-                        // remaining opens short
                         const remain = qty - closeQty;
                         if (remain > 0) {
-                            const remainAmount = tx.totalAmount - closeAmount;
+                            if (tx.mode !== 'short') {
+                                this.openInfoModal('庫存不足', `${tx.name || code} ${tx.date}：賣出超過庫存，剩餘部分會變成空單。請改選『融券』或分拆交易。`);
+                                return false;
+                            }
+                            const remainAmount = amount - closeAmount;
                             state[code].qty -= remain;
                             state[code].cost -= remainAmount;
+                            tx.flow = 'sell+short';
+                        } else {
+                            if (tx.flow == null) tx.flow = 'sell';
                         }
                     }
                 }
@@ -1446,11 +1655,142 @@ createApp({
         deleteTransaction(id) { this.confirmTitle = '刪除交易'; this.confirmMessage = '確定要刪除此筆交易紀錄嗎？'; this.confirmCallback = () => { this.transactions = this.transactions.filter(t => t.id !== id); this.saveData(); }; this.showConfirmModal = true; },
         confirmAction() { if (this.confirmCallback) this.confirmCallback(); this.showConfirmModal = false; },
         setDateFilter(mode) { this.dateFilterMode = mode; const today = new Date(); const format = d => d.toISOString().split('T')[0]; this.filterEnd = format(today); if (mode === 'today') this.filterStart = format(today); else if (mode === 'yesterday') { const y = new Date(); y.setDate(y.getDate() - 1); this.filterStart = format(y); this.filterEnd = format(y); } else if (mode === 'week') { const d = new Date(); d.setDate(d.getDate() - 6); this.filterStart = format(d); } else if (mode === 'month') { const d = new Date(); d.setMonth(d.getMonth() - 1); this.filterStart = format(d); } else if (mode === 'all') this.filterStart = '2000-01-01'; },
-        async fetchStockPrices() { if (this.holdings.length === 0) { this.openInfoModal('無庫存可更新', '目前沒有持倉股票，請先新增交易。'); return; } this.isLoading = true; this.lastPriceUpdateError = ''; this.lastPriceUpdateAttemptTs = Date.now(); localStorage.setItem('tw_stock_price_update_attempt_ts_v1', String(this.lastPriceUpdateAttemptTs)); localStorage.setItem('tw_stock_price_update_error_v1', ''); const proxyUrl = (location.protocol === 'file:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1') ? "https://corsproxy.io/?" : "/.netlify/functions/yahoo?u="; const promises = this.holdings.map(async (stock) => { const code = stock.code; let price = null; let status = this.latestStatus[code] || { isWarning: false, disposition: 0 }; try { const res = await fetch(`${proxyUrl}${encodeURIComponent(`https://query1.finance.yahoo.com/v8/finance/chart/${code}.TW?interval=1d`)}`); const data = await res.json(); if (data.chart && data.chart.result) price = data.chart.result[0].meta.regularMarketPrice; } catch(e) {} if (price === null) { try { const res = await fetch(`${proxyUrl}${encodeURIComponent(`https://query1.finance.yahoo.com/v8/finance/chart/${code}.TWO?interval=1d`)}`); const data = await res.json(); if (data.chart && data.chart.result) price = data.chart.result[0].meta.regularMarketPrice; } catch(e) {} } try { const pageRes = await fetch(`${proxyUrl}${encodeURIComponent(`https://tw.stock.yahoo.com/quote/${code}`)}`); const htmlText = await pageRes.text(); if (htmlText.match(/處置|彈性處置/)) { status.disposition = 5; if (htmlText.match(/20分鐘|二十分鐘|20分/)) { status.disposition = 20; } } if (htmlText.match(/注意|警示/)) { status.isWarning = true; } } catch(e) { console.log('Status fetch failed for', code, e); } return { code, price, status }; }); try { const results = await Promise.all(promises); let updatedCount = 0; let missingCount = 0; results.forEach(res => { if (res.price !== null && res.price !== undefined && !Number.isNaN(Number(res.price))) { this.latestPrices[res.code] = Number(res.price); updatedCount += 1; } else { missingCount += 1; } this.latestStatus[res.code] = res.status; }); if (updatedCount === 0) throw new Error('NO_PRICE_UPDATED'); const now = new Date(); this.lastUpdateTime = `${now.getMonth()+1}/${now.getDate()} ${now.getHours()}:${now.getMinutes().toString().padStart(2, '0')}`; this.lastUpdateTimestamp = now.getTime(); localStorage.setItem('tw_stock_prices_v6', JSON.stringify(this.latestPrices)); localStorage.setItem('tw_stock_status_v6', JSON.stringify(this.latestStatus)); localStorage.setItem('tw_stock_time_v6', this.lastUpdateTime); localStorage.setItem('tw_stock_time_ts_v6', String(this.lastUpdateTimestamp)); this.lastPriceUpdatePartial = (missingCount > 0); this.lastPriceUpdateMissingCount = missingCount; localStorage.setItem('tw_stock_price_update_partial_v1', this.lastPriceUpdatePartial ? '1' : '0'); localStorage.setItem('tw_stock_price_update_missing_count_v1', String(this.lastPriceUpdateMissingCount)); if (missingCount > 0) { this.openInfoModal('部分更新成功', ` ${updatedCount} 檔，${missingCount} 檔未更新（沿用上次價格）。`); } else { this.openInfoModal('更新成功', '股價與警示狀態已同步！'); } } catch (error) { this.lastPriceUpdateError = '連線不穩定或資料來源暫時不可用，已沿用上次價格。'; localStorage.setItem('tw_stock_price_update_error_v1', this.lastPriceUpdateError); this.lastPriceUpdatePartial = false; this.lastPriceUpdateMissingCount = 0; localStorage.setItem('tw_stock_price_update_partial_v1', '0'); localStorage.setItem('tw_stock_price_update_missing_count_v1', '0'); this.openInfoModal('', '連線不穩定，已沿用上次價格。可稍後再試。'); } finally { this.isLoading = false; } },
+
+async fetchStockPrices() {
+    if (this.holdings.length === 0) {
+        this.openInfoModal('無庫存可更新', '目前沒有持倉股票，請先新增交易。');
+        return;
+    }
+    this.isLoading = true;
+    this.lastPriceUpdateError = '';
+    this.lastPriceUpdateAttemptTs = Date.now();
+    localStorage.setItem('tw_stock_price_update_attempt_ts_v1', String(this.lastPriceUpdateAttemptTs));
+    localStorage.setItem('tw_stock_price_update_error_v1', '');
+
+    const proxyUrl = (location.protocol === 'file:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1')
+        ? "https://corsproxy.io/?"
+        : "/.netlify/functions/yahoo?u=";
+
+    const promises = this.holdings.map(async (stock) => {
+        const code = stock.code;
+        let price = null;
+        let status = this.latestStatus[code] || { isWarning: false, disposition: 0 };
+
+        try {
+            const res = await fetch(proxyUrl + encodeURIComponent(`https://query1.finance.yahoo.com/v8/finance/chart/${code}.TW?interval=1d`));
+            const data = await res.json();
+            if (data.chart && data.chart.result) price = data.chart.result[0].meta.regularMarketPrice;
+        } catch (e) {}
+
+        if (price === null) {
+            try {
+                const res = await fetch(proxyUrl + encodeURIComponent(`https://query1.finance.yahoo.com/v8/finance/chart/${code}.TWO?interval=1d`));
+                const data = await res.json();
+                if (data.chart && data.chart.result) price = data.chart.result[0].meta.regularMarketPrice;
+            } catch (e) {}
+        }
+
+        try {
+            const pageRes = await fetch(proxyUrl + encodeURIComponent(`https://tw.stock.yahoo.com/quote/${code}`));
+            const htmlText = await pageRes.text();
+            if (htmlText.match(/處置|彈性處置/)) {
+                status.disposition = 5;
+                if (htmlText.match(/20分鐘|二十分鐘|20分/)) {
+                    status.disposition = 20;
+                }
+            }
+            if (htmlText.match(/注意|警示/)) {
+                status.isWarning = true;
+            }
+        } catch (e) {
+            console.log('Status fetch failed for', code, e);
+        }
+
+        return { code, price, status };
+    });
+
+    try {
+        const results = await Promise.all(promises);
+        let updatedCount = 0;
+        let missingCount = 0;
+
+        results.forEach(res => {
+            if (res.price !== null && res.price !== undefined && !Number.isNaN(Number(res.price))) {
+                this.latestPrices[res.code] = Number(res.price);
+                updatedCount += 1;
+            } else {
+                missingCount += 1;
+            }
+            this.latestStatus[res.code] = res.status;
+        });
+
+        if (updatedCount === 0) throw new Error('NO_PRICE_UPDATED');
+
+        const now = new Date();
+        this.lastUpdateTime = `${now.getMonth() + 1}/${now.getDate()} ${now.getHours()}:${now.getMinutes().toString().padStart(2, '0')}`;
+        this.lastUpdateTimestamp = now.getTime();
+
+        localStorage.setItem('tw_stock_prices_v6', JSON.stringify(this.latestPrices));
+        localStorage.setItem('tw_stock_status_v6', JSON.stringify(this.latestStatus));
+        localStorage.setItem('tw_stock_time_v6', this.lastUpdateTime);
+        localStorage.setItem('tw_stock_time_ts_v6', String(this.lastUpdateTimestamp));
+
+        this.lastPriceUpdatePartial = (missingCount > 0);
+        this.lastPriceUpdateMissingCount = missingCount;
+        localStorage.setItem('tw_stock_price_update_partial_v1', this.lastPriceUpdatePartial ? '1' : '0');
+        localStorage.setItem('tw_stock_price_update_missing_count_v1', String(this.lastPriceUpdateMissingCount));
+
+        if (missingCount > 0) {
+            this.openInfoModal('部分更新成功', ` ${updatedCount} 檔，${missingCount} 檔未更新（沿用上次價格）。`);
+        } else {
+            this.openInfoModal('更新成功', '股價與警示狀態已同步！');
+        }
+    } catch (error) {
+        this.lastPriceUpdateError = '連線不穩定或資料來源暫時不可用，已沿用上次價格。';
+        localStorage.setItem('tw_stock_price_update_error_v1', this.lastPriceUpdateError);
+        this.lastPriceUpdatePartial = false;
+        this.lastPriceUpdateMissingCount = 0;
+        localStorage.setItem('tw_stock_price_update_partial_v1', '0');
+        localStorage.setItem('tw_stock_price_update_missing_count_v1', '0');
+        this.openInfoModal('', '連線不穩定，已沿用上次價格。可稍後再試。');
+    } finally {
+        this.isLoading = false;
+    }
+},
         async fetchGlobalIndices() { this.isGlobalLoading = true; this.showGlobalIndices = true; this.globalIndices = []; const corsBase = (location.protocol === 'file:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1') ? "https://corsproxy.io/?" : "/.netlify/functions/yahoo?u="; const cors = (url) => `${corsBase}${encodeURIComponent(url)}`; const fetchFromYahooChart = async (symbol) => { const encodedSymbol = encodeURIComponent(symbol); const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodedSymbol}?interval=1d`; const res = await fetch(cors(url)); if (!res.ok) throw new Error(`HTTP ${res.status}`); const data = await res.json(); const meta = data?.chart?.result?.[0]?.meta; const price = meta?.regularMarketPrice; const prev = meta?.chartPreviousClose ?? meta?.previousClose; if (typeof price !== 'number' || typeof prev !== 'number' || prev === 0) throw new Error('No market meta'); const change = price - prev; const percent = (change / prev) * 100; return { price, change, percent }; }; const fetchTaiexNightFromYahooTW = async () => { const url = `https://tw.stock.yahoo.com/future/futures.html`; const res = await fetch(cors(url)); if (!res.ok) throw new Error(`HTTP ${res.status}`); const htmlText = await res.text(); const idx = htmlText.indexOf('WTX&'); const idx2 = htmlText.indexOf('WTX&amp;'); const hit = (idx !== -1) ? idx : idx2; if (hit === -1) throw new Error('WTX& not found'); const slice = htmlText.slice(Math.max(0, hit - 4000), Math.min(htmlText.length, hit + 8000)); const textOnly = slice.replace(/<script[\s\S]*?<\/script>/gi, ' ').replace(/<style[\s\S]*?<\/style>/gi, ' ').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim(); const m = textOnly.match(/(-?\d{1,3}(?:,\d{3})*(?:\.\d+)?)\s*([+-]?\d+(?:\.\d+)?)%/); const change = m ? parseFloat(m[1].replace(/,/g, '')) : null; const percent = m ? parseFloat(m[2]) : null; const after = textOnly.split(/WTX&|WTX&amp;/).slice(1).join(' ').trim(); const numsAfter = after.match(/-?\d{1,3}(?:,\d{3})*(?:\.\d+)?/g) || []; const price = numsAfter.length ? parseFloat(numsAfter[0].replace(/,/g, '')) : null; if (typeof price !== 'number' || isNaN(price)) throw new Error('No price parsed'); return { price, change: (typeof change === 'number' && !isNaN(change)) ? change : 0, percent: (typeof percent === 'number' && !isNaN(percent)) ? percent : 0 }; }; const targets = [ { symbol: '^DJI', name: '道瓊工業', kind: 'chart' }, { symbol: '^IXIC', name: 'NASDAQ', kind: 'chart' }, { symbol: '^GSPC', name: 'S&P 500', kind: 'chart' }, { symbol: '^SOX', name: '費城半導體', kind: 'chart' }, { symbol: 'WTX&', name: '台股指數(夜盤)', kind: 'taiexNight' }, ]; const promises = targets.map(async (t) => { try { const { price, change, percent } = (t.kind === 'taiexNight') ? await fetchTaiexNightFromYahooTW() : await fetchFromYahooChart(t.symbol); return { ...t, price: Number(price).toFixed(2), change, percent }; } catch (e) { return { ...t, price: '-', change: 0, percent: 0 }; } }); const results = await Promise.all(promises); this.globalIndices = results; const missing = results.filter(x => x && x.price === '-').length; const total = results.length; const success = total - missing; this.globalIndicesAttemptTs = Date.now(); localStorage.setItem('tw_stock_global_update_attempt_ts_v1', String(this.globalIndicesAttemptTs)); if (success <= 0) { this.globalIndicesError = true; this.globalIndicesPartial = false; this.globalIndicesMissingCount = total; localStorage.setItem('tw_stock_global_update_error_v1', '1'); localStorage.setItem('tw_stock_global_update_partial_v1', '0'); localStorage.setItem('tw_stock_global_update_missing_count_v1', String(this.globalIndicesMissingCount)); } else { this.globalIndicesLastTs = Date.now(); localStorage.setItem('tw_stock_global_time_ts_v1', String(this.globalIndicesLastTs)); this.globalIndicesError = false; this.globalIndicesPartial = (missing > 0); this.globalIndicesMissingCount = missing; localStorage.setItem('tw_stock_global_update_error_v1', '0'); localStorage.setItem('tw_stock_global_update_partial_v1', this.globalIndicesPartial ? '1' : '0'); localStorage.setItem('tw_stock_global_update_missing_count_v1', String(this.globalIndicesMissingCount)); } this.isGlobalLoading = false; },
         async fetchTaiexNightIndex() { this.isTaiexNightLoading = true; this.showGlobalIndices = true; const corsBase = (location.protocol === 'file:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1') ? "https://corsproxy.io/?" : "/.netlify/functions/yahoo?u="; const cors = (url) => `${corsBase}${encodeURIComponent(url)}`; try { const url = `https://tw.stock.yahoo.com/future/futures.html`; const res = await fetch(cors(url)); if (!res.ok) throw new Error(`HTTP ${res.status}`); const htmlText = await res.text(); const idx = htmlText.indexOf('WTX&'); const idx2 = htmlText.indexOf('WTX&amp;'); const hit = (idx !== -1) ? idx : idx2; if (hit === -1) throw new Error('WTX& not found'); const slice = htmlText.slice(Math.max(0, hit - 4000), Math.min(htmlText.length, hit + 8000)); const textOnly = slice.replace(/<script[\s\S]*?<\/script>/gi, ' ').replace(/<style[\s\S]*?<\/style>/gi, ' ').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim(); const m = textOnly.match(/(-?\d{1,3}(?:,\d{3})*(?:\.\d+)?)\s*([+-]?\d+(?:\.\d+)?)%/); const change = m ? parseFloat(m[1].replace(/,/g, '')) : 0; const percent = m ? parseFloat(m[2]) : 0; const after = textOnly.split(/WTX&|WTX&amp;/).slice(1).join(' ').trim(); const numsAfter = after.match(/-?\d{1,3}(?:,\d{3})*(?:\.\d+)?/g) || []; const price = numsAfter.length ? parseFloat(numsAfter[0].replace(/,/g, '')) : null; if (typeof price !== 'number' || isNaN(price)) throw new Error('No price parsed'); if (!Array.isArray(this.globalIndices) || this.globalIndices.length === 0) { await this.fetchGlobalIndices(); this.isTaiexNightLoading = false; return; } const i = this.globalIndices.findIndex(x => x.kind === 'taiexNight' || x.symbol === 'WTX&'); const item = { symbol: 'WTX&', name: '台股指數(夜盤)', kind: 'taiexNight', price: Number(price).toFixed(2), change: (typeof change === 'number' && !isNaN(change)) ? change : 0, percent: (typeof percent === 'number' && !isNaN(percent)) ? percent : 0 }; if (i >= 0) this.$set ? this.$set(this.globalIndices, i, item) : (this.globalIndices.splice(i, 1, item)); else this.globalIndices.push(item); this.globalIndicesLastTs = Date.now(); localStorage.setItem('tw_stock_global_time_ts_v1', String(this.globalIndicesLastTs)); const missing = (this.globalIndices || []).filter(x => x && x.price === '-').length; const total = (this.globalIndices || []).length; const success = total - missing; this.globalIndicesError = (success <= 0); this.globalIndicesPartial = (!this.globalIndicesError && missing > 0); this.globalIndicesMissingCount = missing; localStorage.setItem('tw_stock_global_update_error_v1', this.globalIndicesError ? '1' : '0'); localStorage.setItem('tw_stock_global_update_partial_v1', this.globalIndicesPartial ? '1' : '0'); localStorage.setItem('tw_stock_global_update_missing_count_v1', String(this.globalIndicesMissingCount)); } catch (e) { const i = this.globalIndices.findIndex(x => x.kind === 'taiexNight' || x.symbol === 'WTX&'); if (i >= 0) { const cur = this.globalIndices[i]; const next = { ...cur, price: '-', change: 0, percent: 0 }; this.globalIndices.splice(i, 1, next); } const missing = (this.globalIndices || []).filter(x => x && x.price === '-').length; const total = (this.globalIndices || []).length; const success = total - missing; this.globalIndicesError = (success <= 0); this.globalIndicesPartial = (!this.globalIndicesError && missing > 0); this.globalIndicesMissingCount = missing; localStorage.setItem('tw_stock_global_update_error_v1', this.globalIndicesError ? '1' : '0'); localStorage.setItem('tw_stock_global_update_partial_v1', this.globalIndicesPartial ? '1' : '0'); localStorage.setItem('tw_stock_global_update_missing_count_v1', String(this.globalIndicesMissingCount)); } finally { this.isTaiexNightLoading = false; } },
         lookupStock() { const term = this.searchText; if (!term) { this.suggestions = []; this.showSuggestions = false; return; } const localResults = this.fullStockMap.filter(s => s.code.startsWith(term) || s.name.includes(term)); this.suggestions = localResults.slice(0, 6); this.showSuggestions = true; const exact = localResults.find(s => s.code === term || s.name === term); if(exact) { this.newTx.code = exact.code; this.newTx.name = exact.name; } if (term.length > 1 && localResults.length < 3) { if (this.searchTimeout) clearTimeout(this.searchTimeout); this.searchTimeout = setTimeout(() => { this.fetchOnlineSuggestions(term); }, 500); } },
-        async fetchOnlineSuggestions(query) { this.isSearching = true; try { const res = await fetch(`${((location.protocol === 'file:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1') ? "https://corsproxy.io/?" : "/.netlify/functions/yahoo?u=")}${encodeURIComponent(`https://query1.finance.yahoo.com/v1/finance/search?q=${query}&lang=zh-Hant-TW&region=TW&quotesCount=5&newsCount=0`)}`); const data = await res.json(); if (data.quotes && data.quotes.length > 0) { const onlineResults = data.quotes.filter(q => q.symbol && (q.symbol.endsWith('.TW') || q.symbol.endsWith('.TWO'))).map(q => ({ code: q.symbol.replace(/\.TW(O)?$/, ''), name: q.longname || q.shortname || '', isOnline: true })); const existingCodes = new Set(this.suggestions.map(s => s.code)); onlineResults.forEach(item => { if (!existingCodes.has(item.code)) this.suggestions.push(item); }); } } catch (e) {} finally { this.isSearching = false; } },
+
+async fetchOnlineSuggestions(query) {
+    this.isSearching = true;
+    try {
+        const proxyUrl = (location.protocol === 'file:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1')
+            ? "https://corsproxy.io/?"
+            : "/.netlify/functions/yahoo?u=";
+
+        const url = `https://query1.finance.yahoo.com/v1/finance/search?q=${encodeURIComponent(query)}&lang=zh-Hant-TW&region=TW&quotesCount=5&newsCount=0`;
+        const res = await fetch(proxyUrl + encodeURIComponent(url));
+        const data = await res.json();
+
+        if (data.quotes && data.quotes.length > 0) {
+            const onlineResults = data.quotes
+                .filter(q => q.symbol && (q.symbol.endsWith('.TW') || q.symbol.endsWith('.TWO')))
+                .map(q => ({
+                    code: q.symbol.replace(/\.TW(O)?$/, ''),
+                    name: q.longname || q.shortname || '',
+                    isOnline: true
+                }));
+
+            const existingCodes = new Set(this.suggestions.map(s => s.code));
+            onlineResults.forEach(item => {
+                if (!existingCodes.has(item.code)) this.suggestions.push(item);
+            });
+        }
+    } catch (e) {
+    } finally {
+        this.isSearching = false;
+    }
+},
         selectSuggestion(stock) { this.searchText = stock.code + " " + stock.name; this.newTx.code = stock.code; this.newTx.name = stock.name; this.showSuggestions = false; },
         addTransaction() {
             if (!this.newTx.code || !this.newTx.price || !this.newTx.qty) { this.openInfoModal('資料不完整', '請輸入代碼、價格與股數'); return; }
@@ -1471,18 +1811,20 @@ createApp({
             const subTotal = price * qty;
             const fee = Math.max(Math.round(subTotal * (this.settings.feeRate / 100) * this.settings.discount), Math.round(this.settings.minFee || 0));
 
+            // 當沖是否成立要看同日配對結果；這裡先以一般稅率估算，最終以 recompute 重新計算為準。
             let tax = 0;
             let totalAmount = subTotal + fee;
-            let isDayTrade = false;
             if (type === 'sell') {
-                isDayTrade = !!this.newTx.isDayTrade;
-                const taxRate = (isDayTrade ? (this.settings.dayTradeTaxRate ?? 0.15) : this.settings.taxRate);
+                const taxRate = this.settings.taxRate;
                 tax = Math.round(subTotal * (taxRate / 100));
                 totalAmount = subTotal - fee - tax;
             }
 
+            const mode = (this.newTx.mode || 'cash');
+            const dayTradeEligible = !!this.newTx.dayTradeEligible;
+
             const backup = JSON.parse(JSON.stringify(this.transactions));
-            this.transactions.push({ id: Date.now(), date: this.newTx.date, code, name: name || (exists ? exists.name : code), type, price, qty, category: this.newTx.category, isDayTrade, fee, tax, totalAmount, realizedPnL: null });
+            this.transactions.push({ id: Date.now(), date: this.newTx.date, code, name: name || (exists ? exists.name : code), type, mode, dayTradeEligible, price, qty, category: this.newTx.category, fee, tax, totalAmount, realizedPnL: null });
 
             const ok = this.recomputeAllTradesAndValidate();
             if (!ok) { this.transactions = backup; return; }
@@ -1490,7 +1832,7 @@ createApp({
             this.saveData();
             this.newTx.price = null;
             this.searchText = '';
-            this.newTx.isDayTrade = false;
+            this.newTx.dayTradeEligible = false;
             this.showAddModal = false;
             this.openInfoModal('新增成功', '交易紀錄已儲存！');
         },
@@ -1501,6 +1843,9 @@ createApp({
                 this.openInfoModal('空單持倉', '此標的是空單（負庫存）。回補請用上方「新增交易紀錄」選買入/回補；要加空請選賣出/做空。');
                 return;
             }
+                        const defaultModeTx = [...this.transactions].sort((a,b) => (new Date(b.date) - new Date(a.date)) || (Number(b.id||0)-Number(a.id||0)))
+                .find(t => t && t.code === stock.code && t.type === 'buy' && ((t.mode === 'margin') || (t.mode === 'cash')));
+            const defaultMode = (defaultModeTx && defaultModeTx.mode) ? defaultModeTx.mode : 'cash';
             this.sellTx = {
                 date: new Date().toISOString().split('T')[0],
                 code: stock.code,
@@ -1509,7 +1854,8 @@ createApp({
                 qty: Math.abs(stock.qty),
                 maxQty: Math.abs(stock.qty),
                 category: stock.category,
-                isDayTrade: false
+                                mode: defaultMode,
+                dayTradeEligible: false
             };
             this.showSellModal = true;
         },
@@ -1519,12 +1865,13 @@ createApp({
 
             const subTotal = this.sellTx.price * this.sellTx.qty;
             const fee = Math.max(Math.round(subTotal * (this.settings.feeRate / 100) * this.settings.discount), Math.round(this.settings.minFee || 0));
-            const taxRate = (this.sellTx.isDayTrade ? (this.settings.dayTradeTaxRate ?? 0.15) : this.settings.taxRate);
+            // 當沖是否成立要看同日配對結果；這裡先以一般稅率估算，最終以 recompute 重新計算為準。
+            const taxRate = this.settings.taxRate;
             const tax = Math.round(subTotal * (taxRate / 100));
             const totalAmount = subTotal - fee - tax;
 
             const backup = JSON.parse(JSON.stringify(this.transactions));
-            this.transactions.push({ id: Date.now(), date: this.sellTx.date, code: this.sellTx.code, name: this.sellTx.name, type: 'sell', price: Number(this.sellTx.price), qty: Number(this.sellTx.qty), category: this.sellTx.category, isDayTrade: !!this.sellTx.isDayTrade, fee, tax, totalAmount, realizedPnL: null });
+            this.transactions.push({ id: Date.now(), date: this.sellTx.date, code: this.sellTx.code, name: this.sellTx.name, type: 'sell', mode: (this.sellTx.mode || 'cash'), dayTradeEligible: !!this.sellTx.dayTradeEligible, price: Number(this.sellTx.price), qty: Number(this.sellTx.qty), category: this.sellTx.category, fee, tax, totalAmount, realizedPnL: null });
 
             const ok = this.recomputeAllTradesAndValidate();
             if (!ok) { this.transactions = backup; return; }
