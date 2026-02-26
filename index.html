@@ -799,9 +799,32 @@
                         </div>
                         <div class="text-[11px] text-slate-400 font-bold mt-2">＊融券放空/回補請使用上方「新增交易紀錄」</div>
                     </div>
-                    <div class="input-group"><label class="text-xs font-bold text-slate-500 mb-2 ml-1">賣出價格</label><div class="relative flex items-center"><input type="number" step="0.01" v-model.number="sellTx.price" class="w-full h-[50px] pl-11 pr-4 bg-white border border-slate-300 rounded-xl text-slate-700 font-bold text-lg outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-50/50 transition-all shadow-sm text-green-600"><i class="fa-solid fa-dollar-sign absolute left-4 text-slate-400 text-base pointer-events-none"></i></div></div>
-                    <div class="input-group"><label class="text-xs font-bold text-slate-500 mb-2 ml-1">賣出股數</label><div class="relative flex items-center"><input type="number" v-model.number="sellTx.qty" class="w-full h-[50px] pl-11 pr-4 bg-white border border-slate-300 rounded-xl text-slate-700 font-bold text-lg outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-50/50 transition-all shadow-sm" :max="sellTx.maxQty"><i class="fa-solid fa-cubes absolute left-4 text-slate-400 text-base pointer-events-none"></i></div><div class="flex justify-end mt-2"><button @click="sellTx.qty = sellTx.maxQty" class="text-xs bg-blue-50 text-blue-600 px-2 py-1 rounded font-bold hover:bg-blue-100">全部賣出</button></div>
-                    <div class="flex items-center justify-between bg-amber-50 border border-amber-200 rounded-xl px-4 py-3">
+                    <div class="grid grid-cols-2 gap-4">
+  <div class="input-group">
+    <label class="text-xs font-bold text-slate-500 mb-2 ml-1">賣出價格</label>
+    <div class="relative flex items-center">
+      <input type="number" step="0.01" v-model.number="sellTx.price"
+        class="w-full h-[50px] pl-11 pr-4 bg-white border border-slate-300 rounded-xl text-slate-700 font-bold text-lg outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-50/50 transition-all shadow-sm text-green-600">
+      <i class="fa-solid fa-dollar-sign absolute left-4 text-slate-400 text-base pointer-events-none"></i>
+    </div>
+  </div>
+
+  <div class="input-group">
+    <div class="flex items-center justify-between mb-2 ml-1">
+      <label class="text-xs font-bold text-slate-500">賣出股數</label>
+      <button @click="sellTx.qty = sellTx.maxQty"
+        class="text-xs bg-blue-50 text-blue-600 px-2 py-1 rounded font-bold hover:bg-blue-100 whitespace-nowrap shrink-0">
+        全部賣出
+      </button>
+    </div>
+    <div class="relative flex items-center">
+      <input type="number" v-model.number="sellTx.qty"
+        class="w-full h-[50px] pl-11 pr-4 bg-white border border-slate-300 rounded-xl text-slate-700 font-bold text-lg outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-50/50 transition-all shadow-sm"
+        :max="sellTx.maxQty">
+      <i class="fa-solid fa-cubes absolute left-4 text-slate-400 text-base pointer-events-none"></i>
+    </div>
+  </div>
+</div><div class="flex items-center justify-between bg-amber-50 border border-amber-200 rounded-xl px-4 py-3">
                         <div class="flex items-center gap-3">
                             <i class="fa-solid fa-bolt text-amber-500 text-lg"></i>
                             <div>
