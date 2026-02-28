@@ -677,8 +677,21 @@
             </div>
 
             <div v-if="historyMode === 'analysis'">
+
+                <div class="bg-white p-4 rounded-2xl border border-slate-200 mb-6 text-sm text-slate-600 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                    <div class="flex items-center gap-2">
+                        <span class="font-black text-slate-700">區間：</span>
+                        <span class="font-black" :class="dateFilterMode==='thisMonth' ? 'text-emerald-700' : 'text-slate-700'">
+                            {{ ({'thisMonth':'當月','lastMonth':'上個月','today':'今日','yesterday':'昨日','week':'近一週','month':'近一月','all':'全部'}[dateFilterMode] || '區間') }}
+                        </span>
+                        <span class="text-xs text-slate-400 font-bold hidden sm:inline">（{{ filterStart }} ～ {{ filterEnd }}）</span>
+                    </div>
+                    <button type="button" @click="historyMode='list'" class="self-start sm:self-auto text-blue-600 font-black hover:underline underline-offset-4">
+                        到交易流水帳調整
+                    </button>
+                </div>
                 
-                <div class="card !p-5 !mb-6">
+                <div v-if="false" class="card !p-5 !mb-6">
                     <div class="hidden md:flex flex-col xl:flex-row gap-4 items-center justify-between">
                         <div class="flex gap-3 overflow-x-auto w-full xl:w-auto pb-2 xl:pb-0 scrollbar-hide">
                             <button v-for="mode in ['today','yesterday','week','month','all']" @click="setDateFilter(mode)" class="filter-btn whitespace-nowrap px-6 py-3 text-sm" :class="{ active: dateFilterMode === mode}">{{ {'today':'今日','yesterday':'昨日','week':'近一週','month':'近一月','all':'全部'}[mode] }}</button>
