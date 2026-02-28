@@ -593,10 +593,10 @@
             
             <div class="sub-tab-container">
                 <div @click="historyMode = 'list'" :class="['sub-tab-item', historyMode === 'list' ? 'active' : '']">
-                    <i class="fa-solid fa-list-ul mr-2"></i> 交易流水帳
+                    <i class="fa-solid fa-list-ul mr-2"></i> 交易流水帳 <span class="ml-2 text-[11px] font-black px-2 py-0.5 rounded-full" :class="dateFilterMode==='thisMonth' ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-600'">{{ ({'thisMonth':'當月','lastMonth':'上個月','today':'今日','yesterday':'昨日','week':'近一週','month':'近一月','all':'全部'}[dateFilterMode] || '區間') }}</span>
                 </div>
                 <div @click="historyMode = 'analysis'" :class="['sub-tab-item', historyMode === 'analysis' ? 'active' : '']">
-                    <i class="fa-solid fa-chart-pie mr-2"></i> 已實現損益分析
+                    <i class="fa-solid fa-chart-pie mr-2"></i> 已實現損益分析 <span class="ml-2 text-[11px] font-black px-2 py-0.5 rounded-full" :class="dateFilterMode==='thisMonth' ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-600'">{{ ({'thisMonth':'當月','lastMonth':'上個月','today':'今日','yesterday':'昨日','week':'近一週','month':'近一月','all':'全部'}[dateFilterMode] || '區間') }}</span>
                 </div>
             </div>
 
@@ -611,7 +611,7 @@
                 <div class="card !p-5 !mb-6">
                     <div class="hidden md:flex flex-col xl:flex-row gap-4 items-center justify-between">
                         <div class="flex gap-3 overflow-x-auto w-full xl:w-auto pb-2 xl:pb-0 scrollbar-hide">
-                            <button v-for="mode in ['today','yesterday','week','month','all']" @click="setDateFilter(mode)" class="filter-btn whitespace-nowrap px-6 py-3 text-sm" :class="{ active: dateFilterMode === mode}">{{ {'today':'今日','yesterday':'昨日','week':'近一週','month':'近一月','all':'全部'}[mode] }}</button>
+                            <button v-for="mode in ['thisMonth','lastMonth','today','yesterday','week','month','all']" @click="setDateFilter(mode)" class="filter-btn whitespace-nowrap px-6 py-3 text-sm" :class="{ active: dateFilterMode === mode}">{{ {'thisMonth':'當月','lastMonth':'上個月','today':'今日','yesterday':'昨日','week':'近一週','month':'近一月','all':'全部'}[mode] }}</button>
                         </div>
                         <div class="flex gap-3 w-full xl:w-auto">
                             <div class="flex items-center gap-3 bg-white px-5 py-3 rounded-xl border-2 border-slate-200 shadow-sm flex-1"><i class="fa-regular fa-calendar text-slate-400"></i><input type="date" v-model="filterStart" class="bg-transparent text-sm font-bold text-slate-600 outline-none w-32 cursor-pointer"><span class="text-slate-300 font-bold">➜</span><input type="date" v-model="filterEnd" class="bg-transparent text-sm font-bold text-slate-600 outline-none w-32 cursor-pointer"></div>
@@ -620,7 +620,7 @@
                     </div>
                     <div class="md:hidden flex flex-col gap-4">
                         <div class="relative">
-                            <select v-model="dateFilterMode" @change="setDateFilter(dateFilterMode)" class="w-full h-12 pl-4 pr-10 bg-slate-100 border-2 border-slate-200 rounded-xl text-slate-700 font-bold appearance-none outline-none focus:border-blue-500 transition-colors"><option value="today">📅 今日</option><option value="yesterday">⏮️ 昨日</option><option value="week">🗓️ 近一週</option><option value="month">🈷️ 近一月</option><option value="all">♾️ 全部</option></select>
+                            <select v-model="dateFilterMode" @change="setDateFilter(dateFilterMode)" class="w-full h-12 pl-4 pr-10 bg-slate-100 border-2 border-slate-200 rounded-xl text-slate-700 font-bold appearance-none outline-none focus:border-blue-500 transition-colors"><option value="thisMonth">🈷️ 當月</option><option value="lastMonth">⏮️ 上個月</option><option value="today">📅 今日</option><option value="yesterday">⏮️ 昨日</option><option value="week">🗓️ 近一週</option><option value="month">🈷️ 近一月</option><option value="all">♾️ 全部</option></select>
                             <div class="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"><i class="fa-solid fa-chevron-down"></i></div>
                         </div>
                         <div class="flex gap-2 items-center bg-slate-50 p-2 rounded-xl border border-slate-200"><input type="date" v-model="filterStart" class="bg-transparent text-sm font-bold text-slate-600 outline-none w-full text-center"><span class="text-slate-300 font-bold">➜</span><input type="date" v-model="filterEnd" class="bg-transparent text-sm font-bold text-slate-600 outline-none w-full text-center"></div>
@@ -1290,7 +1290,7 @@ createApp({
             filter: 'all', suggestions: [], showSuggestions: false, customStocks: [], 
             latestPrices: {}, latestStatus: {}, lastUpdateTime: '',
             lastUpdateTimestamp: Number(localStorage.getItem('tw_stock_time_ts_v6') || 0) || 0, lastPriceUpdateError: localStorage.getItem('tw_stock_price_update_error_v1') || '', lastPriceUpdateAttemptTs: Number(localStorage.getItem('tw_stock_price_update_attempt_ts_v1') || 0) || 0, lastPriceUpdatePartial: (localStorage.getItem('tw_stock_price_update_partial_v1') === '1'), lastPriceUpdateMissingCount: Number(localStorage.getItem('tw_stock_price_update_missing_count_v1') || 0) || 0, priceStaleThresholdMinutes: 180, isLoading: false,
-            dateFilterMode: 'month', filterStart: '', filterEnd: '', historyTypeFilter: 'all',
+            dateFilterMode: 'thisMonth', filterStart: '', filterEnd: '', historyTypeFilter: 'all',
             contextMenu: { visible: false, x: 0, y: 0, stock: null },
             rawStockData: ["2330:台積電","2317:鴻海","2454:聯發科","2603:長榮","2609:陽明","2615:萬海","0050:元大台灣50","0056:元大高股息","00878:國泰永續高股息"], baseStockMap: [], nameMap: {}, categories: [], newCategoryName: '',
             
@@ -1342,7 +1342,7 @@ createApp({
         if (savedUser) { this.authInput.username = savedUser; this.rememberUser = true; }
         if (savedAuth) { this.securityConfig = JSON.parse(savedAuth); if (this.securityConfig.enabled) { this.authMode = 'login'; this.isLoggedIn = false; } else { this.isLoggedIn = true; } } else { this.authMode = 'setup'; this.isLoggedIn = false; }
         window.addEventListener('click', this.handleGlobalClick, true); window.addEventListener('resize', this.closeContextMenu); window.addEventListener('scroll', this.closeContextMenu, true);
-        this.setDateFilter('month');
+        this.setDateFilter('thisMonth');
     },
     beforeUnmount() { window.removeEventListener('click', this.handleGlobalClick, true); window.removeEventListener('resize', this.closeContextMenu); window.removeEventListener('scroll', this.closeContextMenu, true); },
     computed: {
@@ -1894,7 +1894,43 @@ recomputeAllTradesAndValidate() {
         deleteAllTransactions() { this.deleteCurrentPortfolioTransactions(); },
         deleteTransaction(id) { this.confirmTitle = '刪除交易'; this.confirmMessage = '確定要刪除此筆交易紀錄嗎？'; this.confirmCallback = () => { this.transactions = this.transactions.filter(t => t.id !== id); this.saveData(); }; this.showConfirmModal = true; },
         confirmAction() { if (this.confirmCallback) this.confirmCallback(); this.showConfirmModal = false; },
-        setDateFilter(mode) { this.dateFilterMode = mode; const today = new Date(); const format = d => d.toISOString().split('T')[0]; this.filterEnd = format(today); if (mode === 'today') this.filterStart = format(today); else if (mode === 'yesterday') { const y = new Date(); y.setDate(y.getDate() - 1); this.filterStart = format(y); this.filterEnd = format(y); } else if (mode === 'week') { const d = new Date(); d.setDate(d.getDate() - 6); this.filterStart = format(d); } else if (mode === 'month') { const d = new Date(); d.setMonth(d.getMonth() - 1); this.filterStart = format(d); } else if (mode === 'all') this.filterStart = '2000-01-01'; },
+        setDateFilter(mode) {
+            this.dateFilterMode = mode;
+            const today = new Date();
+            const format = d => d.toISOString().split('T')[0];
+
+            if (mode === 'thisMonth') {
+                const first = new Date(today.getFullYear(), today.getMonth(), 1);
+                this.filterStart = format(first);
+                this.filterEnd = format(today);
+                return;
+            }
+
+            if (mode === 'lastMonth') {
+                const first = new Date(today.getFullYear(), today.getMonth() - 1, 1);
+                const last = new Date(today.getFullYear(), today.getMonth(), 0);
+                this.filterStart = format(first);
+                this.filterEnd = format(last);
+                return;
+            }
+
+            this.filterEnd = format(today);
+            if (mode === 'today') this.filterStart = format(today);
+            else if (mode === 'yesterday') {
+                const y = new Date();
+                y.setDate(y.getDate() - 1);
+                this.filterStart = format(y);
+                this.filterEnd = format(y);
+            } else if (mode === 'week') {
+                const d = new Date();
+                d.setDate(d.getDate() - 6);
+                this.filterStart = format(d);
+            } else if (mode === 'month') {
+                const d = new Date();
+                d.setMonth(d.getMonth() - 1);
+                this.filterStart = format(d);
+            } else if (mode === 'all') this.filterStart = '2000-01-01';
+        },
 
 async fetchStockPrices() {
     if (this.holdings.length === 0) {
