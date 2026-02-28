@@ -989,153 +989,149 @@
              <div class="bg-white w-full max-w-2xl rounded-[2rem] shadow-2xl relative flex flex-col max-h-[90vh]">
                 <div class="flex justify-between items-center p-6 border-b border-slate-100"><h3 class="text-2xl font-extrabold text-slate-800 flex items-center"><i class="fa-solid fa-book-open text-blue-500 mr-3"></i> 系統使用說明</h3><button @click="showHelpModal = false" class="w-9 h-9 rounded-full bg-slate-50 text-slate-400 border border-slate-200 flex items-center justify-center hover:bg-slate-100 transition"><i class="fa-solid fa-times"></i></button></div>
                 <div class="overflow-y-auto p-6 space-y-8">
-                    <div>
-                        <h4 class="text-lg font-black text-slate-700 mb-3 flex items-center">快速入門</h4>
-                        <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 text-sm text-slate-600 space-y-3 leading-relaxed">
-                            <p><strong>1) 先設定費率：</strong>右上角 <i class="fa-solid fa-gear mx-1"></i>「費率設定」填入你的券商手續費、折扣、最低手續費、證交稅；若有當沖，請設定「當沖證交稅率」。</p>
-                            <p><strong>2) 建立交易：</strong>在「庫存」頁新增買入；從持倉卡片點「賣出」完成結算，或使用「融券賣出 / 回補」記錄做空。</p>
-                            <p><strong>3) 更新股價：</strong>按「更新股價」抓取 Yahoo 最新價格，計算未實現損益。</p>
-                            <p><strong>4) 備份：</strong>右上角 <i class="fa-solid fa-download mx-1"></i> 下載備份檔，或用 <i class="fa-solid fa-cloud mx-1"></i> Google 雲端備份（需先填 OAuth Client ID）。</p>
-                        </div>
-                    </div>
+    <div>
+        <h4 class="text-lg font-black text-slate-700 mb-3 flex items-center">快速入門</h4>
+        <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 text-sm text-slate-600 space-y-3 leading-relaxed">
+            <p><strong>1) 先選擇帳本：</strong>右上角帳本按鈕（手機為頂欄帳本名稱）進入「投資帳本」可新增/切換帳本。每個帳本的交易、庫存與歷史帳務<strong>完全獨立</strong>。</p>
+            <p><strong>2) 設定費率：</strong>右上角 <i class="fa-solid fa-gear mx-1"></i>「費率設定」填入你的券商手續費、折扣、最低手續費、證交稅；若有當沖，請設定「當沖證交稅率」。</p>
+            <p><strong>3) 新增交易：</strong>在「庫存管理」頁新增買入/賣出，或使用「融券賣出 / 回補」記錄做空。</p>
+            <p><strong>4) 策略分類：</strong>在「策略分類」下拉選擇，或直接在下方輸入新名稱並按「新增」建立自己的分類（例如：長期、短線、定期定額、孩子A…）。</p>
+            <p><strong>5) 更新股價與股名：</strong>按「更新股價」抓取 Yahoo 最新價格；同時會嘗試同步抓取<strong>中文股名</strong>（含 ETF），用於庫存/歷史帳務顯示。</p>
+            <p><strong>6) 備份：</strong>右上角 <i class="fa-solid fa-download mx-1"></i> 下載備份檔，或用 <i class="fa-solid fa-cloud mx-1"></i> Google 雲端備份（需先填 OAuth Client ID）。備份包含：交易、費率、帳本、分類、股名對照等。</p>
+        </div>
+    </div>
 
-                    <div>
-                        <h4 class="text-lg font-black text-slate-700 mb-3">交易類型與計算規則</h4>
-                        <div class="bg-white p-4 rounded-xl border border-slate-200 text-sm text-slate-600 space-y-3 leading-relaxed">
-                            <div class="grid sm:grid-cols-2 gap-3">
-                                <div class="bg-slate-50 rounded-xl p-3 border border-slate-100">
-                                    <div class="font-extrabold text-slate-700 mb-1">買入（做多）</div>
-                                    <div>建立/加碼多單。<br>成本 = 價格×股數 + 手續費</div>
-                                </div>
-                                <div class="bg-slate-50 rounded-xl p-3 border border-slate-100">
-                                    <div class="font-extrabold text-slate-700 mb-1">賣出（平多/減碼）</div>
-                                    <div>減碼或出清多單。<br>入帳 = 價格×股數 − 手續費 − 證交稅</div>
-                                </div>
-                                <div class="bg-slate-50 rounded-xl p-3 border border-slate-100">
-                                    <div class="font-extrabold text-slate-700 mb-1">融券賣出（做空）</div>
-                                    <div>先賣出建立空單，允許在沒有庫存時賣出。<br>空單持倉會顯示「股數為負」。</div>
-                                </div>
-                                <div class="bg-slate-50 rounded-xl p-3 border border-slate-100">
-                                    <div class="font-extrabold text-slate-700 mb-1">回補（平空）</div>
-                                    <div>買回減少/結束空單。<br>若回補股數超過空單，超出部分會轉為多單。</div>
-                                </div>
-                            </div>
-                            <div class="pt-2">
-                                <div class="font-extrabold text-slate-700 mb-1">損益算法</div>
-                                <ul class="list-disc pl-5 space-y-1">
-                                    <li>系統採<strong>平均成本法</strong>（同一股票以加權平均成本計算已實現損益）。</li>
-                                    <li><strong>已實現損益</strong>：每筆平倉（賣出平多 / 回補平空）當下就計入。</li>
-                                    <li><strong>未實現損益</strong>：以最新股價估算，多單/空單都會計算（空單價格下跌為正）。</li>
-                                    <li>手續費依「費率 × 折扣」計算並套用最低手續費；證交稅僅在「賣出」端計入（含融券賣出）。</li>
-                                </ul>
-                            </div>
-                        </div>
-                    </div>
+    <div>
+        <h4 class="text-lg font-black text-slate-700 mb-3">投資帳本（多帳本管理）</h4>
+        <div class="bg-white p-4 rounded-xl border border-slate-200 text-sm text-slate-600 space-y-3 leading-relaxed">
+            <ul class="list-disc pl-5 space-y-1">
+                <li><strong>用途：</strong>把不同目的/成員的投資分開管理（例如：我的帳戶、家庭帳本、孩子A、孩子B、長期帳…）。</li>
+                <li><strong>切換：</strong>切換帳本後，「庫存」與「歷史帳務」會自動切到該帳本的資料。</li>
+                <li><strong>改名：</strong>在投資帳本清單可直接修改名稱。</li>
+                <li><strong>刪除：</strong>刪除帳本會<strong>一併刪除該帳本的所有交易</strong>（請先備份）。</li>
+            </ul>
+            <div class="bg-slate-50 rounded-xl p-3 border border-slate-100">
+                <div class="font-extrabold text-slate-700 mb-1">提醒</div>
+                <div>新增交易會記錄在<strong>目前帳本</strong>。如果覺得資料「不見了」，通常是帳本切到別的了。</div>
+            </div>
+        </div>
+    </div>
 
-                    <div>
-                        <h4 class="text-lg font-black text-slate-700 mb-3">新增交易：做多 / 做空 / 當沖</h4>
-                        <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 text-sm text-slate-600 space-y-4 leading-relaxed">
-                            <div>
-                                <div class="font-extrabold text-slate-700 mb-1">A. 新增買入（做多）</div>
-                                <ul class="list-disc pl-5 space-y-1">
-                                    <li>在「庫存」頁輸入<strong>代碼、成交價、股數</strong>，可選擇核心/衛星分類。</li>
-                                    <li>新增後會立刻更新持倉成本與平均成本。</li>
-                                </ul>
-                            </div>
-                            <div>
-                                <div class="font-extrabold text-slate-700 mb-1">B. 賣出（平多/減碼）</div>
-                                <ul class="list-disc pl-5 space-y-1">
-                                    <li>在持倉卡片點「賣出」，輸入賣出價格與股數。</li>
-                                    <li>若為當沖，請勾選<strong>「當沖」</strong>（見下段）。</li>
-                                </ul>
-                            </div>
-                            <div>
-                                <div class="font-extrabold text-slate-700 mb-1">C. 融券賣出（做空）</div>
-                                <ul class="list-disc pl-5 space-y-1">
-                                    <li>選擇「融券賣出 / 做空」並輸入賣出價格、股數。</li>
-                                    <li>建立後該股票持倉股數會變成<strong>負值</strong>，代表空單。</li>
-                                    <li>若屬當沖放空（先賣後買），賣出那筆也可勾「當沖」。</li>
-                                </ul>
-                            </div>
-                            <div>
-                                <div class="font-extrabold text-slate-700 mb-1">D. 回補（平空）</div>
-                                <ul class="list-disc pl-5 space-y-1">
-                                    <li>當持倉為負時，新增「回補 / 買回」並輸入買回價格、股數。</li>
-                                    <li>回補會逐筆結算空單的已實現損益（空單：賣得高、買得低為正）。</li>
-                                </ul>
-                            </div>
-                        </div>
-                    </div>
+    <div>
+        <h4 class="text-lg font-black text-slate-700 mb-3">策略分類（可自訂）</h4>
+        <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 text-sm text-slate-600 space-y-3 leading-relaxed">
+            <ul class="list-disc pl-5 space-y-1">
+                <li><strong>新增：</strong>在「新增交易紀錄」的策略分類下方輸入名稱並按「新增」。</li>
+                <li><strong>篩選：</strong>持倉上方會顯示分類篩選列（只顯示目前帳本中「有庫存」的分類）。</li>
+                <li><strong>編輯：</strong>在「編輯買入/交易」可調整分類；修改後系統會重新計算並更新持倉。</li>
+                <li><strong>備份：</strong>分類會跟著「下載備份」與「Google 雲端備份」一起保存與還原。</li>
+            </ul>
+        </div>
+    </div>
 
-                    <div>
-                        <h4 class="text-lg font-black text-slate-700 mb-3">當沖（Day Trade）設定與記帳方式</h4>
-                        <div class="bg-white p-4 rounded-xl border border-slate-200 text-sm text-slate-600 space-y-3 leading-relaxed">
-                            <p><strong>目的：</strong>當沖在台股通常適用不同的證交稅率。系統用「每筆賣出是否為當沖」來決定使用哪個稅率。</p>
-                            <ul class="list-disc pl-5 space-y-1">
-                                <li>到「費率設定」填入<strong>當沖證交稅率 (%)</strong>（預設 0.15）。</li>
-                                <li>在新增/編輯「賣出」時勾選<strong>當沖</strong>，該筆賣出會改用當沖稅率計算證交稅。</li>
-                                <li>同樣適用於<strong>融券賣出</strong>（當沖放空：先賣後買）。</li>
-                                <li>若你沒有做當沖，保持不勾選即可（會使用一般證交稅率）。</li>
-                            </ul>
-                            <div class="bg-slate-50 rounded-xl p-3 border border-slate-100">
-                                <div class="font-extrabold text-slate-700 mb-1">小提醒</div>
-                                <div>系統不會自動判斷「是否同日沖銷」；是否為當沖由你在賣出時勾選，以符合你的實際成交與券商稅率。</div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div>
-                        <h4 class="text-lg font-black text-slate-700 mb-3">更新股價、警示/處置狀態</h4>
-                        <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 text-sm text-slate-600 space-y-3 leading-relaxed">
-                            <ul class="list-disc pl-5 space-y-1">
-                                <li><strong>更新股價：</strong>按下後會透過 Yahoo Finance 抓最新價格，並寫入快取；若抓不到，會沿用上次成功的價格。</li>
-                                <li><strong>處置/注意：</strong>系統會嘗試從 Yahoo 頁面判斷是否為處置/注意標的，並顯示於持倉卡片（此功能可能受 Yahoo 版面調整影響）。</li>
-                                <li><strong>全球指數（夜）：</strong>提供美股與夜盤參考（資料來源依網路狀況可能延遲）。</li>
-                            </ul>
-                        </div>
-                    </div>
-
-                    <div>
-                        <h4 class="text-lg font-black text-slate-700 mb-3">歷史帳務：列表與分析</h4>
-                        <div class="bg-white p-4 rounded-xl border border-slate-200 text-sm text-slate-600 space-y-3 leading-relaxed">
-                            <ul class="list-disc pl-5 space-y-1">
-                                <li><strong>列表：</strong>可依日期、類型（買/賣/融券/回補）篩選，並支援刪除、編輯交易。</li>
-                                <li><strong>分析：</strong>依股票彙總已實現損益、報酬率、交易筆數等，便於回顧策略表現。</li>
-                                <li><strong>重算：</strong>每次新增/編輯/刪除交易後，系統會依時間順序重新計算持倉與損益，確保一致性。</li>
-                            </ul>
-                        </div>
-                    </div>
-
-                    <div>
-                        <h4 class="text-lg font-black text-slate-700 mb-3">備份、還原與資料安全</h4>
-                        <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 text-sm text-slate-600 space-y-3 leading-relaxed">
-                            <ul class="list-disc pl-5 space-y-1">
-                                <li><strong>本機資料：</strong>所有資料預設存於你目前瀏覽器的 localStorage。清除瀏覽器資料/更換裝置會造成資料消失，請定期備份。</li>
-                                <li><strong>下載備份：</strong>會匯出一個 JSON 檔；「匯入還原」會以備份檔覆蓋目前資料。</li>
-                                <li><strong>Google 雲端備份：</strong>備份檔會存到你的 Google Drive <code>appDataFolder</code>（一般檔案列表看不到），需先在雲端備份設定填入 OAuth Client ID 才能使用。</li>
-                                <li><strong>安全性設定：</strong>本系統的登入保護主要是避免他人誤操作；仍建議搭配 OS/瀏覽器帳號安全、不要在公用電腦使用。</li>
-                            </ul>
-                        </div>
-                    </div>
-
-                    <div>
-                        <h4 class="text-lg font-black text-slate-700 mb-3">常見問題</h4>
-                        <div class="bg-white p-4 rounded-xl border border-slate-200 text-sm text-slate-600 space-y-3 leading-relaxed">
-                            <div>
-                                <div class="font-extrabold text-slate-700 mb-1">Q1：股價更新失敗？</div>
-                                <div>A：可能是網路或資料來源暫時異常。你仍可繼續記帳；未實現損益會使用上次成功抓到的價格。稍後再按一次更新即可。</div>
-                            </div>
-                            <div>
-                                <div class="font-extrabold text-slate-700 mb-1">Q2：為什麼持倉股數會是負的？</div>
-                                <div>A：代表你有空單（融券賣出）。用「回補」買回後，股數會回到 0；若回補超過空單，會轉成多單。</div>
-                            </div>
-                            <div>
-                                <div class="font-extrabold text-slate-700 mb-1">Q3：當沖一定要勾嗎？</div>
-                                <div>A：只有在該筆賣出屬於當沖、且你的券商適用當沖稅率時才勾。系統以勾選與否決定該筆賣出使用的證交稅率。</div>
-                            </div>
-                        </div>
-                    </div>
+    <div>
+        <h4 class="text-lg font-black text-slate-700 mb-3">交易類型與計算規則</h4>
+        <div class="bg-white p-4 rounded-xl border border-slate-200 text-sm text-slate-600 space-y-3 leading-relaxed">
+            <div class="grid sm:grid-cols-2 gap-3">
+                <div class="bg-slate-50 rounded-xl p-3 border border-slate-100">
+                    <div class="font-extrabold text-slate-700 mb-1">買入（做多）</div>
+                    <div>建立/加碼多單。<br>成本 = 價格×股數 + 手續費</div>
                 </div>
+                <div class="bg-slate-50 rounded-xl p-3 border border-slate-100">
+                    <div class="font-extrabold text-slate-700 mb-1">賣出（平多/減碼）</div>
+                    <div>減碼或出清多單。<br>入帳 = 價格×股數 − 手續費 − 證交稅</div>
+                </div>
+                <div class="bg-slate-50 rounded-xl p-3 border border-slate-100">
+                    <div class="font-extrabold text-slate-700 mb-1">融券賣出（做空）</div>
+                    <div>先賣出建立空單，允許在沒有庫存時賣出。<br>空單持倉會顯示「股數為負」。</div>
+                </div>
+                <div class="bg-slate-50 rounded-xl p-3 border border-slate-100">
+                    <div class="font-extrabold text-slate-700 mb-1">回補（平空）</div>
+                    <div>買回減少/結束空單。<br>若回補股數超過空單，超出部分會轉為多單。</div>
+                </div>
+            </div>
+            <div class="pt-2">
+                <div class="font-extrabold text-slate-700 mb-1">損益算法</div>
+                <ul class="list-disc pl-5 space-y-1">
+                    <li>系統採<strong>平均成本法</strong>（同一股票以加權平均成本計算已實現損益）。</li>
+                    <li><strong>已實現損益</strong>：每筆平倉（賣出平多 / 回補平空）當下就計入。</li>
+                    <li><strong>未實現損益</strong>：以最新股價估算，多單/空單都會計算（空單價格下跌為正）。</li>
+                    <li>手續費依「費率 × 折扣」計算並套用最低手續費；證交稅在「賣出」端計入（含融券賣出）。</li>
+                    <li>每次新增/編輯/刪除交易後，系統會依時間順序<strong>重新計算</strong>持倉與損益，確保一致性。</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <div>
+        <h4 class="text-lg font-black text-slate-700 mb-3">當沖（Day Trade）與稅率</h4>
+        <div class="bg-white p-4 rounded-xl border border-slate-200 text-sm text-slate-600 space-y-3 leading-relaxed">
+            <p><strong>目的：</strong>當沖在台股通常適用不同的證交稅率。系統會依你是否勾選「參與當沖配對」決定是否嘗試同日配對與使用當沖稅率。</p>
+            <ul class="list-disc pl-5 space-y-1">
+                <li>到「費率設定」填入<strong>當沖證交稅率 (%)</strong>（預設 0.15）。</li>
+                <li>在「賣出」視窗開啟<strong>參與當沖配對</strong>：系統會嘗試將同日買/賣（含先賣後買）進行配對。</li>
+                <li><strong>配對成功</strong>的賣出部分會使用當沖稅率；其餘部分使用一般證交稅率。</li>
+                <li>如果你沒有做當沖，保持不開啟即可。</li>
+            </ul>
+        </div>
+    </div>
+
+    <div>
+        <h4 class="text-lg font-black text-slate-700 mb-3">更新股價、警示/處置、中文股名</h4>
+        <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 text-sm text-slate-600 space-y-3 leading-relaxed">
+            <ul class="list-disc pl-5 space-y-1">
+                <li><strong>更新股價：</strong>透過 Yahoo Finance 抓最新價格並快取；抓不到時會沿用上次成功價格。</li>
+                <li><strong>中文股名：</strong>更新股價時會嘗試同步抓取中文名稱（含 ETF），之後庫存/歷史/編輯都會優先顯示中文。</li>
+                <li><strong>處置/注意：</strong>系統會嘗試從 Yahoo 頁面判斷是否為處置/注意標的（此功能可能受 Yahoo 版面調整影響）。</li>
+                <li><strong>全球指數（夜）：</strong>提供美股與夜盤參考（資料來源依網路狀況可能延遲）。</li>
+            </ul>
+        </div>
+    </div>
+
+    <div>
+        <h4 class="text-lg font-black text-slate-700 mb-3">歷史帳務：列表與分析</h4>
+        <div class="bg-white p-4 rounded-xl border border-slate-200 text-sm text-slate-600 space-y-3 leading-relaxed">
+            <ul class="list-disc pl-5 space-y-1">
+                <li><strong>列表：</strong>可依日期、類型篩選，並支援刪除、編輯交易。</li>
+                <li><strong>分析：</strong>依股票彙總已實現損益、報酬率、交易筆數等，便於回顧策略表現。</li>
+            </ul>
+        </div>
+    </div>
+
+    <div>
+        <h4 class="text-lg font-black text-slate-700 mb-3">備份、還原與資料安全</h4>
+        <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 text-sm text-slate-600 space-y-3 leading-relaxed">
+            <ul class="list-disc pl-5 space-y-1">
+                <li><strong>本機資料：</strong>所有資料預設存於瀏覽器 localStorage。清除瀏覽器資料/更換裝置會造成資料消失，請定期備份。</li>
+                <li><strong>下載備份：</strong>匯出 JSON 檔；匯入還原會以備份檔覆蓋目前資料。</li>
+                <li><strong>Google 雲端備份：</strong>備份檔會存到 Google Drive <code>appDataFolder</code>（一般檔案列表看不到）。</li>
+                <li><strong>備份內容：</strong>交易、費率、股票清單、自訂中文股名對照、帳本、策略分類、快取狀態等。</li>
+            </ul>
+        </div>
+    </div>
+
+    <div>
+        <h4 class="text-lg font-black text-slate-700 mb-3">常見問題</h4>
+        <div class="bg-white p-4 rounded-xl border border-slate-200 text-sm text-slate-600 space-y-4 leading-relaxed">
+            <div>
+                <div class="font-extrabold text-slate-700 mb-1">Q1：股價更新失敗？</div>
+                <div>A：可能是網路或資料來源暫時異常。你仍可繼續記帳；未實現損益會使用上次成功抓到的價格。稍後再按一次更新即可。</div>
+            </div>
+            <div>
+                <div class="font-extrabold text-slate-700 mb-1">Q2：為什麼資料看起來「不見了」？</div>
+                <div>A：請先確認你目前切換到哪個「投資帳本」。每個帳本資料獨立；切回正確帳本就會看到。</div>
+            </div>
+            <div>
+                <div class="font-extrabold text-slate-700 mb-1">Q3：Google 雲端備份看不到檔案？</div>
+                <div>A：備份會存到 <code>appDataFolder</code>，在一般 Drive 檔案列表是看不到的。請用系統內的「刷新雲端狀態」確認是否存在。</div>
+            </div>
+            <div>
+                <div class="font-extrabold text-slate-700 mb-1">Q4：為什麼股名不是中文？</div>
+                <div>A：先按一次「更新股價」，系統會嘗試同步抓中文股名；抓到後會記住並用於庫存/歷史/編輯顯示。</div>
+            </div>
+        </div>
+    </div>
+</div>
                 <div class="p-6 border-t border-slate-100"><button @click="showHelpModal = false" class="w-full h-[50px] bg-blue-600 text-white rounded-xl font-bold shadow-lg shadow-blue-500/30 active:scale-95 transition-transform">了解，開始使用</button></div>
              </div>
         </div>
