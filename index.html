@@ -596,7 +596,7 @@
                     <i class="fa-solid fa-list-ul mr-2"></i> 交易流水帳 <span class="ml-2 text-[11px] font-black px-2 py-0.5 rounded-full" :class="dateFilterMode==='thisMonth' ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-600'">{{ ({'thisMonth':'當月','lastMonth':'上個月','today':'今日','yesterday':'昨日','week':'近一週','month':'近一月','all':'全部'}[dateFilterMode] || '區間') }}</span>
                 </div>
                 <div @click="historyMode = 'analysis'" :class="['sub-tab-item', historyMode === 'analysis' ? 'active' : '']">
-                    <i class="fa-solid fa-chart-pie mr-2"></i> 已實現損益分析 <span class="ml-2 text-[11px] font-black px-2 py-0.5 rounded-full" :class="dateFilterMode==='thisMonth' ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-600'">{{ ({'thisMonth':'當月','lastMonth':'上個月','today':'今日','yesterday':'昨日','week':'近一週','month':'近一月','all':'全部'}[dateFilterMode] || '區間') }}</span>
+                    <i class="fa-solid fa-chart-pie mr-2"></i> 已實現損益 <span class="ml-2 text-[11px] font-black px-2 py-0.5 rounded-full" :class="dateFilterMode==='thisMonth' ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-600'">{{ ({'thisMonth':'當月','lastMonth':'上個月','today':'今日','yesterday':'昨日','week':'近一週','month':'近一月','all':'全部'}[dateFilterMode] || '區間') }}</span>
                 </div>
             </div>
 
