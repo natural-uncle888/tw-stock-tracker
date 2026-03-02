@@ -240,6 +240,9 @@
                 <button @click="currentTab = 'history'; showStockDetails = false" type="button" role="tab" :aria-selected="currentTab === 'history'" :class="['tab-btn', currentTab === 'history' ? 'active' : '']">
                     <i class="fa-solid fa-file-invoice-dollar text-base"></i><span>歷史帳務</span>
                 </button>
+                <button @click="currentTab = 'cash'; showStockDetails = false" type="button" role="tab" :aria-selected="currentTab === 'cash'" :class="['tab-btn', currentTab === 'cash' ? 'active' : '']">
+                    <i class="fa-solid fa-money-bill-transfer text-base"></i><span>資金流</span>
+                </button>
             </div>
 
             <div class="flex gap-3">
@@ -986,7 +989,223 @@
             </div>
         </div>
 
+
+
+        <div v-show="currentTab === 'cash'">
+            <div class="space-y-6">
+                <div class="card">
+                    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-5">
+                        <h2 class="text-xl font-bold text-slate-700 flex items-center"><i class="fa-solid fa-money-bill-transfer text-slate-400 mr-3"></i> 資金流／現金帳</h2>
+                        <div class="flex flex-wrap gap-2">
+                            <button @click="cashViewMode='all'" class="px-4 py-2 rounded-xl text-sm font-black border transition" :class="cashViewMode==='all' ? 'bg-emerald-600 text-white border-emerald-600' : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'">全部</button>
+                            <button @click="cashViewMode='cashOnly'" class="px-4 py-2 rounded-xl text-sm font-black border transition" :class="cashViewMode==='cashOnly' ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'">只看入出金</button>
+                            <button @click="cashViewMode='tradesOnly'" class="px-4 py-2 rounded-xl text-sm font-black border transition" :class="cashViewMode==='tradesOnly' ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'">只看買賣</button>
+                            <button @click="triggerClearCashBook" class="px-4 py-2 rounded-xl text-sm font-black border border-rose-200 text-rose-600 bg-rose-50 hover:bg-rose-100 transition" title="清空目前帳本的期初/入金/出金（不影響交易）"><i class="fa-solid fa-trash-can mr-2"></i>清空入出金</button>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        <div class="rounded-2xl bg-slate-50 border border-slate-200 p-4">
+                            <div class="flex items-center justify-between"><div class="text-slate-500 text-xs font-bold">總投入（淨入金）</div><i class="fa-solid fa-circle-dollar-to-slot text-slate-400"></i></div>
+                            <div class="mt-1 text-xl font-black text-slate-800">{{ formatCurrency(cashNetContribution) }}</div>
+                            <div class="mt-1 text-[11px] text-slate-400 font-bold">期初 {{ formatCurrency(cashInitialCapital) }}｜入 {{ formatCurrency(cashDepositsTotal) }}｜出 {{ formatCurrency(cashWithdrawalsTotal) }}</div>
+                        </div>
+                        <div class="rounded-2xl bg-slate-50 border border-slate-200 p-4">
+                            <div class="flex items-center justify-between"><div class="text-slate-500 text-xs font-bold">現金餘額</div><i class="fa-solid fa-wallet text-slate-400"></i></div>
+                            <div class="mt-1 text-xl font-black" :class="cashBalance >= 0 ? 'text-emerald-700' : 'text-rose-600'">{{ cashBalance >= 0 ? '' : '-' }}{{ formatCurrency(Math.abs(cashBalance)) }}</div>
+                            <div class="mt-1 text-[11px] text-slate-400 font-bold">買賣淨額：{{ cashTradeNet >= 0 ? '+' : '' }}{{ formatCurrency(cashTradeNet) }}</div>
+                        </div>
+                        <div class="rounded-2xl bg-slate-50 border border-slate-200 p-4">
+                            <div class="flex items-center justify-between"><div class="text-slate-500 text-xs font-bold">持倉市值（估）</div><i class="fa-solid fa-coins text-slate-400"></i></div>
+                            <div class="mt-1 text-xl font-black text-slate-800">{{ formatCurrency(estimatedMarketValue) }}</div>
+                            <div class="mt-1 text-[11px] text-slate-400 font-bold">未實現：{{ totalUnrealizedPnL >= 0 ? '+' : '' }}{{ formatCurrency(totalUnrealizedPnL) }}</div>
+                        </div>
+                        <div class="rounded-2xl bg-slate-50 border border-slate-200 p-4">
+                            <div class="flex items-center justify-between"><div class="text-slate-500 text-xs font-bold">總資產（含現金）</div><i class="fa-solid fa-chart-pie text-slate-400"></i></div>
+                            <div class="mt-1 text-xl font-black text-slate-800">{{ formatCurrency(netAssetValue) }}</div>
+                            <div class="mt-1 text-[11px] font-bold" :class="cashTotalPnL >= 0 ? 'text-up' : 'text-down'">總損益：{{ cashTotalPnL >= 0 ? '+' : '' }}{{ formatCurrency(cashTotalPnL) }}（{{ cashRoiPercent }}%）</div>
+                        </div>
+                    </div>
+
+                    <div class="mt-5 text-[12px] text-slate-500 font-bold leading-relaxed">
+                        <div class="flex items-start gap-2"><i class="fa-solid fa-circle-info text-slate-400 mt-0.5"></i>
+                            <div>計算規則：<span class="text-slate-700">總投入</span>＝期初＋入金－出金；<span class="text-slate-700">現金餘額</span>＝總投入＋賣出淨入－買入支出（已含手續費/稅）；<span class="text-slate-700">總資產</span>＝現金餘額＋持倉市值（估）。</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-base font-extrabold text-slate-700 flex items-center gap-2"><i class="fa-solid fa-square-plus text-slate-400"></i> 新增期初 / 入金 / 出金</h3>
+                        <div v-if="cashEntryForm.type==='initial' && cashInitialEntry" class="text-xs font-black text-amber-700 bg-amber-50 border border-amber-200 px-3 py-1.5 rounded-full">將覆蓋既有期初</div>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                        <div class="input-group">
+                            <label class="text-xs font-bold text-slate-500 mb-2 ml-1">日期</label>
+                            <input type="date" v-model="cashEntryForm.date" class="w-full h-[50px] px-4 bg-white border border-slate-300 rounded-xl text-slate-700 font-bold outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-50/50 transition-all shadow-sm">
+                        </div>
+                        <div class="input-group">
+                            <label class="text-xs font-bold text-slate-500 mb-2 ml-1">類型</label>
+                            <select v-model="cashEntryForm.type" class="w-full h-[50px] px-4 bg-white border border-slate-300 rounded-xl text-slate-700 font-bold outline-none focus:border-emerald-500">
+                                <option value="initial">期初資金</option>
+                                <option value="deposit">入金</option>
+                                <option value="withdraw">出金</option>
+                            </select>
+                        </div>
+                        <div class="input-group">
+                            <label class="text-xs font-bold text-slate-500 mb-2 ml-1">金額</label>
+                            <div class="relative flex items-center">
+                                <input type="number" v-model.number="cashEntryForm.amount" placeholder="0" class="w-full h-[50px] pl-11 pr-4 bg-white border border-slate-300 rounded-xl text-slate-700 font-bold text-lg outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-50/50 transition-all shadow-sm placeholder:text-slate-300">
+                                <i class="fa-solid fa-dollar-sign absolute left-4 text-slate-400 text-base pointer-events-none"></i>
+                            </div>
+                        </div>
+                        <div class="input-group">
+                            <label class="text-xs font-bold text-slate-500 mb-2 ml-1">備註（選填）</label>
+                            <input type="text" v-model="cashEntryForm.note" placeholder="例如：加碼、提領、薪資" class="w-full h-[50px] px-4 bg-white border border-slate-300 rounded-xl text-slate-700 font-bold outline-none focus:border-emerald-500">
+                        </div>
+                    </div>
+                    <button @click="addCashEntry" class="btn btn-success w-full mt-5 gap-2"><i class="fa-solid fa-check"></i> 送出</button>
+
+                    <div v-if="cashTopUpNeeded > 0" class="mt-5 rounded-2xl border border-amber-200 bg-amber-50 p-4">
+                        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+                            <div class="text-sm font-black text-amber-800 flex items-center gap-2"><i class="fa-solid fa-triangle-exclamation"></i> 目前現金餘額為負，表示你的入金少於買入支出。</div>
+                            <button @click="prefillCashTopUp" class="px-4 py-2 rounded-xl font-black text-white bg-amber-600 hover:bg-amber-700 transition flex items-center justify-center gap-2"><i class="fa-solid fa-wand-magic-sparkles"></i> 一鍵補入金 {{ formatCurrency(cashTopUpNeeded) }}</button>
+                        </div>
+                        <div class="mt-2 text-xs font-bold text-amber-700/80">按下後會自動填入「入金」金額，你只要按送出即可。</div>
+                    </div>
+                </div>
+
+                <div class="card p-0 overflow-hidden">
+                    <div class="px-6 py-4 border-b border-slate-200 bg-slate-50 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+                        <h3 class="text-base font-extrabold text-slate-700 flex items-center gap-2"><i class="fa-solid fa-receipt text-slate-400"></i> 資金流水帳（含交易）</h3>
+                        <div class="text-xs font-bold text-slate-400">顯示：{{ cashViewMode==='all' ? '全部' : (cashViewMode==='cashOnly' ? '入出金' : '買賣') }}</div>
+                    </div>
+
+                    <div class="md:hidden divide-y divide-slate-100">
+                        <div v-for="row in cashLedgerRowsDisplayed" :key="row.id" class="px-6 py-5">
+                            <div class="flex items-start justify-between gap-4">
+                                <div class="min-w-0">
+                                    <div class="text-xs font-bold text-slate-400 flex items-center gap-2"><i class="fa-regular fa-calendar"></i> {{ row.date }}</div>
+                                    <div class="mt-2 flex items-center gap-2">
+                                        <span class="px-2.5 py-1 rounded-lg text-[11px] font-black" :class="row.kind==='cash' ? (row.subType==='withdraw' ? 'bg-rose-50 text-rose-600' : 'bg-emerald-50 text-emerald-700') : (row.amount >= 0 ? 'bg-green-50 text-green-600' : 'bg-red-50 text-red-600')">{{ row.kind==='cash' ? row.label : row.txType }}</span>
+                                        <div class="font-black text-slate-800 truncate">{{ row.title }}</div>
+                                    </div>
+                                    <div v-if="row.note" class="mt-1 text-[11px] text-slate-400 font-bold truncate">{{ row.note }}</div>
+                                </div>
+                                <div class="shrink-0 text-right">
+                                    <div class="font-black text-lg" :class="row.amount >= 0 ? 'text-up' : 'text-down'">{{ row.amount >= 0 ? '+' : '-' }}{{ formatCurrency(Math.abs(row.amount)) }}</div>
+                                    <div class="text-[10px] font-bold text-slate-400">餘額 {{ formatCurrency(row.balance) }}</div>
+                                </div>
+                            </div>
+                            <div class="flex justify-end mt-3">
+                                <button v-if="row.canDelete" @click="deleteCashEntry(row.rawId)" class="px-3 py-2 rounded-lg text-xs font-black bg-white border-2 border-red-200 text-red-500 hover:bg-red-50 hover:border-red-400 transition"><i class="fa-solid fa-trash-can mr-1"></i> 刪除</button>
+                            </div>
+                        </div>
+                        <div v-if="cashLedgerRowsDisplayed.length === 0" class="text-center py-12 text-slate-400 font-bold">此模式無資料</div>
+                    </div>
+
+                    <div class="hidden md:block overflow-x-auto">
+                        <table class="w-full text-left text-sm min-w-[920px]">
+                            <thead>
+                                <tr class="bg-slate-100 text-slate-500 border-b border-slate-200">
+                                    <th class="p-5 pl-8 whitespace-nowrap font-bold">日期</th>
+                                    <th class="p-5 whitespace-nowrap font-bold">類別</th>
+                                    <th class="p-5 whitespace-nowrap font-bold">摘要</th>
+                                    <th class="p-5 text-right whitespace-nowrap font-bold">入金</th>
+                                    <th class="p-5 text-right whitespace-nowrap font-bold">出金</th>
+                                    <th class="p-5 text-right whitespace-nowrap font-bold">餘額</th>
+                                    <th class="p-5 text-center whitespace-nowrap font-bold">操作</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-100">
+                                <tr v-for="row in cashLedgerRowsDisplayed" :key="row.id" class="hover:bg-slate-50 transition bg-white">
+                                    <td class="p-5 pl-8 text-slate-600 font-bold whitespace-nowrap">{{ row.date }}</td>
+                                    <td class="p-5 whitespace-nowrap"><span class="px-3 py-1.5 rounded-lg text-xs font-black" :class="row.kind==='cash' ? (row.subType==='withdraw' ? 'bg-rose-100 text-rose-700' : 'bg-emerald-100 text-emerald-700') : (row.amount >= 0 ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700')">{{ row.kind==='cash' ? row.label : row.txType }}</span></td>
+                                    <td class="p-5"><div class="font-black text-slate-800">{{ row.title }}</div><div v-if="row.note" class="text-xs text-slate-400 font-bold mt-1">{{ row.note }}</div></td>
+                                    <td class="p-5 text-right font-black text-emerald-700">{{ row.inAmount > 0 ? formatCurrency(row.inAmount) : '-' }}</td>
+                                    <td class="p-5 text-right font-black text-rose-600">{{ row.outAmount > 0 ? formatCurrency(row.outAmount) : '-' }}</td>
+                                    <td class="p-5 text-right font-black text-slate-800">{{ formatCurrency(row.balance) }}</td>
+                                    <td class="p-5 text-center">
+                                        <button v-if="row.canDelete" @click="deleteCashEntry(row.rawId)" class="text-slate-300 hover:text-red-500 hover:bg-red-50 p-2 rounded-lg transition" title="刪除"><i class="fa-solid fa-trash-can"></i></button>
+                                        <span v-else class="text-slate-200">—</span>
+                                    </td>
+                                </tr>
+                                <tr v-if="cashLedgerRowsDisplayed.length === 0"><td colspan="7" class="p-12 text-center text-slate-400 font-bold">此模式無資料</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <div v-if="showConfirmModal" class="fixed inset-0 bg-slate-900/70 backdrop-blur-sm flex justify-center items-center z-[100] p-6 transition-all duration-300"><div class="bg-white rounded-[2rem] p-8 w-full max-w-sm shadow-2xl transform scale-100 flex flex-col items-center text-center relative border-2 border-red-50"><div class="w-20 h-20 bg-red-50 rounded-full flex items-center justify-center text-red-500 text-4xl mb-5 shadow-inner"><i class="fa-solid fa-triangle-exclamation"></i></div><h3 class="text-2xl font-black text-slate-800 mb-3">{{ confirmTitle }}</h3><p class="text-slate-500 font-bold mb-8 leading-relaxed">{{ confirmMessage }}</p><div class="flex gap-4 w-full"><button @click="showConfirmModal = false" class="h-[54px] flex-1 rounded-xl font-bold text-slate-500 bg-white border-2 border-slate-200 hover:bg-slate-50 hover:border-slate-400 transition-all duration-200 active:scale-95">取消</button><button @click="confirmAction" class="h-[54px] flex-1 rounded-xl font-bold text-white bg-gradient-to-r from-rose-500 to-red-600 shadow-xl shadow-rose-300 hover:shadow-2xl hover:shadow-rose-400 hover:-translate-y-1 transition-all duration-300 active:scale-95">確認執行</button></div></div></div>
+
+        <div v-if="showCashShortModal" @click.self="cancelCashShortBuy" class="fixed inset-0 bg-slate-900/70 backdrop-blur-sm flex justify-center items-center z-[120] p-6 transition-all duration-300">
+            <div class="bg-white w-full max-w-md rounded-[2rem] shadow-2xl overflow-hidden border border-amber-100 relative">
+                <div class="p-7 bg-gradient-to-r from-amber-50 via-white to-yellow-50 border-b border-slate-100">
+                    <div class="flex items-start gap-4">
+                        <div class="relative shrink-0">
+                            <div class="absolute -inset-1 rounded-2xl bg-amber-400/25 blur-lg"></div>
+                            <div class="relative w-14 h-14 rounded-2xl bg-gradient-to-br from-amber-400 to-yellow-500 text-white flex items-center justify-center text-2xl shadow-lg shadow-amber-300/50">
+                                <i class="fa-solid fa-coins"></i>
+                            </div>
+                        </div>
+                        <div class="flex-1">
+                            <div class="text-xl font-black text-slate-900">現金不足，需要補入金</div>
+                            <div class="text-sm text-slate-500 font-bold mt-1">
+                                買入 <span class="text-slate-800">{{ cashShortTarget }}</span> 前，需先補足現金餘額。
+                            </div>
+                        </div>
+                        <button @click="cancelCashShortBuy" class="w-10 h-10 rounded-full bg-white/70 hover:bg-white border border-slate-200 text-slate-500 flex items-center justify-center active:scale-95 transition">
+                            <i class="fa-solid fa-xmark"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="p-7 space-y-5">
+                    <div class="grid grid-cols-3 gap-3 text-sm">
+                        <div class="rounded-2xl bg-slate-50 border border-slate-200 p-4">
+                            <div class="text-xs text-slate-400 font-extrabold">目前現金</div>
+                            <div class="mt-1 font-black text-slate-800">{{ formatCurrency(cashShortCurrentCash) }}</div>
+                        </div>
+                        <div class="rounded-2xl bg-slate-50 border border-slate-200 p-4">
+                            <div class="text-xs text-slate-400 font-extrabold">本次支出</div>
+                            <div class="mt-1 font-black text-slate-800">{{ formatCurrency(cashShortBuyCost) }}</div>
+                        </div>
+                        <div class="rounded-2xl bg-amber-50 border border-amber-200 p-4">
+                            <div class="text-xs text-amber-700 font-extrabold">需補入金</div>
+                            <div class="mt-1 font-black text-amber-800">{{ formatCurrency(cashShortNeeded) }}</div>
+                        </div>
+                    </div>
+
+                    <div class="rounded-2xl border border-slate-200 bg-white p-4">
+                        <div class="text-xs font-extrabold text-slate-600 mb-2">入金金額</div>
+                        <div class="relative">
+                            <i class="fa-solid fa-arrow-trend-up absolute left-4 top-1/2 -translate-y-1/2 text-emerald-500"></i>
+                            <input type="number" v-model.number="cashShortForm.amount" class="w-full h-12 pl-11 pr-4 rounded-xl border border-slate-300 font-black text-slate-800 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100 transition" />
+                        </div>
+                        <div class="mt-2 text-[11px] font-bold" :class="canProceedCashTopUp ? 'text-slate-500' : 'text-rose-600'">
+                            <span v-if="canProceedCashTopUp">＊會新增一筆「入金」到資金流，日期使用交易日期（{{ cashShortTradeDate }}）。</span>
+                            <span v-else>＊入金不足：至少需要 {{ formatCurrency(cashShortNeeded) }} 才能完成買入。</span>
+                        </div>
+                    </div>
+
+                    <div class="rounded-2xl border border-slate-200 bg-white p-4">
+                        <div class="text-xs font-extrabold text-slate-600 mb-2">備註（可留空）</div>
+                        <input type="text" v-model="cashShortForm.note" placeholder="例如：加碼投入/轉帳入金…" class="w-full h-12 px-4 rounded-xl border border-slate-300 font-bold text-slate-700 focus:border-amber-500 focus:ring-4 focus:ring-amber-100 transition" />
+                    </div>
+
+                    <div class="flex gap-3 pt-2">
+                        <button @click="cancelCashShortBuy" class="h-12 flex-1 rounded-xl font-black bg-white border-2 border-slate-200 text-slate-600 hover:bg-slate-50 active:scale-[0.98] transition">取消買入</button>
+                        <button @click="confirmTopUpAndProceed" :disabled="!canProceedCashTopUp" class="h-12 flex-1 rounded-xl font-black text-white bg-gradient-to-r from-emerald-500 to-teal-600 shadow-lg shadow-emerald-300/40 hover:shadow-xl hover:shadow-emerald-300/60 hover:-translate-y-0.5 transition active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0">
+                            <i class="fa-solid fa-check mr-2"></i>補入金並買入
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
         <div v-if="showInfoModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex justify-center items-center z-[100] p-6 transition-all duration-300"><div class="bg-white rounded-[2rem] p-8 w-full max-w-sm shadow-2xl transform scale-100 flex flex-col items-center text-center"><div class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 text-3xl mb-4 shadow-sm"><i class="fa-solid fa-circle-info"></i></div><h3 class="text-xl font-black text-slate-800 mb-2">{{ infoTitle }}</h3><p class="text-slate-500 font-bold mb-6">{{ infoMessage }}</p><button @click="showInfoModal = false" class="h-[54px] w-full rounded-xl font-bold text-white bg-gradient-to-r from-blue-500 to-indigo-600 shadow-xl shadow-blue-300 hover:shadow-2xl hover:shadow-blue-400 hover:-translate-y-1 transition-all duration-300 active:scale-95">好，我知道了</button></div></div>
         
         <div v-if="showGDriveModal" class="fixed inset-0 bg-slate-900/70 backdrop-blur-sm flex justify-center items-center z-[85] p-4">
@@ -1005,12 +1224,13 @@
     <div>
         <h4 class="text-lg font-black text-slate-700 mb-3 flex items-center">快速入門</h4>
         <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 text-sm text-slate-600 space-y-3 leading-relaxed">
-            <p><strong>1) 先選擇帳本：</strong>右上角帳本按鈕（手機為頂欄帳本名稱）進入「投資帳本」可新增/切換帳本。每個帳本的交易、庫存與歷史帳務<strong>完全獨立</strong>。</p>
-            <p><strong>2) 設定費率：</strong>右上角 <i class="fa-solid fa-gear mx-1"></i>「費率設定」填入你的券商手續費、折扣、最低手續費、證交稅；若有當沖，請設定「當沖證交稅率」。</p>
-            <p><strong>3) 新增交易：</strong>在「庫存管理」頁新增買入/賣出，或使用「融券賣出 / 回補」記錄做空。</p>
-            <p><strong>4) 策略分類：</strong>在「策略分類」下拉選擇，或直接在下方輸入新名稱並按「新增」建立自己的分類（例如：長期、短線、定期定額、孩子A…）。</p>
-            <p><strong>5) 更新股價與股名：</strong>按「更新股價」抓取 Yahoo 最新價格；同時會嘗試同步抓取<strong>中文股名</strong>（含 ETF），用於庫存/歷史帳務顯示。</p>
-            <p><strong>6) 備份：</strong>右上角 <i class="fa-solid fa-download mx-1"></i> 下載備份檔，或用 <i class="fa-solid fa-cloud mx-1"></i> Google 雲端備份（需先填 OAuth Client ID）。備份包含：交易、費率、帳本、分類、股名對照等。</p>
+            <p><strong>1) 先選擇帳本：</strong>右上角帳本按鈕（手機為頂欄帳本名稱）進入「投資帳本」可新增/切換帳本。每個帳本的交易、庫存、歷史帳務與資金流<strong>完全獨立</strong>。</p>
+<p><strong>2) 設定費率：</strong>右上角 <i class="fa-solid fa-gear mx-1"></i>「費率設定」填入你的券商手續費、折扣、最低手續費、證交稅；若有當沖，請設定「當沖證交稅率」。</p>
+<p><strong>3) 設定資金流（建議先做）：</strong>到「資金流」新增<strong>期初資金</strong>（一開始帶多少錢進來投資），之後加碼用「入金」、提領用「出金」。</p>
+<p><strong>4) 新增交易：</strong>在「庫存管理」頁新增買入/賣出，或使用「融券賣出 / 回補」記錄做空。<strong>買入若現金不足</strong>，系統會自動跳出「補入金」視窗協助補足後再買入。</p>
+<p><strong>5) 策略分類：</strong>在「策略分類」下拉選擇，或直接在下方輸入新名稱並按「新增」建立自己的分類（例如：長期、短線、定期定額、孩子A…）。</p>
+<p><strong>6) 更新股價與股名：</strong>按「更新股價」抓取 Yahoo 最新價格；同時會嘗試同步抓取<strong>中文股名</strong>（含 ETF），用於庫存/歷史帳務顯示。</p>
+<p><strong>7) 備份：</strong>右上角 <i class="fa-solid fa-download mx-1"></i> 下載備份檔，或用 <i class="fa-solid fa-cloud mx-1"></i> Google 雲端備份（需先填 OAuth Client ID）。備份包含：交易、費率、帳本、分類、股名對照、資金流等。</p>
         </div>
     </div>
 
@@ -1077,6 +1297,42 @@
     </div>
 
     <div>
+        <h4 class="text-lg font-black text-slate-700 mb-3">資金流／現金帳（入金 / 出金 / 期初）</h4>
+    <div class="bg-white p-4 rounded-xl border border-slate-200 text-sm text-slate-600 space-y-3 leading-relaxed">
+        <p><strong>用途：</strong>用「薪資帳本」邏輯管理你的投資資金來源與流向，並同時追蹤<strong>現金餘額</strong>、<strong>總投入（淨入金）</strong>、<strong>總資產</strong>與<strong>總損益</strong>。</p>
+
+        <div class="grid sm:grid-cols-2 gap-3">
+            <div class="bg-slate-50 rounded-xl p-3 border border-slate-100">
+                <div class="font-extrabold text-slate-700 mb-1">期初資金</div>
+                <div>你一開始帶多少錢進來投資。<br>同一帳本會保留<strong>最新一筆期初</strong>（新的會覆蓋舊的）。</div>
+            </div>
+            <div class="bg-slate-50 rounded-xl p-3 border border-slate-100">
+                <div class="font-extrabold text-slate-700 mb-1">入金 / 出金</div>
+                <div>入金：加碼投入；出金：提領獲利/抽回本金。<br><strong>出金會降低總投入</strong>（淨入金）。</div>
+            </div>
+        </div>
+
+        <div class="pt-1">
+            <div class="font-extrabold text-slate-700 mb-1">核心指標（計算概念）</div>
+            <ul class="list-disc pl-5 space-y-1">
+                <li><strong>總投入（淨入金）</strong> = 期初 + 入金 − 出金</li>
+                <li><strong>現金餘額</strong> = 總投入 +（賣出淨入 − 買入支出）</li>
+                <li><strong>總資產（含現金）</strong> = 現金餘額 + 持倉市值（估）</li>
+                <li><strong>總損益</strong> = 總資產 − 總投入（並顯示 ROI%）</li>
+            </ul>
+            <div class="text-xs text-slate-500 mt-2">註：買入支出包含手續費；賣出淨入會扣除手續費與證交稅。</div>
+        </div>
+
+        <div class="bg-slate-50 rounded-xl p-3 border border-slate-100">
+            <div class="font-extrabold text-slate-700 mb-1">進階：買入現金不足自動補入金</div>
+            <div>當你在「買入」且選擇<strong>現股（Cash）</strong>時，若現金餘額不足以支付本次買入（含手續費），系統會自動跳出<strong>美化確認視窗</strong>，顯示「目前現金 / 本次支出 / 需補入金」。你可直接按「補入金並買入」一鍵完成，或調整入金金額與備註。</div>
+        </div>
+
+        <div class="text-xs text-slate-500">提醒：資金流為<strong>帳本級</strong>資料；切換帳本會看到該帳本自己的期初/入金/出金與現金餘額。</div>
+    </div>
+</div>
+
+    <div>
         <h4 class="text-lg font-black text-slate-700 mb-3">當沖（Day Trade）與稅率</h4>
         <div class="bg-white p-4 rounded-xl border border-slate-200 text-sm text-slate-600 space-y-3 leading-relaxed">
             <p><strong>目的：</strong>當沖在台股通常適用不同的證交稅率。系統會依你是否勾選「參與當沖配對」決定是否嘗試同日配對與使用當沖稅率。</p>
@@ -1118,7 +1374,7 @@
                 <li><strong>本機資料：</strong>所有資料預設存於瀏覽器 localStorage。清除瀏覽器資料/更換裝置會造成資料消失，請定期備份。</li>
                 <li><strong>下載備份：</strong>匯出 JSON 檔；匯入還原會以備份檔覆蓋目前資料。</li>
                 <li><strong>Google 雲端備份：</strong>備份檔會存到 Google Drive <code>appDataFolder</code>（一般檔案列表看不到）。</li>
-                <li><strong>備份內容：</strong>交易、費率、股票清單、自訂中文股名對照、帳本、策略分類、快取狀態等。</li>
+                <li><strong>備份內容：</strong>交易、費率、股票清單、自訂中文股名對照、帳本、策略分類、資金流（期初/入金/出金）、快取狀態等。</li>
             </ul>
         </div>
     </div>
@@ -1142,6 +1398,14 @@
                 <div class="font-extrabold text-slate-700 mb-1">Q4：為什麼股名不是中文？</div>
                 <div>A：先按一次「更新股價」，系統會嘗試同步抓中文股名；抓到後會記住並用於庫存/歷史/編輯顯示。</div>
             </div>
+<div>
+    <div class="font-extrabold text-slate-700 mb-1">Q5：買入時跳出「補入金」視窗是什麼？</div>
+    <div>A：代表你目前帳本的「現金餘額」不足以支付這筆買入（含手續費）。視窗會顯示需補金額，你可按「補入金並買入」一鍵完成，或取消回去調整交易。</div>
+</div>
+<div>
+    <div class="font-extrabold text-slate-700 mb-1">Q6：現金餘額為負數怎麼辦？</div>
+    <div>A：通常是你先記了買入但尚未入金，或曾經出金/提領導致不足。到「資金流」新增入金，或用系統提示的「一鍵補入金」把現金補到非負即可。</div>
+</div>
         </div>
     </div>
 </div>
@@ -1245,7 +1509,7 @@
                 <div class="p-5 md:p-7">
                     <div class="flex items-start justify-between gap-4 mb-4"><div class="flex items-center gap-3"><div class="w-10 h-10 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center shadow-sm"><i class="fa-solid fa-cloud-arrow-down"></i></div><div><div class="text-lg font-black text-slate-800 leading-tight">備份</div><div class="text-xs font-bold text-slate-400 mt-1">下載 JSON 備份檔，或用備份檔還原資料（會覆蓋本機資料）。</div></div></div><button @click="showExportModal=false" class="w-10 h-10 rounded-full bg-slate-50 border border-slate-200 flex items-center justify-center text-slate-500 hover:bg-slate-100"><i class="fa-solid fa-xmark"></i></button></div>
                     <div class="grid grid-cols-2 gap-2 mb-5"><button @click="backupTab='download'" :class="backupTab==='download' ? 'bg-emerald-600 text-white shadow' : 'bg-slate-50 text-slate-600 border border-slate-200'" class="h-11 rounded-xl font-extrabold transition-all"><i class="fa-solid fa-download mr-2"></i>下載備份</button><button @click="backupTab='restore'" :class="backupTab==='restore' ? 'bg-indigo-600 text-white shadow' : 'bg-slate-50 text-slate-600 border border-slate-200'" class="h-11 rounded-xl font-extrabold transition-all"><i class="fa-solid fa-rotate-right mr-2"></i>還原備份</button></div>
-                    <div v-if="backupTab==='download'"><div class="space-y-4"><div><div class="text-sm font-extrabold text-slate-700 mb-2">檔案名稱</div><div class="flex items-center gap-2"><input v-model="exportFileName" class="flex-1 h-12 rounded-xl px-4 text-slate-700 font-bold bg-slate-50 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-300" placeholder="stock_backup_YYYY-MM-DD"><div class="text-sm font-black text-slate-400">.json</div></div><div class="text-xs font-bold text-slate-400 mt-2">包含：交易紀錄／自選股／設定參數／最新價格／狀態／更新時間</div></div><div class="flex gap-3"><button @click="showExportModal=false" class="flex-1 h-12 rounded-xl font-extrabold text-slate-600 bg-slate-50 border border-slate-200 hover:bg-slate-100 active:scale-[0.98] transition-all">取消</button><button @click="confirmExport" class="flex-1 h-12 rounded-xl font-extrabold text-white bg-emerald-600 hover:bg-emerald-700 active:scale-[0.98] transition-all flex items-center justify-center gap-2"><i class="fa-solid fa-download"></i> 確認下載</button></div></div></div>
+                    <div v-if="backupTab==='download'"><div class="space-y-4"><div><div class="text-sm font-extrabold text-slate-700 mb-2">檔案名稱</div><div class="flex items-center gap-2"><input v-model="exportFileName" class="flex-1 h-12 rounded-xl px-4 text-slate-700 font-bold bg-slate-50 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-300" placeholder="stock_backup_YYYY-MM-DD"><div class="text-sm font-black text-slate-400">.json</div></div><div class="text-xs font-bold text-slate-400 mt-2">包含：交易紀錄／入出金／自選股／分類／設定參數／最新價格／狀態／更新時間</div></div><div class="flex gap-3"><button @click="showExportModal=false" class="flex-1 h-12 rounded-xl font-extrabold text-slate-600 bg-slate-50 border border-slate-200 hover:bg-slate-100 active:scale-[0.98] transition-all">取消</button><button @click="confirmExport" class="flex-1 h-12 rounded-xl font-extrabold text-white bg-emerald-600 hover:bg-emerald-700 active:scale-[0.98] transition-all flex items-center justify-center gap-2"><i class="fa-solid fa-download"></i> 確認下載</button></div></div></div>
                     <div v-else class="space-y-4"><div class="rounded-2xl border border-amber-200 bg-amber-50 p-4"><div class="text-sm font-black text-amber-700 flex items-center gap-2"><i class="fa-solid fa-triangle-exclamation"></i> 還原會覆蓋目前本機資料</div><div class="text-xs font-bold text-amber-700/80 mt-1">建議先下載一份備份，再進行還原。</div></div><div class="rounded-2xl border border-slate-200 bg-white p-4"><div class="text-sm font-extrabold text-slate-700 mb-2">備份檔案</div><div class="flex items-center gap-2"><div class="w-10 h-10 bg-slate-50 rounded-xl flex items-center justify-center text-slate-400 border border-slate-100"><i class="fa-solid fa-file-code"></i></div><div class="flex-1 min-w-0"><div class="text-xs font-bold text-slate-400 uppercase">JSON</div><div class="text-sm font-black text-slate-700 truncate">{{ restoreFileName || '尚未選擇檔案' }}</div></div></div><input ref="restoreFileInput" type="file" accept=".json,application/json" class="hidden" @change="onRestoreBackupFileChange"><div class="flex flex-col md:flex-row gap-3 mt-4"><button @click="$refs.restoreFileInput && $refs.restoreFileInput.click()" class="w-full md:flex-1 h-12 rounded-xl font-extrabold text-slate-600 bg-slate-50 border border-slate-200 hover:bg-slate-100 active:scale-[0.98] transition-all flex items-center justify-center gap-2"><i class="fa-solid fa-folder-open"></i> 選擇檔案</button><button :disabled="!restoreFileObject || restoreBusy" @click="confirmRestoreFromBackupFile" class="w-full md:flex-1 h-12 rounded-xl font-extrabold text-white bg-indigo-600 hover:bg-indigo-700 active:scale-[0.98] disabled:opacity-60 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2"><i class="fa-solid fa-rotate-right"></i> 立即還原</button></div><div v-if="restoreBusy" class="mt-3 text-xs font-bold text-slate-500 flex items-center gap-2"><i class="fa-solid fa-spinner fa-spin"></i> 正在還原備份…</div></div><div class="flex gap-3"><button @click="showExportModal=false" class="flex-1 h-12 rounded-xl font-extrabold text-slate-600 bg-slate-50 border border-slate-200 hover:bg-slate-100 active:scale-[0.98] transition-all">關閉</button><button @click="backupTab='download'" class="flex-1 h-12 rounded-xl font-extrabold text-emerald-700 bg-emerald-50 border border-emerald-200 hover:bg-emerald-100 active:scale-[0.98] transition-all flex items-center justify-center gap-2"><i class="fa-solid fa-download"></i> 先下載備份</button></div></div>
                 </div>
             </div>
@@ -1253,7 +1517,7 @@
 
         <!-- Mobile Bottom Main Tabs -->
         <div class="md:hidden fixed bottom-0 left-0 w-full z-40 bg-white/95 backdrop-blur border-t border-slate-200 px-4 pt-2 pb-[calc(env(safe-area-inset-bottom)+10px)]">
-            <div class="grid grid-cols-2 gap-2">
+            <div class="grid grid-cols-3 gap-2">
                 <button type="button" @click="currentTab = 'inventory'; showStockDetails = false" class="flex flex-col items-center justify-center py-2 rounded-2xl font-black transition-all"
                     :class="currentTab === 'inventory' ? 'bg-blue-50 text-blue-700 border border-blue-200 shadow-sm' : 'text-slate-600 hover:bg-slate-50'">
                     <i class="fa-solid fa-briefcase text-lg"></i>
@@ -1264,6 +1528,12 @@
                     <i class="fa-solid fa-file-invoice-dollar text-lg"></i>
                     <span class="text-[11px] mt-1 tracking-wide">歷史帳務</span>
                 </button>
+                <button type="button" @click="currentTab = 'cash'; showStockDetails = false" class="flex flex-col items-center justify-center py-2 rounded-2xl font-black transition-all"
+                    :class="currentTab === 'cash' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200 shadow-sm' : 'text-slate-600 hover:bg-slate-50'">
+                    <i class="fa-solid fa-money-bill-transfer text-lg"></i>
+                    <span class="text-[11px] mt-1 tracking-wide">資金流</span>
+                </button>
+
             </div>
         </div>
 
@@ -1289,6 +1559,21 @@ createApp({
             isLoggedIn: false, authMode: 'login', authInput: { username: '', password: '', confirmPassword: '' }, rememberUser: false, authError: '', securityConfig: { enabled: true, username: '', passwordHash: '' }, showSecurityModal: false, showChangePasswordModal: false, changePassInput: { old: '', new: '' },
             currentTab: 'inventory', showStockDetails: false, selectedStock: null,
             transactions: [], newTx: { date: new Date().toISOString().split('T')[0], code: '', name: '', type: 'buy', mode: 'cash', price: null, qty: 1000, category: 'core', dayTradeEligible: false },
+            cashBook: (() => { try { const v = JSON.parse(localStorage.getItem('tw_stock_cashbook_v1') || '[]'); return Array.isArray(v) ? v : []; } catch(e){ return []; } })(),
+            cashEntryForm: { date: new Date().toISOString().split('T')[0], type: 'deposit', amount: null, note: '' },
+            cashViewMode: 'all', // all | cashOnly | tradesOnly
+
+
+            // --- Advanced: Cash short modal (buy requires top-up) ---
+            showCashShortModal: false,
+            cashShortTarget: '',
+            cashShortTradeDate: '',
+            cashShortCurrentCash: 0,
+            cashShortBuyCost: 0,
+            cashShortNeeded: 0,
+            cashShortForm: { amount: null, note: '' },
+            pendingCashShortTx: null,
+            pendingCashShortMeta: null,
             showSellModal: false, sellTx: { date: '', code: '', name: '', price: 0, qty: 0, maxQty: 0, category: '', mode: 'cash', dayTradeEligible: false },
             showEditBuyModal: false, editBuyTx: { id: null, date: '', code: '', name: '', price: null, qty: 0, category: 'core' },
             showEditTxModal: false, editTx: { id: null, date: '', code: '', name: '', type: 'buy', mode: 'cash', price: null, qty: 0, category: 'core', dayTradeEligible: false },
@@ -1317,6 +1602,25 @@ createApp({
         this.baseStockMap = this.rawStockData.map(s => { const [code, name] = s.split(':'); return { code, name }; });
         const savedNames = localStorage.getItem('tw_stock_names_v1') || ''; if (savedNames) { try { this.nameMap = JSON.parse(savedNames) || {}; } catch(_) { this.nameMap = {}; } try { Object.keys(this.nameMap || {}).forEach(k => { let v = String(this.nameMap[k] || '').replace(/\s+/g,' ').trim(); if (!v || /yahoo|奇摩股市|yahoo股市/i.test(v)) { delete this.nameMap[k]; return; } v = v.replace(/(走勢圖|即時行情|技術分析|討論|個股|公司資料|股價)/g,'').trim(); v = v.replace(/\(\s*[0-9A-Za-z]{4,8}(?:\.(?:TW|TWO))?\s*\)/gi,'').trim(); v = v.replace(/\b\d{4,6}[A-Za-z]{0,2}(?:\.(?:TW|TWO))?\b/ig,'').trim(); v = v.replace(/\s+\d{2,3}\s*$/,'').trim();  v = v.replace(/\bTOP\s*\d+\b/ig,'').trim(); v = v.replace(/\bETF\b/ig,'').trim(); v = v.replace(/\s{2,}/g,' ').trim(); if (!v) { delete this.nameMap[k]; return; } this.nameMap[k] = v; }); localStorage.setItem('tw_stock_names_v1', JSON.stringify(this.nameMap || {})); } catch(_) {} }
                 const savedTx = localStorage.getItem('tw_stock_tx_v6'); if (savedTx) this.transactions = JSON.parse(savedTx);
+const savedCash = localStorage.getItem('tw_stock_cashbook_v1') || ''; if (savedCash) { try { const parsed = JSON.parse(savedCash); this.cashBook = Array.isArray(parsed) ? parsed : []; } catch(_) { this.cashBook = []; } }
+        if (!Array.isArray(this.cashBook)) this.cashBook = [];
+        // Migrate legacy cash entries (ensure portfolioId / normalize fields)
+        try {
+            let changed = false;
+            this.cashBook = (this.cashBook || []).filter(e => e && typeof e === 'object').map(e => {
+                const out = { ...e };
+                if (!out.id) { out.id = Date.now() + Math.floor(Math.random() * 100000); changed = true; }
+                if (!out.portfolioId) { out.portfolioId = 'main'; changed = true; }
+                if (!out.date) { out.date = new Date().toISOString().split('T')[0]; changed = true; }
+                if (!out.type) { out.type = 'deposit'; changed = true; }
+                out.type = String(out.type || 'deposit');
+                if (!['initial','deposit','withdraw'].includes(out.type)) { out.type = 'deposit'; changed = true; }
+                out.amount = Math.abs(Number(out.amount) || 0);
+                out.note = String(out.note || '');
+                return out;
+            });
+            if (changed) localStorage.setItem('tw_stock_cashbook_v1', JSON.stringify(this.cashBook || []));
+        } catch(_) {}
         const savedCats = localStorage.getItem('tw_stock_categories_v1') || '';
         if (savedCats) { try { this.categories = JSON.parse(savedCats) || []; } catch(_) { this.categories = []; } }
         if (!Array.isArray(this.categories)) this.categories = [];
@@ -1431,6 +1735,113 @@ createApp({
             const pid = this.currentPortfolioId || 'main';
             return (this.transactions || []).filter(tx => (tx && (tx.portfolioId || 'main') === pid));
         },
+        portfolioCashBook() {
+            const pid = this.currentPortfolioId || 'main';
+            return (this.cashBook || []).filter(e => (e && (e.portfolioId || 'main') === pid));
+        },
+        cashInitialEntry() {
+            const list = (this.portfolioCashBook || []).filter(e => e && String(e.type) === 'initial');
+            if (list.length === 0) return null;
+            return [...list].sort((a,b) => (new Date(a.date) - new Date(b.date)) || (Number(a.id||0) - Number(b.id||0)))[0];
+        },
+        cashInitialCapital() { return this.cashInitialEntry ? (Number(this.cashInitialEntry.amount) || 0) : 0; },
+        cashDepositsTotal() { return (this.portfolioCashBook || []).filter(e => e && String(e.type) === 'deposit').reduce((s,e) => s + (Number(e.amount) || 0), 0); },
+        cashWithdrawalsTotal() { return (this.portfolioCashBook || []).filter(e => e && String(e.type) === 'withdraw').reduce((s,e) => s + (Number(e.amount) || 0), 0); },
+        cashNetContribution() { return (this.cashInitialCapital || 0) + (this.cashDepositsTotal || 0) - (this.cashWithdrawalsTotal || 0); },
+        cashTradeNet() {
+            let net = 0;
+            (this.portfolioTransactions || []).forEach(tx => {
+                if (!tx) return;
+                const amt = Number(tx.totalAmount) || 0;
+                if (tx.type === 'buy') net -= amt;
+                else if (tx.type === 'sell') net += amt;
+            });
+            return net;
+        },
+        cashBalance() { return (this.cashNetContribution || 0) + (this.cashTradeNet || 0); },
+        signedMarketValue() {
+            return (this.holdings || []).reduce((sum, h) => {
+                const price = this.latestPrices[h.code] || h.currentPrice || h.buyAvgPrice || 0;
+                return sum + (Number(price) || 0) * (Number(h.qty) || 0);
+            }, 0);
+        },
+        netAssetValue() { return (this.cashBalance || 0) + (this.signedMarketValue || 0); },
+        cashTotalPnL() { return (this.netAssetValue || 0) - (this.cashNetContribution || 0); },
+        cashRoiPercent() {
+            const base = Number(this.cashNetContribution) || 0;
+            if (base <= 0) return '0.00';
+            return ((Number(this.cashTotalPnL) / base) * 100).toFixed(2);
+        },
+        cashTopUpNeeded() { return (this.cashBalance < 0) ? Math.abs(this.cashBalance) : 0; },
+        canProceedCashTopUp() { return !!(this.cashShortForm && Number(this.cashShortForm.amount || 0) >= Number(this.cashShortNeeded || 0)); },
+        cashLedgerRowsAll() {
+            const pid = this.currentPortfolioId || 'main';
+            const rows = [];
+            // Manual cash entries
+            (this.cashBook || []).forEach(e => {
+                if (!e) return;
+                if ((e.portfolioId || 'main') !== pid) return;
+                const t = String(e.type || 'deposit');
+                const amtAbs = Math.abs(Number(e.amount) || 0);
+                const signed = (t === 'withdraw') ? -amtAbs : amtAbs;
+                const label = (t === 'initial') ? '期初' : (t === 'deposit' ? '入金' : '出金');
+                rows.push({
+                    kind: 'cash',
+                    id: `cash_${e.id}`,
+                    rawId: e.id,
+                    date: e.date,
+                    subType: t,
+                    label,
+                    title: e.note ? e.note : label,
+                    note: e.note || '',
+                    amount: signed,
+                    inAmount: signed > 0 ? signed : 0,
+                    outAmount: signed < 0 ? Math.abs(signed) : 0,
+                    canDelete: true,
+                    sortId: Number(e.id) || 0
+                });
+            });
+            // Trades
+            (this.portfolioTransactions || []).forEach(tx => {
+                if (!tx) return;
+                const amt = Number(tx.totalAmount) || 0;
+                const signed = (tx.type === 'sell') ? amt : -amt;
+                const title = `${this.displayNameOnly(tx.code, tx.name)} (${tx.code})`;
+                rows.push({
+                    kind: 'trade',
+                    id: `tx_${tx.id}`,
+                    rawId: tx.id,
+                    date: tx.date,
+                    subType: tx.type,
+                    label: '交易',
+                    txType: this.txTypeLabel(tx),
+                    title,
+                    note: `費用 ${this.formatCurrency(Number(tx.fee||0) + Number(tx.tax||0))}` + ((tx.realizedPnL !== null && tx.realizedPnL !== undefined) ? `｜已實現 ${(Number(tx.realizedPnL)>0?'+':'')}${this.formatCurrency(tx.realizedPnL)}` : ''),
+                    amount: signed,
+                    inAmount: signed > 0 ? signed : 0,
+                    outAmount: signed < 0 ? Math.abs(signed) : 0,
+                    canDelete: false,
+                    sortId: Number(tx.id) || 0
+                });
+            });
+            rows.sort((a,b) => {
+                const da = new Date(a.date).getTime();
+                const db = new Date(b.date).getTime();
+                if (da !== db) return da - db;
+                return (a.sortId || 0) - (b.sortId || 0);
+            });
+            let bal = 0;
+            rows.forEach(r => { bal += (Number(r.amount) || 0); r.balance = bal; });
+            return rows;
+        },
+        cashLedgerRowsDisplayed() {
+            const mode = this.cashViewMode || 'all';
+            const all = this.cashLedgerRowsAll || [];
+            if (mode === 'cashOnly') return all.filter(r => r.kind === 'cash');
+            if (mode === 'tradesOnly') return all.filter(r => r.kind === 'trade');
+            return all;
+        },
+
         sortedTransactions() { return [...this.portfolioTransactions].sort((a, b) => (new Date(b.date) - new Date(a.date)) || (Number(b.id || 0) - Number(a.id || 0))); },
         filteredTransactions() { if (this.dateFilterMode === 'all') return this.sortedTransactions; const start = new Date(this.filterStart).setHours(0,0,0,0); const end = new Date(this.filterEnd).setHours(23,59,59,999); return this.sortedTransactions.filter(tx => { const txDate = new Date(tx.date).getTime(); return txDate >= start && txDate <= end; }); },
         displayedHistoryTransactions() { if (this.historyTypeFilter === 'all') return this.filteredTransactions; return this.filteredTransactions.filter(tx => tx.type === this.historyTypeFilter); },
@@ -1524,6 +1935,7 @@ filteredHoldings() { return this.filter === 'all' ? this.holdings : this.holding
                 : `確定要刪除「${name}」帳本？`;
             this.confirmCallback = () => {
                 this.transactions = (this.transactions || []).filter(tx => (tx && (tx.portfolioId || 'main') !== pid));
+                this.cashBook = (this.cashBook || []).filter(e => (e && (e.portfolioId || 'main') !== pid));
                 this.portfolios = (this.portfolios || []).filter(x => x && x.id !== pid);
                 if (!this.portfolios.some(x => x.id === 'main')) this.portfolios.unshift({ id: 'main', name: '我的帳戶', kind: 'personal', createdAt: new Date().toISOString() });
                 if (this.currentPortfolioId === pid) this.currentPortfolioId = 'main';
@@ -1541,6 +1953,69 @@ filteredHoldings() { return this.filter === 'all' ? this.holdings : this.holding
             this.saveData();
             this.openInfoModal('已清空', `「${name}」帳本的交易紀錄已成功刪除。`);
         },
+
+        // --- Cash Book (資金流／現金帳) ---
+        addCashEntry() {
+            const pid = this.currentPortfolioId || 'main';
+            const date = String(this.cashEntryForm?.date || '').trim();
+            const type = String(this.cashEntryForm?.type || 'deposit').trim();
+            const amount = Math.abs(Number(this.cashEntryForm?.amount) || 0);
+            const note = String(this.cashEntryForm?.note || '').trim();
+
+            if (!date) { this.openInfoModal('資料不完整', '請選擇日期。'); return; }
+            if (!['initial','deposit','withdraw'].includes(type)) { this.openInfoModal('資料不正確', '類型不正確。'); return; }
+            if (!amount || amount <= 0) { this.openInfoModal('資料不完整', '請輸入大於 0 的金額。'); return; }
+
+            if (!Array.isArray(this.cashBook)) this.cashBook = [];
+            if (type === 'initial') {
+                // Keep only one initial entry per portfolio
+                this.cashBook = (this.cashBook || []).filter(e => !(e && (e.portfolioId || 'main') === pid && String(e.type) === 'initial'));
+            }
+
+            this.cashBook.push({ id: Date.now(), portfolioId: pid, date, type, amount, note });
+            this.cashEntryForm.amount = null;
+            this.cashEntryForm.note = '';
+            if (type === 'initial') this.cashEntryForm.type = 'deposit';
+
+            this.saveData();
+            this.openInfoModal('', type === 'initial' ? '期初資金已設定。' : '資金紀錄已新增。');
+        },
+        deleteCashEntry(id) {
+            const raw = Number(id) || 0;
+            if (!raw) return;
+            this.confirmTitle = '刪除資金紀錄';
+            this.confirmMessage = '確定要刪除此筆「期初／入金／出金」紀錄嗎？';
+            this.confirmCallback = () => {
+                this.cashBook = (this.cashBook || []).filter(e => Number(e?.id) !== raw);
+                this.saveData();
+            };
+            this.showConfirmModal = true;
+        },
+        deleteCurrentPortfolioCashBookEntries() {
+            const pid = this.currentPortfolioId || 'main';
+            const name = (this.currentPortfolio && this.currentPortfolio.name) ? this.currentPortfolio.name : pid;
+            this.cashBook = (this.cashBook || []).filter(e => (e && (e.portfolioId || 'main') !== pid));
+            this.saveData();
+            this.openInfoModal('已清空', `「${name}」帳本的入出金（含期初）已清空。`);
+        },
+        triggerClearCashBook() {
+            const name = (this.currentPortfolio && this.currentPortfolio.name) ? this.currentPortfolio.name : (this.currentPortfolioId || 'main');
+            const count = (this.portfolioCashBook || []).length;
+            if (count === 0) { this.openInfoModal('無資料', '目前此帳本沒有任何期初/入金/出金紀錄。'); return; }
+            this.confirmTitle = `清空「${name}」入出金`;
+            this.confirmMessage = `⚠️ 危險操作：確定要永久刪除「${name}」帳本的 ${count} 筆期初/入金/出金紀錄嗎？（不影響買賣交易）`;
+            this.confirmCallback = this.deleteCurrentPortfolioCashBookEntries;
+            this.showConfirmModal = true;
+        },
+        prefillCashTopUp() {
+            const need = Number(this.cashTopUpNeeded) || 0;
+            if (need <= 0) return;
+            this.cashEntryForm.type = 'deposit';
+            this.cashEntryForm.amount = Math.ceil(need);
+            this.cashEntryForm.date = new Date().toISOString().split('T')[0];
+            this.cashEntryForm.note = '補入金';
+        },
+
 
         txTypeLabel(tx) {
             if (!tx) return '';
@@ -2092,6 +2567,93 @@ async fetchOnlineSuggestions(query) {
     }
 },
         selectSuggestion(stock) { this.searchText = stock.code + " " + stock.name; this.newTx.code = stock.code; this.newTx.name = stock.name; this.showSuggestions = false; },
+
+        // --- Advanced: cash short check for BUY ---
+        _finalizeAddTransaction(txObj, meta, successTitle = '新增成功', successMsg = '交易紀錄已儲存！') {
+            const code = meta?.code ? String(meta.code).trim() : String(txObj?.code || '').trim();
+            const name = meta?.name ? String(meta.name).trim() : String(txObj?.name || '').trim();
+            const price = (meta && meta.price != null) ? Number(meta.price) : Number(txObj?.price || 0);
+            const exists = !!meta?.exists;
+
+            // Persist custom stock + last price only when we actually commit the transaction
+            if (code) {
+                const inMap = (this.fullStockMap || []).some(s => s && s.code === code);
+                if (!exists && !inMap && name) {
+                    this.customStocks = Array.isArray(this.customStocks) ? this.customStocks : [];
+                    this.customStocks.push({ code, name });
+                    localStorage.setItem('tw_stock_custom_v6', JSON.stringify(this.customStocks));
+                }
+                if (price && price > 0) this.latestPrices[code] = price;
+            }
+
+            const backup = JSON.parse(JSON.stringify(this.transactions));
+            this.transactions.push(txObj);
+
+            const ok = this.recomputeAllTradesAndValidate();
+            if (!ok) { this.transactions = backup; return false; }
+
+            this.saveData();
+            this.newTx.price = null;
+            this.searchText = '';
+            this.newTx.dayTradeEligible = false;
+            this.showAddModal = false;
+
+            this.openInfoModal(successTitle, successMsg);
+            return true;
+        },
+        openCashShortModal(pendingTx, meta, shortage, currentCash, buyCost) {
+            const s = Math.max(0, Math.ceil(Number(shortage) || 0));
+            this.pendingCashShortTx = pendingTx || null;
+            this.pendingCashShortMeta = meta || null;
+            this.cashShortNeeded = s;
+            this.cashShortCurrentCash = Number(currentCash) || 0;
+            this.cashShortBuyCost = Number(buyCost) || 0;
+            this.cashShortTradeDate = String(pendingTx?.date || new Date().toISOString().split('T')[0]);
+            const label = `${pendingTx?.code || ''}${pendingTx?.name ? ' ' + pendingTx.name : ''}`.trim();
+            this.cashShortTarget = label || (pendingTx?.code || '');
+            this.cashShortForm = this.cashShortForm || { amount: null, note: '' };
+            this.cashShortForm.amount = s;
+            this.cashShortForm.note = (this.cashShortForm.note && String(this.cashShortForm.note).trim()) ? this.cashShortForm.note : `買入前補入金：${pendingTx?.code || ''}`.trim();
+            this.showCashShortModal = true;
+        },
+        cancelCashShortBuy() {
+            this.showCashShortModal = false;
+            this.pendingCashShortTx = null;
+            this.pendingCashShortMeta = null;
+            // Keep the trade form values so user can adjust if needed
+        },
+        confirmTopUpAndProceed() {
+            if (!this.pendingCashShortTx) { this.cancelCashShortBuy(); return; }
+            const needed = Number(this.cashShortNeeded) || 0;
+            const amount = Math.abs(Number(this.cashShortForm?.amount) || 0);
+            if (!amount || amount <= 0) { this.openInfoModal('資料不完整', '請輸入入金金額。'); return; }
+            if (amount + 1e-9 < needed) { this.openInfoModal('入金不足', `至少需要入金 ${this.formatCurrency(needed)} 才能完成買入。`); return; }
+
+            const pid = this.pendingCashShortTx.portfolioId || (this.currentPortfolioId || 'main');
+            const date = this.pendingCashShortTx.date || new Date().toISOString().split('T')[0];
+            const note = String(this.cashShortForm?.note || '').trim();
+
+            if (!Array.isArray(this.cashBook)) this.cashBook = [];
+            this.cashBook.push({
+                id: Date.now(),
+                portfolioId: pid,
+                date,
+                type: 'deposit',
+                amount: amount,
+                note: note || `買入前補入金：${this.pendingCashShortTx.code || ''}`.trim()
+            });
+
+            const txObj = this.pendingCashShortTx;
+            const meta = this.pendingCashShortMeta;
+
+            // Close modal BEFORE opening success modal (z-index)
+            this.showCashShortModal = false;
+            this.pendingCashShortTx = null;
+            this.pendingCashShortMeta = null;
+
+            this._finalizeAddTransaction(txObj, meta, '已完成', '已自動入金並完成買入。');
+        },
+
         addTransaction() {
             if (!this.newTx.code || !this.newTx.price || !this.newTx.qty) { this.openInfoModal('資料不完整', '請輸入代碼、價格與股數'); return; }
             const type = (this.newTx.type === 'sell') ? 'sell' : 'buy';
@@ -2101,12 +2663,7 @@ async fetchOnlineSuggestions(query) {
             const qty = Number(this.newTx.qty);
             if (!price || !qty || price <= 0 || qty <= 0) { this.openInfoModal('資料錯誤', '請輸入正確價格與股數'); return; }
 
-            const exists = this.fullStockMap.find(s => s.code === code);
-            if (!exists && name) {
-                this.customStocks.push({ code, name });
-                localStorage.setItem('tw_stock_custom_v6', JSON.stringify(this.customStocks));
-            }
-            this.latestPrices[code] = price;
+            const exists = (this.fullStockMap || []).find(s => s.code === code) || null;
 
             const subTotal = price * qty;
             const fee = Math.max(Math.round(subTotal * (this.settings.feeRate / 100) * this.settings.discount), Math.round(this.settings.minFee || 0));
@@ -2123,19 +2680,42 @@ async fetchOnlineSuggestions(query) {
             const mode = (this.newTx.mode || 'cash');
             const dayTradeEligible = !!this.newTx.dayTradeEligible;
 
-            const backup = JSON.parse(JSON.stringify(this.transactions));
-            this.transactions.push({ id: Date.now(), portfolioId: (this.currentPortfolioId || 'main'), date: this.newTx.date, code, name: name || (exists ? exists.name : code), type, mode, dayTradeEligible, price, qty, category: this.newTx.category, fee, tax, totalAmount, realizedPnL: null });
+            const txObj = {
+                id: Date.now(),
+                portfolioId: (this.currentPortfolioId || 'main'),
+                date: this.newTx.date,
+                code,
+                name: name || (exists ? exists.name : code),
+                type,
+                mode,
+                dayTradeEligible,
+                price,
+                qty,
+                category: this.newTx.category,
+                fee,
+                tax,
+                totalAmount,
+                realizedPnL: null
+            };
 
-            const ok = this.recomputeAllTradesAndValidate();
-            if (!ok) { this.transactions = backup; return; }
+            // Advanced: if BUY (cash) has insufficient cashBalance, ask to top-up.
+            if (type === 'buy' && (mode === 'cash' || !mode)) {
+                const currentCash = Number(this.cashBalance || 0);
+                const shortage = (Number(totalAmount) || 0) - currentCash;
+                if (shortage > 0.0001) {
+                    this.openCashShortModal(txObj, { code, name: txObj.name, price, exists: !!exists }, shortage, currentCash, totalAmount);
+                    return;
+                }
+            }
 
-            this.saveData();
-            this.newTx.price = null;
-            this.searchText = '';
-            this.newTx.dayTradeEligible = false;
-            this.showAddModal = false;
-            this.openInfoModal('新增成功', '交易紀錄已儲存！');
+            // Commit immediately
+            const meta = { code, name: txObj.name, price, exists: !!exists };
+            const ok = this._finalizeAddTransaction(txObj, meta, '新增成功', '交易紀錄已儲存！');
+            if (ok) {
+                // reset form bits (already done in _finalize), keep qty/type/mode/category as user preference
+            }
         },
+
         openSellModal(stock) {
             if (!stock || !stock.code) return;
             // Inventory sell modal is for closing long positions. For shorts, use the top trade form.
@@ -2180,12 +2760,12 @@ async fetchOnlineSuggestions(query) {
             this.showSellModal = false;
         },
         saveSettings() { localStorage.setItem('tw_stock_settings_v6', JSON.stringify(this.settings)); this.showSettings = false; },
-        saveData() { localStorage.setItem('tw_stock_tx_v6', JSON.stringify(this.transactions)); localStorage.setItem('tw_stock_portfolios_v1', JSON.stringify(this.portfolios || [])); localStorage.setItem('tw_stock_current_portfolio_v1', this.currentPortfolioId || 'main'); localStorage.setItem('tw_stock_names_v1', JSON.stringify(this.nameMap || {})); localStorage.setItem('tw_stock_categories_v1', JSON.stringify(this.categories || [])); },
+        saveData() { localStorage.setItem('tw_stock_tx_v6', JSON.stringify(this.transactions)); localStorage.setItem('tw_stock_cashbook_v1', JSON.stringify(this.cashBook || [])); localStorage.setItem('tw_stock_portfolios_v1', JSON.stringify(this.portfolios || [])); localStorage.setItem('tw_stock_current_portfolio_v1', this.currentPortfolioId || 'main'); localStorage.setItem('tw_stock_names_v1', JSON.stringify(this.nameMap || {})); localStorage.setItem('tw_stock_categories_v1', JSON.stringify(this.categories || [])); },
         exportData() { const dateStr = new Date().toISOString().split('T')[0]; this.exportFileName = `stock_backup_${dateStr}`; this.backupTab = 'download'; this.restoreFileName = ''; this.restoreFileObject = null; this.showExportModal = true; },
-        confirmExport() { const dataStr = JSON.stringify({ tx: this.transactions, settings: this.settings, custom: this.customStocks, prices: this.latestPrices, status: this.latestStatus, time: this.lastUpdateTime, portfolios: this.portfolios, currentPortfolioId: this.currentPortfolioId, names: this.nameMap, categories: this.categories, version: 2 }); const blob = new Blob([dataStr], {type: "application/json"}); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = `${this.exportFileName || 'backup'}.json`; a.click(); this.showExportModal = false; },
+        confirmExport() { const dataStr = JSON.stringify({ tx: this.transactions, cashBook: this.cashBook, settings: this.settings, custom: this.customStocks, prices: this.latestPrices, status: this.latestStatus, time: this.lastUpdateTime, portfolios: this.portfolios, currentPortfolioId: this.currentPortfolioId, names: this.nameMap, categories: this.categories, version: 3 }); const blob = new Blob([dataStr], {type: "application/json"}); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = `${this.exportFileName || 'backup'}.json`; a.click(); this.showExportModal = false; },
         onRestoreBackupFileChange(e) { const file = e?.target?.files?.[0]; if (!file) return; this.restoreFileName = file.name || ''; this.restoreFileObject = file; },
         async confirmRestoreFromBackupFile() { if (!this.restoreFileObject) return; this.restoreBusy = true; try { const file = this.restoreFileObject; const text = await file.text(); let payload; try { payload = JSON.parse(text); } catch (err) { throw new Error('備份檔案不是有效的 JSON 格式。'); } this._applyBackupPayload(payload); this.openInfoModal('還原成功', '已從備份檔案還原資料，將重新整理以套用所有狀態。'); setTimeout(() => window.location.reload(), 600); } catch (e) { this.openInfoModal('還原失敗', `發生未預期錯誤：${e?.message || e}`); } finally { this.restoreBusy = false; } },
-        _applyBackupPayload(payload) { if (!payload || typeof payload !== 'object') throw new Error('備份檔內容格式不正確。'); const tx = Array.isArray(payload.tx) ? payload.tx : []; const portfolios = Array.isArray(payload.portfolios) ? payload.portfolios : null; const currentPid = (typeof payload.currentPortfolioId === 'string') ? payload.currentPortfolioId : null; const names = (payload.names && typeof payload.names === 'object') ? payload.names : null; const categories = Array.isArray(payload.categories) ? payload.categories : null;  const settings = payload.settings && typeof payload.settings === 'object' ? payload.settings : this.settings; const custom = Array.isArray(payload.custom) ? payload.custom : []; const prices = payload.prices && typeof payload.prices === 'object' ? payload.prices : {}; const status = payload.status && typeof payload.status === 'object' ? payload.status : (this.latestStatus || {}); const time = typeof payload.time === 'string' ? payload.time : ''; this.transactions = tx; if (portfolios) this.portfolios = portfolios; if (currentPid) this.currentPortfolioId = currentPid; this.initPortfoliosAndMigrate(); this.settings = settings; this.customStocks = custom; this.latestPrices = prices; this.latestStatus = status; this.lastUpdateTime = time; localStorage.setItem('tw_stock_tx_v6', JSON.stringify(tx)); localStorage.setItem('tw_stock_settings_v6', JSON.stringify(settings)); localStorage.setItem('tw_stock_custom_v6', JSON.stringify(custom)); localStorage.setItem('tw_stock_prices_v6', JSON.stringify(prices)); localStorage.setItem('tw_stock_status_v6', JSON.stringify(status)); localStorage.setItem('tw_stock_time_v6', time); if (names) { this.nameMap = names; localStorage.setItem('tw_stock_names_v1', JSON.stringify(names)); } try { this.recomputeAllTradesAndValidate(); } catch (_) {} },
+        _applyBackupPayload(payload) { if (!payload || typeof payload !== 'object') throw new Error('備份檔內容格式不正確。'); const tx = Array.isArray(payload.tx) ? payload.tx : []; const cashBook = Array.isArray(payload.cashBook) ? payload.cashBook : []; const portfolios = Array.isArray(payload.portfolios) ? payload.portfolios : null; const currentPid = (typeof payload.currentPortfolioId === 'string') ? payload.currentPortfolioId : null; const names = (payload.names && typeof payload.names === 'object') ? payload.names : null; const categories = Array.isArray(payload.categories) ? payload.categories : null;  const settings = payload.settings && typeof payload.settings === 'object' ? payload.settings : this.settings; const custom = Array.isArray(payload.custom) ? payload.custom : []; const prices = payload.prices && typeof payload.prices === 'object' ? payload.prices : {}; const status = payload.status && typeof payload.status === 'object' ? payload.status : (this.latestStatus || {}); const time = typeof payload.time === 'string' ? payload.time : ''; this.transactions = tx; this.cashBook = cashBook; if (portfolios) this.portfolios = portfolios; if (currentPid) this.currentPortfolioId = currentPid; this.initPortfoliosAndMigrate(); this.settings = settings; this.customStocks = custom; this.latestPrices = prices; this.latestStatus = status; this.lastUpdateTime = time; localStorage.setItem('tw_stock_tx_v6', JSON.stringify(tx)); localStorage.setItem('tw_stock_cashbook_v1', JSON.stringify(cashBook)); localStorage.setItem('tw_stock_settings_v6', JSON.stringify(settings)); localStorage.setItem('tw_stock_custom_v6', JSON.stringify(custom)); localStorage.setItem('tw_stock_prices_v6', JSON.stringify(prices)); localStorage.setItem('tw_stock_status_v6', JSON.stringify(status)); localStorage.setItem('tw_stock_time_v6', time); if (names) { this.nameMap = names; localStorage.setItem('tw_stock_names_v1', JSON.stringify(names)); } try { this.recomputeAllTradesAndValidate(); } catch (_) {} },
         _readCloudMeta() { try { return JSON.parse(localStorage.getItem('tw_stock_cloud_meta_v1') || '{}') || {}; } catch(e) { return {}; } },
         _writeCloudMeta(patch) { const cur = this._readCloudMeta(); const next = Object.assign({}, cur, patch || {}); localStorage.setItem('tw_stock_cloud_meta_v1', JSON.stringify(next)); this.gdriveCloudMeta = next; },
         formatDateTime(ts) { if (!ts) return '—'; const d = new Date(ts); if (isNaN(d.getTime())) return '—'; try { return d.toLocaleString('zh-TW', { hour12: false }); } catch (_) { return d.toLocaleString(); } },
@@ -2194,9 +2774,9 @@ async fetchOnlineSuggestions(query) {
         clearGDriveClientId() { localStorage.removeItem('tw_stock_gdrive_client_id_v1'); this.gdriveClientId = ''; this.gdriveClientIdInput = ''; this.openInfoModal('已清除', '已清除 Google OAuth Client ID。'); },
         async _ensureGDriveAccessToken() { const cid = (this.gdriveClientId || '').trim(); if (!cid) throw new Error('缺少 Google OAuth Client ID。'); if (!window.google || !google.accounts || !google.accounts.oauth2) { throw new Error('Google Identity Services 尚未載入，請稍後再試。'); } if (!__gdriveTokenClient || __gdriveTokenClientCid !== cid) { __gdriveTokenClient = google.accounts.oauth2.initTokenClient({ client_id: cid, scope: __GDRIVE_SCOPE, callback: () => {} }); __gdriveTokenClientCid = cid; } const token = await new Promise((resolve, reject) => { let finished = false; const timer = setTimeout(() => { if (finished) return; finished = true; reject(new Error('授權逾時。請確認已允許彈出視窗（Popup），並在 https 網域下使用。')); }, 10000); __gdriveTokenClient.callback = (resp) => { if (finished) return; finished = true; clearTimeout(timer); if (resp && resp.access_token) resolve(resp.access_token); else reject(new Error(resp?.error_description || resp?.error || '授權失敗')); }; try { __gdriveTokenClient.requestAccessToken({ prompt: 'consent' }); } catch (e) { if (finished) return; finished = true; clearTimeout(timer); reject(new Error('無法啟動授權流程。請允許彈出視窗（Popup）後再試一次。')); } }); return token; },
         async _findBackupFileId(accessToken) { const q = encodeURIComponent("name='tw_stock_backup.json' and 'appDataFolder' in parents and trashed=false"); const url = `https://www.googleapis.com/drive/v3/files?spaces=appDataFolder&q=${q}&fields=files(id,name,modifiedTime)&pageSize=1`; const res = await fetch(url, { headers: { Authorization: `Bearer ${accessToken}` }}); if (!res.ok) throw new Error(`Drive 查詢失敗（${res.status}）`); const j = await res.json(); return (j.files && j.files[0] && j.files[0].id) ? { id: j.files[0].id, modifiedTime: j.files[0].modifiedTime || '' } : null; },
-        _buildBackupPayload() { return { tx: this.transactions, settings: this.settings, custom: this.customStocks, prices: this.latestPrices, status: this.latestStatus, time: this.lastUpdateTime, portfolios: this.portfolios, currentPortfolioId: this.currentPortfolioId, names: this.nameMap, categories: this.categories, version: 2, exportedAt: new Date().toISOString() }; },
+        _buildBackupPayload() { return { tx: this.transactions, cashBook: this.cashBook, settings: this.settings, custom: this.customStocks, prices: this.latestPrices, status: this.latestStatus, time: this.lastUpdateTime, portfolios: this.portfolios, currentPortfolioId: this.currentPortfolioId, names: this.nameMap, categories: this.categories, version: 3, exportedAt: new Date().toISOString() }; },
         async uploadToGDrive() { this.gdriveBusy = true; this.gdriveBusyText = '正在授權／連線…'; try { const accessToken = await this._ensureGDriveAccessToken(); const payload = this._buildBackupPayload(); const fileInfo = await this._findBackupFileId(accessToken); const fileId = fileInfo && fileInfo.id ? fileInfo.id : null; const boundary = '-------314159265358979323846'; const metadata = fileId ? { name: 'tw_stock_backup.json' } : { name: 'tw_stock_backup.json', parents: ['appDataFolder'] }; const multipartBody = `--${boundary}\r\n` + `Content-Type: application/json; charset=UTF-8\r\n\r\n` + `${JSON.stringify(metadata)}\r\n` + `--${boundary}\r\n` + `Content-Type: application/json; charset=UTF-8\r\n\r\n` + `${JSON.stringify(payload)}\r\n` + `--${boundary}--`; const uploadUrl = fileId ? `https://www.googleapis.com/upload/drive/v3/files/${fileId}?uploadType=multipart&fields=id,modifiedTime` : `https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id,modifiedTime`; const method = fileId ? 'PATCH' : 'POST'; const res = await fetch(uploadUrl, { method, headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': `multipart/related; boundary=${boundary}` }, body: multipartBody }); if (!res.ok) { const t = await res.text().catch(()=>''); throw new Error(`上傳失敗（${res.status}）${t ? '：' + t : ''}`); } let uploadInfo = null; try { uploadInfo = await res.json(); } catch(_) { uploadInfo = null; } const nowIso = new Date().toISOString(); this._writeCloudMeta({ lastCloudUploadAt: nowIso, lastAction: 'upload', cloudFileExists: true, cloudFileModifiedTime: (uploadInfo && uploadInfo.modifiedTime) ? uploadInfo.modifiedTime : (fileInfo && fileInfo.modifiedTime ? fileInfo.modifiedTime : '') }); this.openInfoModal('上傳成功', '已將資料備份到 Google 雲端。'); } catch (e) { this.openInfoModal('上傳失敗', `發生未預期錯誤：${e?.message || e}`); } finally { this.gdriveBusy = false; this.gdriveBusyText = ''; } },
-        async restoreFromGDrive() { this.gdriveBusy = true; this.gdriveBusyText = '正在授權／下載備份…'; try { const accessToken = await this._ensureGDriveAccessToken(); const fileInfo = await this._findBackupFileId(accessToken); const fileId = fileInfo && fileInfo.id ? fileInfo.id : null; if (!fileId) { this.openInfoModal('回復失敗', '雲端找不到備份檔案（tw_stock_backup.json）。'); return; } const url = `https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`; const res = await fetch(url, { headers: { Authorization: `Bearer ${accessToken}` }}); if (!res.ok) throw new Error(`下載失敗（${res.status}）`); const payload = await res.json(); if (!payload || typeof payload !== 'object') throw new Error('備份檔內容格式不正確。'); const tx = Array.isArray(payload.tx) ? payload.tx : []; const settings = payload.settings && typeof payload.settings === 'object' ? payload.settings : this.settings; const custom = Array.isArray(payload.custom) ? payload.custom : []; const prices = payload.prices && typeof payload.prices === 'object' ? payload.prices : {}; const status = payload.status && typeof payload.status === 'object' ? payload.status : {}; const time = typeof payload.time === 'string' ? payload.time : ''; const names = (payload.names && typeof payload.names === 'object') ? payload.names : null; const categories = Array.isArray(payload.categories) ? payload.categories : null; const portfoliosRaw = Array.isArray(payload.portfolios) ? payload.portfolios : []; let portfolios = (portfoliosRaw || []).filter(p => p && typeof p === 'object' && p.id && p.name); if (!portfolios.some(p => p.id === 'main')) portfolios = [{ id: 'main', name: '我的帳戶' }, ...portfolios.filter(p => p.id !== 'main')]; let currentPortfolioId = (typeof payload.currentPortfolioId === 'string' && payload.currentPortfolioId) ? payload.currentPortfolioId : 'main'; if (!portfolios.some(p => p.id === currentPortfolioId)) currentPortfolioId = 'main'; this.transactions = tx; this.settings = settings; this.customStocks = custom; this.latestPrices = prices; this.latestStatus = status; this.lastUpdateTime = time; this.portfolios = portfolios; this.currentPortfolioId = currentPortfolioId; if (names) { this.nameMap = names; } if (categories) { this.categories = categories; } localStorage.setItem('tw_stock_tx_v6', JSON.stringify(tx)); localStorage.setItem('tw_stock_settings_v6', JSON.stringify(settings)); localStorage.setItem('tw_stock_custom_v6', JSON.stringify(custom)); localStorage.setItem('tw_stock_prices_v6', JSON.stringify(prices)); localStorage.setItem('tw_stock_status_v6', JSON.stringify(status)); localStorage.setItem('tw_stock_time_v6', time); localStorage.setItem('tw_stock_portfolios_v1', JSON.stringify(portfolios)); localStorage.setItem('tw_stock_current_portfolio_v1', currentPortfolioId); if (names) localStorage.setItem('tw_stock_names_v1', JSON.stringify(names)); if (categories) localStorage.setItem('tw_stock_categories_v1', JSON.stringify(categories)); const nowIso = new Date().toISOString(); this._writeCloudMeta({ lastCloudRestoreAt: nowIso, lastAction: 'restore', cloudFileExists: true, cloudFileModifiedTime: (fileInfo && fileInfo.modifiedTime) ? fileInfo.modifiedTime : (this.gdriveCloudMeta && this.gdriveCloudMeta.cloudFileModifiedTime ? this.gdriveCloudMeta.cloudFileModifiedTime : '') }); this.openInfoModal('回復成功', '已從雲端回復資料，將重新整理以套用所有狀態。'); setTimeout(() => window.location.reload(), 600); } catch (e) { this.openInfoModal('回復失敗', `發生未預期錯誤：${e?.message || e}`); } finally { this.gdriveBusy = false; this.gdriveBusyText = ''; } },
+        async restoreFromGDrive() { this.gdriveBusy = true; this.gdriveBusyText = '正在授權／下載備份…'; try { const accessToken = await this._ensureGDriveAccessToken(); const fileInfo = await this._findBackupFileId(accessToken); const fileId = fileInfo && fileInfo.id ? fileInfo.id : null; if (!fileId) { this.openInfoModal('回復失敗', '雲端找不到備份檔案（tw_stock_backup.json）。'); return; } const url = `https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`; const res = await fetch(url, { headers: { Authorization: `Bearer ${accessToken}` }}); if (!res.ok) throw new Error(`下載失敗（${res.status}）`); const payload = await res.json(); if (!payload || typeof payload !== 'object') throw new Error('備份檔內容格式不正確。'); const tx = Array.isArray(payload.tx) ? payload.tx : []; const cashBook = Array.isArray(payload.cashBook) ? payload.cashBook : []; const settings = payload.settings && typeof payload.settings === 'object' ? payload.settings : this.settings; const custom = Array.isArray(payload.custom) ? payload.custom : []; const prices = payload.prices && typeof payload.prices === 'object' ? payload.prices : {}; const status = payload.status && typeof payload.status === 'object' ? payload.status : {}; const time = typeof payload.time === 'string' ? payload.time : ''; const names = (payload.names && typeof payload.names === 'object') ? payload.names : null; const categories = Array.isArray(payload.categories) ? payload.categories : null; const portfoliosRaw = Array.isArray(payload.portfolios) ? payload.portfolios : []; let portfolios = (portfoliosRaw || []).filter(p => p && typeof p === 'object' && p.id && p.name); if (!portfolios.some(p => p.id === 'main')) portfolios = [{ id: 'main', name: '我的帳戶' }, ...portfolios.filter(p => p.id !== 'main')]; let currentPortfolioId = (typeof payload.currentPortfolioId === 'string' && payload.currentPortfolioId) ? payload.currentPortfolioId : 'main'; if (!portfolios.some(p => p.id === currentPortfolioId)) currentPortfolioId = 'main'; this.transactions = tx; this.cashBook = cashBook; this.settings = settings; this.customStocks = custom; this.latestPrices = prices; this.latestStatus = status; this.lastUpdateTime = time; this.portfolios = portfolios; this.currentPortfolioId = currentPortfolioId; if (names) { this.nameMap = names; } if (categories) { this.categories = categories; } localStorage.setItem('tw_stock_tx_v6', JSON.stringify(tx)); localStorage.setItem('tw_stock_cashbook_v1', JSON.stringify(cashBook)); localStorage.setItem('tw_stock_settings_v6', JSON.stringify(settings)); localStorage.setItem('tw_stock_custom_v6', JSON.stringify(custom)); localStorage.setItem('tw_stock_prices_v6', JSON.stringify(prices)); localStorage.setItem('tw_stock_status_v6', JSON.stringify(status)); localStorage.setItem('tw_stock_time_v6', time); localStorage.setItem('tw_stock_portfolios_v1', JSON.stringify(portfolios)); localStorage.setItem('tw_stock_current_portfolio_v1', currentPortfolioId); if (names) localStorage.setItem('tw_stock_names_v1', JSON.stringify(names)); if (categories) localStorage.setItem('tw_stock_categories_v1', JSON.stringify(categories)); const nowIso = new Date().toISOString(); this._writeCloudMeta({ lastCloudRestoreAt: nowIso, lastAction: 'restore', cloudFileExists: true, cloudFileModifiedTime: (fileInfo && fileInfo.modifiedTime) ? fileInfo.modifiedTime : (this.gdriveCloudMeta && this.gdriveCloudMeta.cloudFileModifiedTime ? this.gdriveCloudMeta.cloudFileModifiedTime : '') }); this.openInfoModal('回復成功', '已從雲端回復資料，將重新整理以套用所有狀態。'); setTimeout(() => window.location.reload(), 600); } catch (e) { this.openInfoModal('回復失敗', `發生未預期錯誤：${e?.message || e}`); } finally { this.gdriveBusy = false; this.gdriveBusyText = ''; } },
                         addCategory() {
             const raw = String(this.newCategoryName || '').trim();
             if (!raw) return;
