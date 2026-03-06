@@ -13,28 +13,58 @@
     <style type="text/tailwindcss">
         [v-cloak] { display: none !important; }
 
-        body { 
-            font-family: 'Noto Sans TC', sans-serif; 
-            background-color: #f0f4f8; 
-            background-image: linear-gradient(#e2e8f0 1px, transparent 1px), linear-gradient(to right, #e2e8f0 1px, transparent 1px);
-            background-size: 24px 24px;
+        body {
+            font-family: 'Noto Sans TC', sans-serif;
+            background:
+                radial-gradient(circle at top left, rgba(59,130,246,0.16), transparent 30%),
+                radial-gradient(circle at top right, rgba(99,102,241,0.12), transparent 28%),
+                linear-gradient(180deg, #f8fbff 0%, #f3f7fc 42%, #edf3fa 100%);
             color: #334155;
             -webkit-user-select: none;
             user-select: none;
             padding-bottom: env(safe-area-inset-bottom);
+            min-height: 100vh;
+            position: relative;
         }
-        
-        .card { @apply bg-white rounded-3xl shadow-[0_10px_40px_-10px_rgba(0,0,0,0.08)] border border-white p-6 md:p-8 mb-8 transition-all duration-300; }
+        body::before,
+        body::after {
+            content: '';
+            position: fixed;
+            inset: auto;
+            border-radius: 9999px;
+            filter: blur(70px);
+            pointer-events: none;
+            z-index: 0;
+            opacity: .55;
+        }
+        body::before {
+            width: 260px;
+            height: 260px;
+            left: -80px;
+            top: 90px;
+            background: rgba(96,165,250,.24);
+        }
+        body::after {
+            width: 280px;
+            height: 280px;
+            right: -100px;
+            top: 180px;
+            background: rgba(129,140,248,.18);
+        }
+
+        .app-shell { position: relative; z-index: 1; }
+        .card { @apply bg-white/90 backdrop-blur-xl rounded-[2rem] shadow-[0_20px_60px_-24px_rgba(15,23,42,0.28)] border border-white/80 p-6 md:p-8 mb-8 transition-all duration-300; }
+        .card:hover { transform: translateY(-2px); box-shadow: 0 26px 70px -28px rgba(15, 23, 42, 0.32); }
         .input-group { @apply flex flex-col relative; }
-        
+
         /* 按鈕樣式 */
-        .btn { @apply h-[50px] px-6 rounded-xl font-bold tracking-wide transition-all duration-200 transform hover:-translate-y-1 active:scale-95 flex items-center justify-center cursor-pointer shadow-md hover:shadow-xl text-base border-0; }
-        .btn-primary { @apply bg-gradient-to-br from-blue-600 to-indigo-700 text-white shadow-blue-200; }
-        .btn-success { @apply bg-gradient-to-br from-emerald-500 to-teal-600 text-white shadow-emerald-200; }
-        .btn-secondary { @apply bg-white text-slate-600 border-2 border-slate-200 hover:border-slate-400 hover:text-slate-800 hover:bg-slate-50; }
-        
-        .filter-btn { @apply px-4 py-2 rounded-lg text-sm font-bold border-2 border-slate-200 text-slate-500 hover:bg-white hover:text-blue-600 hover:border-blue-300 transition bg-white; }
-        .filter-btn.active { @apply bg-blue-50 text-blue-700 border-blue-500; }
+        .btn { @apply h-[50px] px-6 rounded-2xl font-bold tracking-wide transition-all duration-200 transform hover:-translate-y-1 active:scale-95 flex items-center justify-center cursor-pointer text-base border-0; box-shadow: 0 12px 28px -16px rgba(15, 23, 42, 0.35); }
+        .btn-primary { @apply bg-gradient-to-br from-blue-600 to-indigo-700 text-white; }
+        .btn-success { @apply bg-gradient-to-br from-emerald-500 to-teal-600 text-white; }
+        .btn-secondary { @apply bg-white/95 text-slate-600 border border-slate-200 hover:border-slate-300 hover:text-slate-800 hover:bg-white; }
+
+        .filter-btn { @apply px-4 py-2 rounded-xl text-sm font-bold border border-slate-200 text-slate-500 hover:bg-white hover:text-blue-600 hover:border-blue-300 transition bg-white/90; }
+        .filter-btn.active { @apply bg-blue-50 text-blue-700 border-blue-500 shadow-sm; }
 
         .status-badge { @apply inline-flex items-center justify-center w-5 h-5 rounded-full text-[10px] font-black border ml-1 shadow-sm leading-none; }
         .badge-5m { @apply bg-orange-50 text-orange-600 border-orange-500; }
@@ -52,6 +82,11 @@
         
         .scrollbar-hide::-webkit-scrollbar { display: none; }
         .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+        .modal-scroll { scrollbar-width: thin; scrollbar-color: rgba(148,163,184,.55) transparent; }
+        .modal-scroll::-webkit-scrollbar { width: 8px; }
+        .modal-scroll::-webkit-scrollbar-track { background: transparent; }
+        .modal-scroll::-webkit-scrollbar-thumb { background: rgba(148,163,184,.42); border-radius: 9999px; }
+        .modal-scroll::-webkit-scrollbar-thumb:hover { background: rgba(100,116,139,.58); }
 
         @keyframes slide-up { from { transform: translateY(100%); } to { transform: translateY(0); } }
         .animate-slide-up { animation: slide-up 0.3s cubic-bezier(0.16, 1, 0.3, 1); }
@@ -188,9 +223,9 @@
         </div>
     </div>
 
-    <div v-if="isLoggedIn" class="max-w-7xl mx-auto p-4 md:p-8 pb-32" @click="closeContextMenu" @contextmenu.prevent>
+    <div v-if="isLoggedIn" class="app-shell max-w-7xl mx-auto p-4 md:p-8 pb-32" @click="closeContextMenu" @contextmenu.prevent>
         
-        <div class="fixed top-0 left-0 w-full z-40 bg-white/90 backdrop-blur-md border-b border-slate-200 px-4 py-3 flex justify-between items-center md:hidden shadow-sm pt-[calc(env(safe-area-inset-top)+12px)]">
+        <div class="fixed top-0 left-0 w-full z-40 bg-white/80 backdrop-blur-xl border-b border-white/80 px-4 py-3 flex justify-between items-center md:hidden shadow-[0_10px_35px_-18px_rgba(15,23,42,0.28)] pt-[calc(env(safe-area-inset-top)+12px)]">
 
             <div class="w-full flex flex-col gap-2">
                 <div class="flex items-center justify-between gap-3">
@@ -222,7 +257,7 @@
             </div>
         </div>
 
-        <header class="hidden md:flex flex-col xl:flex-row justify-between items-center mb-8 gap-6 bg-white rounded-3xl p-6 shadow-md border border-slate-100">
+        <header class="hidden md:flex flex-col xl:flex-row justify-between items-center mb-8 gap-6 bg-white/80 backdrop-blur-xl rounded-[2rem] p-6 shadow-[0_20px_60px_-24px_rgba(15,23,42,0.28)] border border-white/90">
             <div class="flex items-center gap-5">
                 <div class="bg-gradient-to-br from-blue-600 to-indigo-700 w-14 h-14 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-blue-500/30">
                     <i class="fa-solid fa-chart-simple text-2xl"></i>
@@ -1413,65 +1448,92 @@
              </div>
         </div>
 
-        <div v-if="showSettings" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex justify-center items-center z-50 p-4">
-            <div class="bg-white rounded-[2rem] p-8 w-full max-w-sm shadow-2xl relative max-h-[calc(100vh-2rem)] overflow-y-auto">
-                <button @click="showSettings = false" class="absolute top-6 right-6 w-9 h-9 rounded-full bg-slate-50 text-slate-400 border border-slate-200 flex items-center justify-center active:bg-slate-200 transition-colors"><i class="fa-solid fa-times"></i></button>
-                <h3 class="text-xl font-extrabold mb-8 text-slate-800 flex items-center tracking-tight">費率設定</h3>
-                
-                <div class="space-y-5">
-                    <!-- Mobile-first layout: 折扣整行，其餘欄位半行（兩欄一列） -->
-                    <div class="input-group">
-                        <div class="flex justify-between items-center mb-2 ml-1">
-                            <label class="text-xs font-bold text-slate-500">手續費折扣</label>
-                        </div>
-                        <div class="flex gap-2 mb-3 overflow-x-auto pb-1 scrollbar-hide">
-                            <span @click="settings.discount = 0.28" class="px-3 py-1.5 bg-slate-50 text-slate-600 rounded-lg text-xs font-bold border border-slate-200 cursor-pointer active:scale-95 hover:bg-blue-50 hover:text-blue-600 hover:border-blue-300 transition-all whitespace-nowrap" :class="settings.discount === 0.28 ? 'bg-blue-50 text-blue-600 border-blue-400 ring-2 ring-blue-100' : ''">2.8折</span>
-                            <span @click="settings.discount = 0.3" class="px-3 py-1.5 bg-slate-50 text-slate-600 rounded-lg text-xs font-bold border border-slate-200 cursor-pointer active:scale-95 hover:bg-blue-50 hover:text-blue-600 hover:border-blue-300 transition-all whitespace-nowrap" :class="settings.discount === 0.3 ? 'bg-blue-50 text-blue-600 border-blue-400 ring-2 ring-blue-100' : ''">3折</span>
-                            <span @click="settings.discount = 0.5" class="px-3 py-1.5 bg-slate-50 text-slate-600 rounded-lg text-xs font-bold border border-slate-200 cursor-pointer active:scale-95 hover:bg-blue-50 hover:text-blue-600 hover:border-blue-300 transition-all whitespace-nowrap" :class="settings.discount === 0.5 ? 'bg-blue-50 text-blue-600 border-blue-400 ring-2 ring-blue-100' : ''">5折</span>
-                            <span @click="settings.discount = 0.6" class="px-3 py-1.5 bg-slate-50 text-slate-600 rounded-lg text-xs font-bold border border-slate-200 cursor-pointer active:scale-95 hover:bg-blue-50 hover:text-blue-600 hover:border-blue-300 transition-all whitespace-nowrap" :class="settings.discount === 0.6 ? 'bg-blue-50 text-blue-600 border-blue-400 ring-2 ring-blue-100' : ''">6折</span>
-                        </div>
-                        <div class="relative flex items-center">
-                            <input type="number" step="0.01" v-model.number="settings.discount" class="w-full h-[50px] pl-11 pr-4 bg-white border border-slate-300 rounded-xl text-slate-700 font-bold text-lg outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-50/50 transition-all shadow-sm">
-                            <i class="fa-solid fa-tag absolute left-4 text-slate-400 text-lg pointer-events-none"></i>
+        <div v-if="showSettings" class="fixed inset-0 bg-slate-900/50 backdrop-blur-md flex justify-center items-start z-50 p-3 sm:p-4 overflow-y-auto">
+            <div class="modal-scroll bg-white/95 backdrop-blur-2xl rounded-[2rem] p-6 sm:p-7 w-full max-w-lg max-h-[calc(100vh-24px)] sm:max-h-[calc(100vh-32px)] overflow-y-auto shadow-[0_35px_100px_-35px_rgba(15,23,42,0.55)] border border-white/80 relative my-0">
+                <button @click="showSettings = false" class="absolute top-5 right-5 w-10 h-10 rounded-full bg-slate-50 text-slate-400 border border-slate-200 flex items-center justify-center active:bg-slate-200 transition-colors"><i class="fa-solid fa-times"></i></button>
+                <div class="pr-12">
+                    <div class="inline-flex items-center gap-2 rounded-full bg-blue-50 px-3 py-1 text-xs font-black text-blue-700 border border-blue-100">
+                        <i class="fa-solid fa-sliders"></i>
+                        Brokerage Settings
+                    </div>
+                    <h3 class="mt-3 text-2xl font-extrabold text-slate-800 tracking-tight">費率設定</h3>
+                    <p class="mt-1 text-sm text-slate-500">已整理成較好操作的 App 版型，可直接套用康和證券預設或自行微調。</p>
+                </div>
+
+                <div class="mt-6 rounded-[1.75rem] border border-emerald-200 bg-gradient-to-br from-emerald-50 via-white to-emerald-50/40 p-5 shadow-[0_18px_40px_-28px_rgba(5,150,105,0.45)]">
+                    <div class="flex items-start justify-between gap-3">
+                        <div>
+                            <div class="inline-flex items-center gap-2 rounded-full bg-emerald-100 px-3 py-1 text-xs font-extrabold text-emerald-800">
+                                <i class="fa-solid fa-shield-halved"></i>
+                                康和證券預設
+                            </div>
+                            <div class="mt-3 grid grid-cols-2 gap-2 text-xs text-slate-600 sm:text-sm">
+                                <div class="rounded-xl bg-white/80 px-3 py-2 border border-emerald-100">手續費率 <span class="font-bold text-slate-800">0.1425%</span></div>
+                                <div class="rounded-xl bg-white/80 px-3 py-2 border border-emerald-100">折扣 <span class="font-bold text-slate-800">1 倍</span></div>
+                                <div class="rounded-xl bg-white/80 px-3 py-2 border border-emerald-100">最低手續費 <span class="font-bold text-slate-800">20 元</span></div>
+                                <div class="rounded-xl bg-white/80 px-3 py-2 border border-emerald-100">當沖稅 <span class="font-bold text-slate-800">0.15%</span></div>
+                            </div>
                         </div>
                     </div>
+                    <button @click="applyKangHePreset" class="mt-4 w-full h-12 rounded-2xl bg-emerald-600 text-white font-bold shadow-lg shadow-emerald-500/20 active:scale-[0.98] transition-all hover:bg-emerald-700">套用康和證券預設</button>
+                </div>
 
-                    <div class="grid grid-cols-2 gap-4">
-                        <div class="input-group">
-                            <label class="text-xs font-bold text-slate-500 mb-2 ml-1">手續費率 (%)</label>
-                            <div class="relative flex items-center">
-                                <input type="number" v-model.number="settings.feeRate" class="w-full h-[50px] pl-11 pr-4 bg-white border border-slate-300 rounded-xl text-slate-700 font-bold text-lg outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-50/50 transition-all shadow-sm">
-                                <i class="fa-solid fa-percent absolute left-4 text-slate-400 text-lg pointer-events-none"></i>
-                            </div>
-                        </div>
-
-                        <div class="input-group">
-                            <label class="text-xs font-bold text-slate-500 mb-2 ml-1">最低手續費 (元)</label>
-                            <div class="relative flex items-center">
-                                <input type="number" v-model.number="settings.minFee" class="w-full h-[50px] pl-11 pr-4 bg-white border border-slate-300 rounded-xl text-slate-700 font-bold text-lg outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-50/50 transition-all shadow-sm">
-                                <i class="fa-solid fa-coins absolute left-4 text-slate-400 text-lg pointer-events-none"></i>
-                            </div>
-                        </div>
-
-                        <div class="input-group">
-                            <label class="text-xs font-bold text-slate-500 mb-2 ml-1">證交稅率 (%)</label>
-                            <div class="relative flex items-center">
-                                <input type="number" v-model.number="settings.taxRate" class="w-full h-[50px] pl-11 pr-4 bg-white border border-slate-300 rounded-xl text-slate-700 font-bold text-lg outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-50/50 transition-all shadow-sm">
-                                <i class="fa-solid fa-building-columns absolute left-4 text-slate-400 text-base pointer-events-none"></i>
-                            </div>
-                        </div>
-
-                        <div class="input-group">
-                            <label class="text-xs font-bold text-slate-500 mb-2 ml-1">當沖證交稅率 (%)</label>
-                            <div class="relative flex items-center">
-                                <input type="number" v-model.number="settings.dayTradeTaxRate" class="w-full h-[50px] pl-11 pr-4 bg-white border border-slate-300 rounded-xl text-slate-700 font-bold text-lg outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-50/50 transition-all shadow-sm">
-                                <i class="fa-solid fa-bolt absolute left-4 text-slate-400 text-base pointer-events-none"></i>
-                            </div>
-                        </div>
+                <div class="mt-6 rounded-[1.75rem] border border-slate-200 bg-white/80 p-5 sm:p-6 shadow-[0_16px_36px_-28px_rgba(15,23,42,0.28)]">
+                    <div class="flex items-center justify-between gap-3">
+                        <label class="text-sm font-extrabold text-slate-700">手續費折扣</label>
+                        <span class="text-xs font-bold text-slate-500">目前：{{ settings.discount }} 倍</span>
+                    </div>
+                    <div class="mt-3 grid grid-cols-2 sm:grid-cols-5 gap-2">
+                        <button type="button" @click="settings.discount = 1" class="h-11 rounded-xl border text-sm font-bold transition-all"
+                            :class="settings.discount === 1 ? 'border-emerald-500 bg-emerald-50 text-emerald-700' : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300'">康和預設</button>
+                        <button type="button" @click="settings.discount = 0.28" class="h-11 rounded-xl border text-sm font-bold transition-all"
+                            :class="settings.discount === 0.28 ? 'border-blue-500 bg-blue-50 text-blue-700' : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300'">2.8 折</button>
+                        <button type="button" @click="settings.discount = 0.3" class="h-11 rounded-xl border text-sm font-bold transition-all"
+                            :class="settings.discount === 0.3 ? 'border-blue-500 bg-blue-50 text-blue-700' : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300'">3 折</button>
+                        <button type="button" @click="settings.discount = 0.5" class="h-11 rounded-xl border text-sm font-bold transition-all"
+                            :class="settings.discount === 0.5 ? 'border-blue-500 bg-blue-50 text-blue-700' : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300'">5 折</button>
+                        <button type="button" @click="settings.discount = 0.6" class="h-11 rounded-xl border text-sm font-bold transition-all"
+                            :class="settings.discount === 0.6 ? 'border-blue-500 bg-blue-50 text-blue-700' : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300'">6 折</button>
+                    </div>
+                    <div class="mt-3">
+                        <label class="mb-2 block text-xs font-bold text-slate-500">自訂折扣倍數</label>
+                        <input type="number" step="0.01" v-model.number="settings.discount" class="w-full h-12 px-4 bg-white border border-slate-300 rounded-2xl text-slate-700 font-bold text-base outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-50/50 transition-all shadow-sm" placeholder="例如 1、0.6、0.3">
                     </div>
                 </div>
 
-                <div class="flex justify-end mt-8"><button @click="saveSettings" class="w-full py-4 rounded-2xl font-bold text-white bg-blue-600 shadow-lg shadow-blue-500/30 active:scale-[0.98] transition-all text-lg flex items-center justify-center gap-2 hover:bg-blue-700">儲存設定</button></div>
+                <div class="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div class="sm:col-span-2 flex items-center gap-2 text-sm font-extrabold text-slate-700">
+                        <div class="w-9 h-9 rounded-2xl bg-slate-100 text-slate-600 flex items-center justify-center"><i class="fa-solid fa-calculator"></i></div>
+                        細部費率欄位
+                    </div>
+                    <div class="rounded-2xl border border-slate-200 bg-white p-4">
+                        <label class="block text-xs font-bold text-slate-500 mb-2">手續費率 (%)</label>
+                        <input type="number" step="0.0001" v-model.number="settings.feeRate" class="w-full h-12 px-4 bg-slate-50 border border-slate-300 rounded-2xl text-slate-700 font-bold text-base outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-50/50 transition-all">
+                    </div>
+                    <div class="rounded-2xl border border-slate-200 bg-white p-4">
+                        <label class="block text-xs font-bold text-slate-500 mb-2">最低手續費 (元)</label>
+                        <input type="number" v-model.number="settings.minFee" class="w-full h-12 px-4 bg-slate-50 border border-slate-300 rounded-2xl text-slate-700 font-bold text-base outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-50/50 transition-all">
+                    </div>
+                    <div class="rounded-2xl border border-slate-200 bg-white p-4">
+                        <label class="block text-xs font-bold text-slate-500 mb-2">證交稅率 (%)</label>
+                        <input type="number" step="0.0001" v-model.number="settings.taxRate" class="w-full h-12 px-4 bg-slate-50 border border-slate-300 rounded-2xl text-slate-700 font-bold text-base outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-50/50 transition-all">
+                    </div>
+                    <div class="rounded-2xl border border-slate-200 bg-white p-4">
+                        <label class="block text-xs font-bold text-slate-500 mb-2">當沖證交稅率 (%)</label>
+                        <input type="number" step="0.0001" v-model.number="settings.dayTradeTaxRate" class="w-full h-12 px-4 bg-slate-50 border border-slate-300 rounded-2xl text-slate-700 font-bold text-base outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-50/50 transition-all">
+                    </div>
+                </div>
+
+                <div class="mt-6 rounded-2xl bg-slate-50 border border-slate-200 px-4 py-3 text-xs text-slate-500 leading-6">
+                    提醒：康和證券預設已依你提供的明細校正。若之後券商折扣或稅率變動，可在這裡直接修改。
+                </div>
+
+                <div class="mt-7 sticky bottom-0 bg-gradient-to-t from-white via-white/95 to-transparent pt-4 pb-1">
+                    <button @click="saveSettings" class="w-full py-4 rounded-2xl font-bold text-white bg-gradient-to-r from-blue-600 to-indigo-700 shadow-[0_18px_35px_-18px_rgba(37,99,235,0.55)] active:scale-[0.98] transition-all text-lg flex items-center justify-center gap-2 hover:from-blue-700 hover:to-indigo-800">
+                        <i class="fa-solid fa-floppy-disk"></i>
+                        儲存設定
+                    </button>
+                </div>
             </div>
         </div>
 
@@ -1578,7 +1640,7 @@ createApp({
             showEditBuyModal: false, editBuyTx: { id: null, date: '', code: '', name: '', price: null, qty: 0, category: 'core' },
             showEditTxModal: false, editTx: { id: null, date: '', code: '', name: '', type: 'buy', mode: 'cash', price: null, qty: 0, category: 'core', dayTradeEligible: false },
             showAddModal: false, searchText: '', isSearching: false,
-            settings: { feeRate: 0.1425, discount: 0.28, taxRate: 0.3, dayTradeTaxRate: 0.15, minFee: 20 },
+            settings: { feeRate: 0.1425, discount: 1, taxRate: 0.3, dayTradeTaxRate: 0.15, minFee: 20 },
             showSettings: false, showExportModal: false, backupTab: 'download', exportFileName: '', restoreFileName: '', restoreFileObject: null, restoreBusy: false,
             showInfoModal: false, infoTitle: '', infoMessage: '', showConfirmModal: false, confirmTitle: '', confirmMessage: '', confirmCallback: null,
             showGlobalIndices: false, isGlobalLoading: false, isTaiexNightLoading: false, globalIndices: [],
@@ -1646,8 +1708,17 @@ const savedCash = localStorage.getItem('tw_stock_cashbook_v1') || ''; if (savedC
         if (!this.newTx.category) this.newTx.category = (this.categories.find(c => c.id === 'core') || this.categories[0] || {id:'core'}).id;
 
         const savedSettings = localStorage.getItem('tw_stock_settings_v6'); if (savedSettings) this.settings = JSON.parse(savedSettings);
-        if (this.settings == null || typeof this.settings !== 'object') this.settings = { feeRate: 0.1425, discount: 0.28, taxRate: 0.3, dayTradeTaxRate: 0.15, minFee: 20 };
+        if (this.settings == null || typeof this.settings !== 'object') this.settings = { feeRate: 0.1425, discount: 1, taxRate: 0.3, dayTradeTaxRate: 0.15, minFee: 20 };
         if (this.settings.dayTradeTaxRate == null || isNaN(Number(this.settings.dayTradeTaxRate))) this.settings.dayTradeTaxRate = 0.15;
+        if (this.settings.feeRate == null || isNaN(Number(this.settings.feeRate))) this.settings.feeRate = 0.1425;
+        if (this.settings.taxRate == null || isNaN(Number(this.settings.taxRate))) this.settings.taxRate = 0.3;
+        if (this.settings.minFee == null || isNaN(Number(this.settings.minFee))) this.settings.minFee = 20;
+        if (this.settings.discount == null || isNaN(Number(this.settings.discount)) || Number(this.settings.discount) <= 0) this.settings.discount = 1;
+        const looksLikeLegacyDefault = Number(this.settings.feeRate) === 0.1425 && Number(this.settings.discount) === 0.28 && Number(this.settings.taxRate) === 0.3 && Number(this.settings.dayTradeTaxRate) === 0.15 && Number(this.settings.minFee) === 20;
+        if (looksLikeLegacyDefault) {
+            this.settings.discount = 1;
+            localStorage.setItem('tw_stock_settings_v6', JSON.stringify(this.settings));
+        }
         const savedCustom = localStorage.getItem('tw_stock_custom_v6'); if (savedCustom) this.customStocks = JSON.parse(savedCustom);
         const savedPrices = localStorage.getItem('tw_stock_prices_v6'); if (savedPrices) this.latestPrices = JSON.parse(savedPrices);
         const savedStatus = localStorage.getItem('tw_stock_status_v6'); if (savedStatus) this.latestStatus = JSON.parse(savedStatus);
@@ -2054,6 +2125,8 @@ filteredHoldings() { return this.filter === 'all' ? this.holdings : this.holding
         closeStockDetails() { this.showStockDetails = false; this.selectedStock = null; },
         openEditBuyModal(row) { if (!row || !row.id) { this.openInfoModal('無法編輯', '找不到這筆買入紀錄的識別碼'); return; } const tx = this.transactions.find(t => t.id === row.id); if (!tx) { this.openInfoModal('無法編輯', '找不到對應的交易紀錄'); return; } if (tx.type !== 'buy') { this.openInfoModal('無法編輯', '目前僅支援編輯「買入」紀錄'); return; } this.editBuyTx = { id: tx.id, date: tx.date, code: tx.code, name: (this.nameMap && this.nameMap[tx.code]) ? this.nameMap[tx.code] : tx.name, price: tx.price, qty: tx.qty, category: tx.category || 'core' }; this.showEditBuyModal = true; },
         closeEditBuyModal() { this.showEditBuyModal = false; this.editBuyTx = { id: null, date: '', code: '', name: '', price: null, qty: 0, category: 'core' }; },
+        calcBrokerFee(subTotal) { const grossFee = Number(subTotal || 0) * (Number(this.settings.feeRate || 0) / 100) * Number(this.settings.discount || 1); return Math.max(Math.floor(grossFee), Math.round(this.settings.minFee || 0)); },
+        calcBrokerTax(subTotal, taxRatePercent) { return Math.floor(Number(subTotal || 0) * (Number(taxRatePercent || 0) / 100)); },
         saveEditedBuy() {
             if (!this.editBuyTx.id || !this.editBuyTx.code || !this.editBuyTx.date || !this.editBuyTx.price || !this.editBuyTx.qty) { this.openInfoModal('資料不完整', '請輸入日期、價格與股數'); return; }
             if (this.editBuyTx.qty <= 0 || this.editBuyTx.price <= 0) { this.openInfoModal('資料不正確', '價格與股數需大於 0'); return; }
@@ -2063,7 +2136,7 @@ filteredHoldings() { return this.filter === 'all' ? this.holdings : this.holding
             const backup = JSON.parse(JSON.stringify(this.transactions));
 
             const subTotal = this.editBuyTx.price * this.editBuyTx.qty;
-            const fee = Math.max(Math.round(subTotal * (this.settings.feeRate / 100) * this.settings.discount), Math.round(this.settings.minFee || 0));
+            const fee = this.calcBrokerFee(subTotal);
             this.transactions[idx] = { ...this.transactions[idx], date: this.editBuyTx.date, price: this.editBuyTx.price, qty: this.editBuyTx.qty, category: this.editBuyTx.category, fee, tax: 0, totalAmount: subTotal + fee, realizedPnL: null };
 
             const ok = this.recomputeAllTradesAndValidate();
@@ -2247,7 +2320,7 @@ recomputeAllTradesAndValidate() {
                     const dtTax = tx.price * matched * (dtTaxRate / 100);
                     const normalQty = qty - matched;
                     const normalTax = tx.price * normalQty * (normalTaxRate / 100);
-                    tx.tax = Math.round(dtTax + normalTax);
+                    tx.tax = this.calcBrokerTax(tx.price * matched, dtTaxRate) + this.calcBrokerTax(tx.price * normalQty, normalTaxRate);
                     tx.totalAmount = subTotal - fee - tx.tax;
                 }
 
@@ -2666,14 +2739,14 @@ async fetchOnlineSuggestions(query) {
             const exists = (this.fullStockMap || []).find(s => s.code === code) || null;
 
             const subTotal = price * qty;
-            const fee = Math.max(Math.round(subTotal * (this.settings.feeRate / 100) * this.settings.discount), Math.round(this.settings.minFee || 0));
+            const fee = this.calcBrokerFee(subTotal);
 
             // 當沖是否成立要看同日配對結果；這裡先以一般稅率估算，最終以 recompute 重新計算為準。
             let tax = 0;
             let totalAmount = subTotal + fee;
             if (type === 'sell') {
                 const taxRate = this.settings.taxRate;
-                tax = Math.round(subTotal * (taxRate / 100));
+                tax = this.calcBrokerTax(subTotal, taxRate);
                 totalAmount = subTotal - fee - tax;
             }
 
@@ -2744,10 +2817,10 @@ async fetchOnlineSuggestions(query) {
             if(this.sellTx.maxQty && this.sellTx.qty > this.sellTx.maxQty) { this.openInfoModal('庫存不足', '賣出股數不可大於庫存'); return; }
 
             const subTotal = this.sellTx.price * this.sellTx.qty;
-            const fee = Math.max(Math.round(subTotal * (this.settings.feeRate / 100) * this.settings.discount), Math.round(this.settings.minFee || 0));
+            const fee = this.calcBrokerFee(subTotal);
             // 當沖是否成立要看同日配對結果；這裡先以一般稅率估算，最終以 recompute 重新計算為準。
             const taxRate = this.settings.taxRate;
-            const tax = Math.round(subTotal * (taxRate / 100));
+            const tax = this.calcBrokerTax(subTotal, taxRate);
             const totalAmount = subTotal - fee - tax;
 
             const backup = JSON.parse(JSON.stringify(this.transactions));
@@ -2759,6 +2832,7 @@ async fetchOnlineSuggestions(query) {
             this.saveData();
             this.showSellModal = false;
         },
+        applyKangHePreset() { this.settings.feeRate = 0.1425; this.settings.discount = 1; this.settings.taxRate = 0.3; this.settings.dayTradeTaxRate = 0.15; this.settings.minFee = 20; },
         saveSettings() { localStorage.setItem('tw_stock_settings_v6', JSON.stringify(this.settings)); this.showSettings = false; },
         saveData() { localStorage.setItem('tw_stock_tx_v6', JSON.stringify(this.transactions)); localStorage.setItem('tw_stock_cashbook_v1', JSON.stringify(this.cashBook || [])); localStorage.setItem('tw_stock_portfolios_v1', JSON.stringify(this.portfolios || [])); localStorage.setItem('tw_stock_current_portfolio_v1', this.currentPortfolioId || 'main'); localStorage.setItem('tw_stock_names_v1', JSON.stringify(this.nameMap || {})); localStorage.setItem('tw_stock_categories_v1', JSON.stringify(this.categories || [])); },
         exportData() { const dateStr = new Date().toISOString().split('T')[0]; this.exportFileName = `stock_backup_${dateStr}`; this.backupTab = 'download'; this.restoreFileName = ''; this.restoreFileObject = null; this.showExportModal = true; },

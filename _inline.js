@@ -15,7 +15,7 @@ createApp({
             showEditBuyModal: false, editBuyTx: { id: null, date: '', code: '', name: '', price: null, qty: 0, category: 'core' },
             showEditTxModal: false, editTx: { id: null, date: '', code: '', name: '', type: 'buy', mode: 'cash', price: null, qty: 0, category: 'core', dayTradeEligible: false },
             showAddModal: false, searchText: '', isSearching: false,
-            settings: { feeRate: 0.1425, discount: 0.28, taxRate: 0.3, dayTradeTaxRate: 0.15, minFee: 20 },
+            settings: { feeRate: 0.1425, discount: 1, taxRate: 0.3, dayTradeTaxRate: 0.15, minFee: 20 },
             showSettings: false, showExportModal: false, backupTab: 'download', exportFileName: '', restoreFileName: '', restoreFileObject: null, restoreBusy: false,
             showInfoModal: false, infoTitle: '', infoMessage: '', showConfirmModal: false, confirmTitle: '', confirmMessage: '', confirmCallback: null,
             showGlobalIndices: false, isGlobalLoading: false, isTaiexNightLoading: false, globalIndices: [],
@@ -39,8 +39,17 @@ createApp({
         this.baseStockMap = this.rawStockData.map(s => { const [code, name] = s.split(':'); return { code, name }; });
         const savedTx = localStorage.getItem('tw_stock_tx_v6'); if (savedTx) this.transactions = JSON.parse(savedTx);
         const savedSettings = localStorage.getItem('tw_stock_settings_v6'); if (savedSettings) this.settings = JSON.parse(savedSettings);
-        if (this.settings == null || typeof this.settings !== 'object') this.settings = { feeRate: 0.1425, discount: 0.28, taxRate: 0.3, dayTradeTaxRate: 0.15, minFee: 20 };
+        if (this.settings == null || typeof this.settings !== 'object') this.settings = { feeRate: 0.1425, discount: 1, taxRate: 0.3, dayTradeTaxRate: 0.15, minFee: 20 };
         if (this.settings.dayTradeTaxRate == null || isNaN(Number(this.settings.dayTradeTaxRate))) this.settings.dayTradeTaxRate = 0.15;
+        if (this.settings.feeRate == null || isNaN(Number(this.settings.feeRate))) this.settings.feeRate = 0.1425;
+        if (this.settings.taxRate == null || isNaN(Number(this.settings.taxRate))) this.settings.taxRate = 0.3;
+        if (this.settings.minFee == null || isNaN(Number(this.settings.minFee))) this.settings.minFee = 20;
+        if (this.settings.discount == null || isNaN(Number(this.settings.discount)) || Number(this.settings.discount) <= 0) this.settings.discount = 1;
+        const looksLikeLegacyDefault = Number(this.settings.feeRate) === 0.1425 && Number(this.settings.discount) === 0.28 && Number(this.settings.taxRate) === 0.3 && Number(this.settings.dayTradeTaxRate) === 0.15 && Number(this.settings.minFee) === 20;
+        if (looksLikeLegacyDefault) {
+            this.settings.discount = 1;
+            localStorage.setItem('tw_stock_settings_v6', JSON.stringify(this.settings));
+        }
         const savedCustom = localStorage.getItem('tw_stock_custom_v6'); if (savedCustom) this.customStocks = JSON.parse(savedCustom);
         const savedPrices = localStorage.getItem('tw_stock_prices_v6'); if (savedPrices) this.latestPrices = JSON.parse(savedPrices);
         const savedStatus = localStorage.getItem('tw_stock_status_v6'); if (savedStatus) this.latestStatus = JSON.parse(savedStatus);
@@ -171,6 +180,8 @@ createApp({
         closeStockDetails() { this.showStockDetails = false; this.selectedStock = null; },
         openEditBuyModal(row) { if (!row || !row.id) { this.openInfoModal('無法編輯', '找不到這筆買入紀錄的識別碼'); return; } const tx = this.transactions.find(t => t.id === row.id); if (!tx) { this.openInfoModal('無法編輯', '找不到對應的交易紀錄'); return; } if (tx.type !== 'buy') { this.openInfoModal('無法編輯', '目前僅支援編輯「買入」紀錄'); return; } this.editBuyTx = { id: tx.id, date: tx.date, code: tx.code, name: tx.name, price: tx.price, qty: tx.qty, category: tx.category || 'core' }; this.showEditBuyModal = true; },
         closeEditBuyModal() { this.showEditBuyModal = false; this.editBuyTx = { id: null, date: '', code: '', name: '', price: null, qty: 0, category: 'core' }; },
+        calcBrokerFee(subTotal) { const grossFee = Number(subTotal || 0) * (Number(this.settings.feeRate || 0) / 100) * Number(this.settings.discount || 1); return Math.max(Math.floor(grossFee), Math.round(this.settings.minFee || 0)); },
+        calcBrokerTax(subTotal, taxRatePercent) { return Math.floor(Number(subTotal || 0) * (Number(taxRatePercent || 0) / 100)); },
         saveEditedBuy() {
             if (!this.editBuyTx.id || !this.editBuyTx.code || !this.editBuyTx.date || !this.editBuyTx.price || !this.editBuyTx.qty) { this.openInfoModal('資料不完整', '請輸入日期、價格與股數'); return; }
             if (this.editBuyTx.qty <= 0 || this.editBuyTx.price <= 0) { this.openInfoModal('資料不正確', '價格與股數需大於 0'); return; }
@@ -180,7 +191,7 @@ createApp({
             const backup = JSON.parse(JSON.stringify(this.transactions));
 
             const subTotal = this.editBuyTx.price * this.editBuyTx.qty;
-            const fee = Math.max(Math.round(subTotal * (this.settings.feeRate / 100) * this.settings.discount), Math.round(this.settings.minFee || 0));
+            const fee = this.calcBrokerFee(subTotal);
             this.transactions[idx] = { ...this.transactions[idx], date: this.editBuyTx.date, price: this.editBuyTx.price, qty: this.editBuyTx.qty, category: this.editBuyTx.category, fee, tax: 0, totalAmount: subTotal + fee, realizedPnL: null };
 
             const ok = this.recomputeAllTradesAndValidate();
@@ -353,7 +364,7 @@ createApp({
                     const dtTax = tx.price * matched * (dtTaxRate / 100);
                     const normalQty = qty - matched;
                     const normalTax = tx.price * normalQty * (normalTaxRate / 100);
-                    tx.tax = Math.round(dtTax + normalTax);
+                    tx.tax = this.calcBrokerTax(tx.price * matched, dtTaxRate) + this.calcBrokerTax(tx.price * normalQty, normalTaxRate);
                     tx.totalAmount = subTotal - fee - tx.tax;
                 }
 
@@ -634,14 +645,14 @@ async fetchOnlineSuggestions(query) {
             this.latestPrices[code] = price;
 
             const subTotal = price * qty;
-            const fee = Math.max(Math.round(subTotal * (this.settings.feeRate / 100) * this.settings.discount), Math.round(this.settings.minFee || 0));
+            const fee = this.calcBrokerFee(subTotal);
 
             // 當沖是否成立要看同日配對結果；這裡先以一般稅率估算，最終以 recompute 重新計算為準。
             let tax = 0;
             let totalAmount = subTotal + fee;
             if (type === 'sell') {
                 const taxRate = this.settings.taxRate;
-                tax = Math.round(subTotal * (taxRate / 100));
+                tax = this.calcBrokerTax(subTotal, taxRate);
                 totalAmount = subTotal - fee - tax;
             }
 
@@ -689,10 +700,10 @@ async fetchOnlineSuggestions(query) {
             if(this.sellTx.maxQty && this.sellTx.qty > this.sellTx.maxQty) { this.openInfoModal('庫存不足', '賣出股數不可大於庫存'); return; }
 
             const subTotal = this.sellTx.price * this.sellTx.qty;
-            const fee = Math.max(Math.round(subTotal * (this.settings.feeRate / 100) * this.settings.discount), Math.round(this.settings.minFee || 0));
+            const fee = this.calcBrokerFee(subTotal);
             // 當沖是否成立要看同日配對結果；這裡先以一般稅率估算，最終以 recompute 重新計算為準。
             const taxRate = this.settings.taxRate;
-            const tax = Math.round(subTotal * (taxRate / 100));
+            const tax = this.calcBrokerTax(subTotal, taxRate);
             const totalAmount = subTotal - fee - tax;
 
             const backup = JSON.parse(JSON.stringify(this.transactions));
@@ -704,6 +715,7 @@ async fetchOnlineSuggestions(query) {
             this.saveData();
             this.showSellModal = false;
         },
+        applyKangHePreset() { this.settings.feeRate = 0.1425; this.settings.discount = 1; this.settings.taxRate = 0.3; this.settings.dayTradeTaxRate = 0.15; this.settings.minFee = 20; },
         saveSettings() { localStorage.setItem('tw_stock_settings_v6', JSON.stringify(this.settings)); this.showSettings = false; },
         saveData() { localStorage.setItem('tw_stock_tx_v6', JSON.stringify(this.transactions)); },
         exportData() { const dateStr = new Date().toISOString().split('T')[0]; this.exportFileName = `stock_backup_${dateStr}`; this.backupTab = 'download'; this.restoreFileName = ''; this.restoreFileObject = null; this.showExportModal = true; },
