@@ -252,6 +252,7 @@
                     <button @click="showSettings = true" class="w-10 h-10 rounded-full bg-slate-100 text-slate-600 flex items-center justify-center active:bg-slate-200" title="設定"><i class="fa-solid fa-gear"></i></button>
                     <button @click="exportData" class="w-10 h-10 rounded-full bg-slate-100 text-slate-600 flex items-center justify-center active:bg-slate-200" title="備份（下載／還原）"><i class="fa-solid fa-download"></i></button>
                     <button @click="showGDriveModal = true" class="w-10 h-10 rounded-full bg-slate-100 text-slate-600 flex items-center justify-center active:bg-slate-200" title="Google 雲端備份"><i class="fa-solid fa-cloud"></i></button>
+                    <button @click="openCommodityModal" class="w-10 h-10 rounded-full bg-slate-100 text-slate-600 flex items-center justify-center active:bg-slate-200 transition-colors" title="商品期貨"><i class="fa-solid fa-coins"></i></button>
                     <button @click="showHelpModal = true" class="w-10 h-10 rounded-full bg-blue-50 text-blue-600 border border-blue-200 flex items-center justify-center active:bg-blue-100 shadow-sm" title="說明"><i class="fa-solid fa-circle-question text-lg"></i></button>
                 </div>
             </div>
@@ -286,6 +287,7 @@
                 <button @click="showSettings = true" class="btn btn-secondary !h-12 !px-4 !rounded-xl" title="費率設定"><i class="fa-solid fa-gear text-lg"></i></button>
                 <button @click="exportData" class="btn btn-secondary !h-12 !px-4 !rounded-xl" title="備份"><i class="fa-solid fa-download text-lg"></i></button>
                 <button @click="showGDriveModal = true" class="btn btn-secondary !h-12 !px-4 !rounded-xl" title="Google 雲端備份"><i class="fa-solid fa-cloud text-lg"></i></button>
+                <button @click="openCommodityModal" class="btn btn-secondary !h-12 !px-4 !rounded-xl" title="商品期貨"><i class="fa-solid fa-coins text-lg"></i></button>
                 <button @click="showHelpModal = true" class="btn btn-secondary !h-12 !px-4 !rounded-xl !text-blue-600 !border-blue-200 hover:!bg-blue-50" title="使用說明"><i class="fa-solid fa-circle-question text-lg"></i></button>
             </div>
         </header>
@@ -1252,7 +1254,78 @@
             </div>
         </div>
 
-        <div v-if="showHelpModal" class="fixed inset-0 bg-slate-900/70 backdrop-blur-sm flex justify-center items-center z-[80] p-4 transition-all duration-300">
+        
+        <div v-if="showCommodityModal" class="fixed inset-0 bg-slate-900/70 backdrop-blur-sm flex justify-center items-center z-[80] p-4 transition-all duration-300" @click.self="showCommodityModal = false">
+            <div class="bg-white w-full max-w-4xl rounded-[2rem] shadow-2xl relative flex flex-col max-h-[90vh]">
+                <div class="flex justify-between items-center p-6 border-b border-slate-100">
+                    <h3 class="text-2xl font-extrabold text-slate-800 flex items-center">
+                        <i class="fa-solid fa-coins text-amber-500 mr-3"></i> 即時商品期貨查價
+                    </h3>
+                    <button @click="showCommodityModal = false" class="w-9 h-9 rounded-full bg-slate-50 text-slate-400 border border-slate-200 flex items-center justify-center hover:bg-slate-100 transition" aria-label="關閉">
+                        <i class="fa-solid fa-times"></i>
+                    </button>
+                </div>
+                <div class="overflow-y-auto p-6 space-y-5">
+                    <div class="bg-slate-50 border border-slate-200 rounded-2xl p-4 text-sm text-slate-600 leading-relaxed">
+                        <div class="font-extrabold text-slate-700 mb-1">快速查價（連續期貨）</div>
+                        這裡提供黃金、白銀、銅、布蘭特原油期貨的即時價格小工具。若畫面顯示空白，請確認瀏覽器未封鎖第三方小工具或關閉阻擋擴充功能後再試。
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div class="rounded-2xl border border-slate-200 bg-white shadow-sm p-4">
+                            <div class="flex items-center justify-between mb-3">
+                                <div class="font-extrabold text-slate-700 flex items-center gap-2">
+                                    <span class="w-2.5 h-2.5 rounded-full bg-amber-400"></span> 黃金期貨
+                                </div>
+                                <a href="https://www.tradingview.com/symbols/COMEX-GC1%21/" target="_blank" rel="noopener" class="text-xs font-bold text-blue-600 hover:underline">開啟圖表</a>
+                            </div>
+                            <div id="tv_quote_gc1" class="rounded-xl border border-slate-200 bg-white/70 p-3 min-h-[86px]"></div>
+                            <div class="pt-2 text-xs text-slate-400">Quotes by TradingView</div>
+                        </div>
+
+                        <div class="rounded-2xl border border-slate-200 bg-white shadow-sm p-4">
+                            <div class="flex items-center justify-between mb-3">
+                                <div class="font-extrabold text-slate-700 flex items-center gap-2">
+                                    <span class="w-2.5 h-2.5 rounded-full bg-slate-400"></span> 白銀期貨
+                                </div>
+                                <a href="https://www.tradingview.com/symbols/COMEX-SI1%21/" target="_blank" rel="noopener" class="text-xs font-bold text-blue-600 hover:underline">開啟圖表</a>
+                            </div>
+                            <div id="tv_quote_si1" class="rounded-xl border border-slate-200 bg-white/70 p-3 min-h-[86px]"></div>
+                            <div class="pt-2 text-xs text-slate-400">Quotes by TradingView</div>
+                        </div>
+
+                        <div class="rounded-2xl border border-slate-200 bg-white shadow-sm p-4">
+                            <div class="flex items-center justify-between mb-3">
+                                <div class="font-extrabold text-slate-700 flex items-center gap-2">
+                                    <span class="w-2.5 h-2.5 rounded-full bg-orange-400"></span> 銅期貨
+                                </div>
+                                <a href="https://www.tradingview.com/symbols/COMEX-HG1%21/" target="_blank" rel="noopener" class="text-xs font-bold text-blue-600 hover:underline">開啟圖表</a>
+                            </div>
+                            <div id="tv_quote_hg1" class="rounded-xl border border-slate-200 bg-white/70 p-3 min-h-[86px]"></div>
+                            <div class="pt-2 text-xs text-slate-400">Quotes by TradingView</div>
+                        </div>
+
+                        <div class="rounded-2xl border border-slate-200 bg-white shadow-sm p-4">
+                            <div class="flex items-center justify-between mb-3">
+                                <div class="font-extrabold text-slate-700 flex items-center gap-2">
+                                    <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span> 布蘭特原油期貨
+                                </div>
+                                <a href="https://www.tradingview.com/symbols/ICEEUR-BRN1%21/" target="_blank" rel="noopener" class="text-xs font-bold text-blue-600 hover:underline">開啟圖表</a>
+                            </div>
+                            <div id="tv_quote_brn1" class="rounded-xl border border-slate-200 bg-white/70 p-3 min-h-[86px]"></div>
+                            <div class="pt-2 text-xs text-slate-400">Quotes by TradingView</div>
+                        </div>
+                    </div>
+
+                    <div class="flex flex-wrap gap-2 justify-end">
+                        <button @click="refreshCommodityWidgets" class="btn btn-secondary !rounded-xl !h-11 !px-4"><i class="fa-solid fa-rotate-right mr-2"></i>重新載入</button>
+                        <button @click="showCommodityModal = false" class="btn btn-primary !rounded-xl !h-11 !px-4"><i class="fa-solid fa-check mr-2"></i>完成</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+<div v-if="showHelpModal" class="fixed inset-0 bg-slate-900/70 backdrop-blur-sm flex justify-center items-center z-[80] p-4 transition-all duration-300">
              <div class="bg-white w-full max-w-2xl rounded-[2rem] shadow-2xl relative flex flex-col max-h-[90vh]">
                 <div class="flex justify-between items-center p-6 border-b border-slate-100"><h3 class="text-2xl font-extrabold text-slate-800 flex items-center"><i class="fa-solid fa-book-open text-blue-500 mr-3"></i> 系統使用說明</h3><button @click="showHelpModal = false" class="w-9 h-9 rounded-full bg-slate-50 text-slate-400 border border-slate-200 flex items-center justify-center hover:bg-slate-100 transition"><i class="fa-solid fa-times"></i></button></div>
                 <div class="overflow-y-auto p-6 space-y-8">
@@ -1611,6 +1684,7 @@ createApp({
     data() {
         return {
             showGDriveModal: false, gdriveBusy: false, gdriveBusyText: '', gdriveCloudMeta: (() => { try { return JSON.parse(localStorage.getItem('tw_stock_cloud_meta_v1') || '{}'); } catch(e){ return {}; } })(),
+            showCommodityModal: false,
             gdriveClientId: localStorage.getItem('tw_stock_gdrive_client_id_v1') || '', gdriveClientIdInput: localStorage.getItem('tw_stock_gdrive_client_id_v1') || '',
             // --- Portfolios (separate books) ---
             showPortfolioModal: false,
@@ -1934,6 +2008,70 @@ filteredHoldings() { return this.filter === 'all' ? this.holdings : this.holding
         selectedStockBuys() { if (!this.selectedStock) return []; return this.sortedTransactions.filter(tx => tx.code === this.selectedStock.code && tx.type === 'buy').map(tx => ({ id: tx.id, date: tx.date, qty: tx.qty, price: tx.price, category: tx.category })); }
     },
     methods: {
+
+        // --- 即時商品期貨查價（第三方小工具：TradingView） ---
+        openCommodityModal() {
+            this.showCommodityModal = true;
+            this.$nextTick(() => {
+                this.ensureCommodityWidgets();
+            });
+        },
+        refreshCommodityWidgets() {
+            // Clear mount points and re-inject scripts
+            const ids = ['tv_quote_gc1', 'tv_quote_si1', 'tv_quote_hg1', 'tv_quote_brn1'];
+            ids.forEach(id => {
+                const el = document.getElementById(id);
+                if (el) {
+                    el.innerHTML = '';
+                    delete el.dataset.tvInited;
+                }
+            });
+            this.$nextTick(() => this.ensureCommodityWidgets());
+        },
+        ensureCommodityWidgets() {
+            const items = [
+                { id: 'tv_quote_gc1', symbol: 'COMEX:GC1!' },
+                { id: 'tv_quote_si1', symbol: 'COMEX:SI1!' },
+                { id: 'tv_quote_hg1', symbol: 'COMEX:HG1!' },
+                { id: 'tv_quote_brn1', symbol: 'ICEEUR:BRN1!' },
+            ];
+            items.forEach(item => {
+                const mount = document.getElementById(item.id);
+                if (!mount) return;
+                if (mount.dataset.tvInited === '1') return;
+                this._mountTradingViewSingleQuote(mount, item.symbol);
+                mount.dataset.tvInited = '1';
+            });
+        },
+        _mountTradingViewSingleQuote(mountEl, symbol) {
+            try {
+                mountEl.innerHTML = '';
+                const outer = document.createElement('div');
+                outer.className = 'tradingview-widget-container';
+                const widget = document.createElement('div');
+                widget.className = 'tradingview-widget-container__widget';
+                outer.appendChild(widget);
+
+                const script = document.createElement('script');
+                script.type = 'text/javascript';
+                script.src = 'https://s3.tradingview.com/external-embedding/embed-widget-single-quote.js';
+                script.async = true;
+                script.text = JSON.stringify({
+                    symbol,
+                    width: '100%',
+                    colorTheme: 'light',
+                    isTransparent: true,
+                    locale: 'zh_TW'
+                }, null, 2);
+
+                outer.appendChild(script);
+                mountEl.appendChild(outer);
+            } catch (e) {
+                // Fail silently; UI already has a fallback link.
+                console.warn('TradingView widget load failed', e);
+            }
+        },
+
         // --- Portfolios: separate books for different purposes / members ---
         initPortfoliosAndMigrate() {
             // Ensure main portfolio exists
