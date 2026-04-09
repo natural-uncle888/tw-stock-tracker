@@ -253,7 +253,6 @@
                     <button @click="exportData" class="w-10 h-10 rounded-full bg-slate-100 text-slate-600 flex items-center justify-center active:bg-slate-200" title="備份（下載／還原）"><i class="fa-solid fa-download"></i></button>
                     <button @click="showGDriveModal = true" class="w-10 h-10 rounded-full bg-slate-100 text-slate-600 flex items-center justify-center active:bg-slate-200" title="Google 雲端備份"><i class="fa-solid fa-cloud"></i></button>
                     <button @click="openCommodityModal" class="w-10 h-10 rounded-full bg-slate-100 text-slate-600 flex items-center justify-center active:bg-slate-200 transition-colors" title="商品期貨"><i class="fa-solid fa-coins"></i></button>
-                    <button @click="openFutOiModal" class="w-10 h-10 rounded-full bg-slate-100 text-slate-600 flex items-center justify-center active:bg-slate-200 transition-colors" title="台指期法人未平倉"><i class="fa-solid fa-building-columns"></i></button>
                     <button @click="showHelpModal = true" class="w-10 h-10 rounded-full bg-blue-50 text-blue-600 border border-blue-200 flex items-center justify-center active:bg-blue-100 shadow-sm" title="說明"><i class="fa-solid fa-circle-question text-lg"></i></button>
                 </div>
             </div>
@@ -289,7 +288,6 @@
                 <button @click="exportData" class="btn btn-secondary !h-12 !px-4 !rounded-xl" title="備份"><i class="fa-solid fa-download text-lg"></i></button>
                 <button @click="showGDriveModal = true" class="btn btn-secondary !h-12 !px-4 !rounded-xl" title="Google 雲端備份"><i class="fa-solid fa-cloud text-lg"></i></button>
                 <button @click="openCommodityModal" class="btn btn-secondary !h-12 !px-4 !rounded-xl" title="商品期貨"><i class="fa-solid fa-coins text-lg"></i></button>
-                <button @click="openFutOiModal" class="btn btn-secondary !h-12 !px-4 !rounded-xl" title="台指期法人未平倉"><i class="fa-solid fa-building-columns text-lg"></i></button>
                 <button @click="showHelpModal = true" class="btn btn-secondary !h-12 !px-4 !rounded-xl !text-blue-600 !border-blue-200 hover:!bg-blue-50" title="使用說明"><i class="fa-solid fa-circle-question text-lg"></i></button>
             </div>
         </header>
@@ -1324,70 +1322,7 @@
                         <button @click="showCommodityModal = false" class="btn btn-primary !rounded-xl !h-11 !px-4"><i class="fa-solid fa-check mr-2"></i>完成</button>
                     </div>
                 </div>
-            
-
-        <div v-if="showFutOiModal" class="fixed inset-0 bg-slate-900/70 backdrop-blur-sm flex justify-center items-center z-[80] p-4" @click.self="showFutOiModal = false">
-            <div class="bg-white w-full max-w-3xl rounded-[2rem] shadow-2xl relative flex flex-col max-h-[90vh]">
-                <div class="flex justify-between items-center p-6 border-b border-slate-100">
-                    <h3 class="text-2xl font-extrabold text-slate-800 flex items-center">
-                        <i class="fa-solid fa-building-columns text-indigo-500 mr-3"></i> 台指期（TX）法人未平倉
-                    </h3>
-                    <button @click="showFutOiModal = false" class="w-9 h-9 rounded-full bg-slate-50 text-slate-400 border border-slate-200 flex items-center justify-center hover:bg-slate-100 transition" aria-label="關閉">
-                        <i class="fa-solid fa-times"></i>
-                    </button>
-                </div>
-
-                <div class="p-6 overflow-auto">
-                    <div class="flex items-center justify-between gap-3 mb-4">
-                        <div class="text-slate-600">
-                            資料日期：<span class="font-semibold text-slate-800">{{ futOiDate || '—' }}</span>
-                        </div>
-                        <button @click="fetchTxFutOi" class="btn btn-secondary !h-10 !px-4 !rounded-xl" :disabled="futOiLoading">
-                            <i class="fa-solid fa-rotate-right mr-2" :class="{'fa-spin': futOiLoading}"></i>
-                            {{ futOiLoading ? '查詢中…' : '重新查詢' }}
-                        </button>
-                    </div>
-
-                    <div v-if="futOiError" class="p-4 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 mb-4 font-bold">
-                        {{ futOiError }}
-                    </div>
-
-                    <div class="overflow-x-auto rounded-2xl border border-slate-200">
-                        <table class="min-w-full text-sm">
-                            <thead class="bg-slate-50 text-slate-700">
-                                <tr>
-                                    <th class="text-left px-4 py-3 font-semibold">身份別</th>
-                                    <th class="text-right px-4 py-3 font-semibold">多方未平倉(口)</th>
-                                    <th class="text-right px-4 py-3 font-semibold">空方未平倉(口)</th>
-                                    <th class="text-right px-4 py-3 font-semibold">多空淨額(口)</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr v-for="r in futOiRows" :key="r.who" class="border-t border-slate-100">
-                                    <td class="px-4 py-3 font-extrabold text-slate-800">{{ r.who }}</td>
-                                    <td class="px-4 py-3 text-right tabular-nums font-bold">{{ formatCurrency(r.long) }}</td>
-                                    <td class="px-4 py-3 text-right tabular-nums font-bold">{{ formatCurrency(r.short) }}</td>
-                                    <td class="px-4 py-3 text-right tabular-nums font-black"
-                                        :class="r.net > 0 ? 'text-emerald-700' : (r.net < 0 ? 'text-rose-700' : 'text-slate-700')">
-                                        {{ formatCurrency(r.net) }}
-                                    </td>
-                                </tr>
-                                <tr v-if="!futOiLoading && futOiRows.length === 0">
-                                    <td colspan="4" class="px-4 py-6 text-center text-slate-500 font-bold">尚無資料</td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-
-                    <div class="mt-3 text-xs text-slate-500">
-                        來源：TAIFEX「Market Data of Major Institutional Traders」- Details of Futures Contracts（TX）
-                    </div>
-                </div>
             </div>
-        </div>
-
-
-</div>
         </div>
 
 <div v-if="showHelpModal" class="fixed inset-0 bg-slate-900/70 backdrop-blur-sm flex justify-center items-center z-[80] p-4 transition-all duration-300">
@@ -1750,8 +1685,6 @@ createApp({
         return {
             showGDriveModal: false, gdriveBusy: false, gdriveBusyText: '', gdriveCloudMeta: (() => { try { return JSON.parse(localStorage.getItem('tw_stock_cloud_meta_v1') || '{}'); } catch(e){ return {}; } })(),
             showCommodityModal: false,
-            showFutOiModal: false, futOiLoading: false, futOiError: '', futOiDate: '', futOiRows: [],
-
             gdriveClientId: localStorage.getItem('tw_stock_gdrive_client_id_v1') || '', gdriveClientIdInput: localStorage.getItem('tw_stock_gdrive_client_id_v1') || '',
             // --- Portfolios (separate books) ---
             showPortfolioModal: false,
@@ -2083,87 +2016,6 @@ filteredHoldings() { return this.filter === 'all' ? this.holdings : this.holding
                 this.ensureCommodityWidgets();
             });
         },
-        // --- 台指期（TX）三大法人未平倉（TAIFEX） ---
-        openFutOiModal() {
-            this.showFutOiModal = true;
-            this.fetchTxFutOi();
-        },
-        async fetchTxFutOi() {
-            this.futOiLoading = true;
-            this.futOiError = '';
-            this.futOiRows = [];
-            this.futOiDate = '';
-
-            try {
-                const target = 'https://www.taifex.com.tw/enl/eng3/futContractsDate';
-                if (location.protocol === 'file:') {
-                    throw new Error('你目前是用 file:// 方式開啟頁面，瀏覽器無法呼叫 Netlify Functions，所以查詢會失敗。請改用 Netlify 部署網址，或在專案資料夾用 netlify dev 啟動。');
-                }
-                const corsBase = '/.netlify/functions/taifex?u=';
-                const url = corsBase + encodeURIComponent(target);
-const res = await fetch(url, { headers: { 'Accept': 'text/html,*/*' } });
-                if (res.status === 404) {
-                    throw new Error('找不到 /.netlify/functions/taifex（你可能不是用 Netlify 部署或 netlify dev 啟動）。請：1) 部署到 Netlify；或 2) 在專案資料夾用 netlify dev 開啟本機網址。');
-                }
-                if (!res.ok) throw new Error(`HTTP ${res.status}`);
-
-                const html = await res.text();
-                const doc = new DOMParser().parseFromString(html, 'text/html');
-
-                // Date:YYYY/MM/DD
-                const bodyText = (doc.body && doc.body.textContent) ? doc.body.textContent : '';
-                const dm = bodyText.match(/Date\s*:\s*(\d{4}\/\d{2}\/\d{2})/);
-                if (dm) this.futOiDate = dm[1];
-
-                const CONTRACT_CODES = new Set(['TX','TE','TF','MTX','TMF','ZEF','ZFF','STF','ETF','GTF','XIF','G2F','M1F','E4F','BTF','SOF','SHF','TJF','SPF','UNF','UDF','SXF','F1F']);
-                const WHO_MAP = { 'FINI': '外資', 'Investment Trust': '投信', 'Dealers': '自營商' };
-                const toInt = (s) => parseInt(String(s).replace(/,/g, ''), 10);
-
-                let curCode = null;
-                const rows = [];
-
-                const trs = Array.from(doc.querySelectorAll('table tr'));
-                for (const tr of trs) {
-                    const cells = Array.from(tr.querySelectorAll('th,td')).map(el => (el.textContent || '').trim()).filter(Boolean);
-
-                    // Contract code may appear only on first row (rowspan)
-                    const maybeCode = cells.find(c => CONTRACT_CODES.has(c));
-                    if (maybeCode) curCode = maybeCode;
-
-                    if (curCode !== 'TX') continue;
-
-                    const whoKey = Object.keys(WHO_MAP).find(k => cells.includes(k));
-                    if (!whoKey) continue;
-
-                    const nums = cells.filter(t => /^-?[\d,]+$/.test(t)).map(toInt);
-                    if (nums.length < 6) continue;
-
-                    // Last 6 = Open Interest (Vol/Value) Long, Short, Net
-                    const last6 = nums.slice(-6);
-
-                    rows.push({
-                        who: WHO_MAP[whoKey],
-                        long: last6[0],
-                        short: last6[2],
-                        net: last6[4],
-                    });
-                }
-
-                const order = { '外資': 0, '投信': 1, '自營商': 2 };
-                rows.sort((a, b) => (order[a.who] ?? 99) - (order[b.who] ?? 99));
-
-                this.futOiRows = rows;
-
-                if (!rows.length) {
-                    this.futOiError = '解析不到 TX 資料（可能 TAIFEX 網頁欄位調整）。';
-                }
-            } catch (e) {
-                this.futOiError = '查詢失敗：' + (e?.message || String(e));
-            } finally {
-                this.futOiLoading = false;
-            }
-        },
-
         refreshCommodityWidgets() {
             // Clear mount points and re-inject scripts
             const ids = ['tv_quote_gc1', 'tv_quote_si1', 'tv_quote_hg1', 'tv_quote_brn1'];
