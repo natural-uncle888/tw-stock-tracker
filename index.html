@@ -156,6 +156,20 @@
           text-align: center !important;
         }
 
+        /* v4.4 UI fix: 長帳戶名稱與桌機 Header 防爆版 */
+        .desktop-header { align-items: center; }
+        .desktop-header .brand-block { flex: 0 0 auto; min-width: 285px; }
+        .desktop-header .tab-switch { flex: 0 0 auto; }
+        .header-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; align-items: center; gap: 0.75rem; min-width: 0; max-width: 560px; }
+        .header-actions .btn { flex: 0 0 auto; }
+        .portfolio-header-btn { min-width: 132px; max-width: 230px; justify-content: flex-start !important; gap: 0.5rem; }
+        .portfolio-header-name, .portfolio-name-truncate { display: inline-block; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; line-height: 1.15; }
+        .portfolio-header-name { max-width: 145px; }
+        .dashboard-portfolio-pill { max-width: min(72vw, 520px); overflow: hidden; }
+        .dashboard-portfolio-pill .portfolio-name-truncate { max-width: min(48vw, 360px); vertical-align: bottom; }
+        @media (max-width: 1279px) { .desktop-header { align-items: stretch; } .desktop-header .brand-block { min-width: 0; } .desktop-header .tab-switch { align-self: center; } .header-actions { max-width: none; justify-content: center; } }
+        @media (max-width: 767px) { .mobile-portfolio-btn { min-width: 0; flex: 0 1 auto; } .mobile-portfolio-btn .portfolio-name-truncate { max-width: 38vw; } }
+
         /* NEW: Sub-Tab Switcher Styles */
         .sub-tab-container { @apply flex p-1 bg-slate-200/50 rounded-xl mb-6 border border-slate-200; }
         .sub-tab-item { @apply flex-1 py-2.5 text-sm font-bold text-slate-500 rounded-lg transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer select-none; }
@@ -240,9 +254,9 @@
                     </div>
 
                     <button @click="openPortfolioModal"
-                            class="max-w-[52vw] h-10 px-3 rounded-2xl bg-slate-50 border border-slate-200 text-slate-700 font-black text-sm flex items-center gap-2 active:scale-95 transition shadow-sm">
+                            class="mobile-portfolio-btn max-w-[52vw] h-10 px-3 rounded-2xl bg-slate-50 border border-slate-200 text-slate-700 font-black text-sm flex items-center gap-2 active:scale-95 transition shadow-sm">
                         <i class="fa-solid fa-user text-slate-500"></i>
-                        <span class="truncate">{{ currentPortfolio.name }}</span>
+                        <span class="portfolio-name-truncate">{{ currentPortfolio.name }}</span>
                         <i class="fa-solid fa-chevron-down text-slate-400 text-xs ml-1"></i>
                     </button>
                 </div>
@@ -258,8 +272,8 @@
             </div>
         </div>
 
-        <header class="hidden md:flex flex-col xl:flex-row justify-between items-center mb-8 gap-6 bg-white/80 backdrop-blur-xl rounded-[2rem] p-6 shadow-[0_20px_60px_-24px_rgba(15,23,42,0.28)] border border-white/90">
-            <div class="flex items-center gap-5">
+        <header class="desktop-header hidden md:flex flex-col xl:flex-row justify-between mb-8 gap-6 bg-white/80 backdrop-blur-xl rounded-[2rem] p-6 shadow-[0_20px_60px_-24px_rgba(15,23,42,0.28)] border border-white/90">
+            <div class="brand-block flex items-center gap-5">
                 <div class="bg-gradient-to-br from-blue-600 to-indigo-700 w-14 h-14 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-blue-500/30">
                     <i class="fa-solid fa-chart-simple text-2xl"></i>
                 </div>
@@ -270,6 +284,9 @@
             </div>
             
             <div class="tab-switch" role="tablist" aria-label="主功能分頁">
+                <button @click="currentTab = 'dashboard'; showStockDetails = false" type="button" role="tab" :aria-selected="currentTab === 'dashboard'" :class="['tab-btn', currentTab === 'dashboard' ? 'active' : '']">
+                    <i class="fa-solid fa-gauge-high text-base"></i><span>總覽</span>
+                </button>
                 <button @click="currentTab = 'inventory'; showStockDetails = false" type="button" role="tab" :aria-selected="currentTab === 'inventory'" :class="['tab-btn', currentTab === 'inventory' ? 'active' : '']">
                     <i class="fa-solid fa-briefcase text-base"></i><span>庫存管理</span>
                 </button>
@@ -281,8 +298,8 @@
                 </button>
             </div>
 
-            <div class="flex gap-3">
-                <button @click="openPortfolioModal" class="btn btn-secondary !h-12 !px-4 !rounded-xl" title="投資組合／自訂帳本"><i class="fa-solid fa-users text-lg"></i><span class="hidden md:inline ml-2 font-bold text-slate-700">{{ currentPortfolio.name }}</span></button>
+            <div class="header-actions">
+                <button @click="openPortfolioModal" class="btn btn-secondary portfolio-header-btn !h-12 !px-4 !rounded-xl" title="投資組合／自訂帳本"><i class="fa-solid fa-users text-lg"></i><span class="hidden md:inline portfolio-header-name font-bold text-slate-700">{{ currentPortfolio.name }}</span></button>
                 <button @click="showSecurityModal = true" class="btn btn-secondary !h-12 !px-4 !rounded-xl" title="安全性設定"><i class="fa-solid fa-lock text-lg"></i></button>
                 <button @click="showSettings = true" class="btn btn-secondary !h-12 !px-4 !rounded-xl" title="費率設定"><i class="fa-solid fa-gear text-lg"></i></button>
                 <button @click="exportData" class="btn btn-secondary !h-12 !px-4 !rounded-xl" title="備份"><i class="fa-solid fa-download text-lg"></i></button>
@@ -293,6 +310,54 @@
         </header>
 
         <div class="h-36 md:hidden"></div>
+
+        <div v-show="currentTab === 'dashboard'" class="space-y-6">
+            <div class="bg-gradient-to-br from-slate-900 via-slate-800 to-indigo-900 rounded-[2rem] p-6 md:p-8 text-white shadow-xl relative overflow-hidden">
+                <div class="absolute -top-12 -right-12 w-56 h-56 rounded-full bg-white/10 blur-2xl"></div>
+                <div class="relative z-10 flex flex-col lg:flex-row lg:items-end lg:justify-between gap-6">
+                    <div>
+                        <div class="dashboard-portfolio-pill inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/10 border border-white/10 text-xs font-black text-slate-200 mb-4"><i class="fa-solid fa-gauge-high shrink-0"></i><span class="shrink-0">Dashboard 總覽｜</span><span class="portfolio-name-truncate">{{ currentPortfolio.name }}</span></div>
+                        <div class="text-sm font-bold text-slate-300">總資產（現金 + 庫存市值）</div>
+                        <div class="mt-2 text-4xl md:text-5xl font-black tracking-tight">{{ formatCurrency(netAssetValue) }}</div>
+                        <div class="mt-3 text-sm font-black" :class="cashTotalPnL >= 0 ? 'text-red-200' : 'text-green-200'">總損益：{{ cashTotalPnL >= 0 ? '+' : '' }}{{ formatCurrency(cashTotalPnL) }}（{{ cashRoiPercent }}%）</div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-3 w-full lg:w-[420px]">
+                        <div class="rounded-2xl bg-white/10 border border-white/10 p-4"><div class="text-xs font-bold text-slate-300">現金餘額</div><div class="mt-1 text-xl font-black" :class="cashBalance >= 0 ? 'text-emerald-200' : 'text-rose-200'">{{ cashBalance >= 0 ? '' : '-' }}{{ formatCurrency(Math.abs(cashBalance)) }}</div></div>
+                        <div class="rounded-2xl bg-white/10 border border-white/10 p-4"><div class="text-xs font-bold text-slate-300">庫存市值</div><div class="mt-1 text-xl font-black text-white">{{ formatCurrency(estimatedMarketValue) }}</div></div>
+                        <div class="rounded-2xl bg-white/10 border border-white/10 p-4"><div class="text-xs font-bold text-slate-300">已實現損益</div><div class="mt-1 text-xl font-black" :class="totalRealizedPnL >= 0 ? 'text-red-200' : 'text-green-200'">{{ totalRealizedPnL >= 0 ? '+' : '' }}{{ formatCurrency(totalRealizedPnL) }}</div></div>
+                        <div class="rounded-2xl bg-white/10 border border-white/10 p-4"><div class="text-xs font-bold text-slate-300">未實現損益</div><div class="mt-1 text-xl font-black" :class="totalUnrealizedPnL >= 0 ? 'text-red-200' : 'text-green-200'">{{ totalUnrealizedPnL >= 0 ? '+' : '' }}{{ formatCurrency(totalUnrealizedPnL) }}</div></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div class="card !p-5"><div class="text-xs text-slate-400 font-bold mb-1">可用獲利</div><div class="text-2xl font-black" :class="availableRealizedProfit >= 0 ? 'text-red-600' : 'text-green-600'">{{ availableRealizedProfit >= 0 ? '+' : '' }}{{ formatCurrency(availableRealizedProfit) }}</div><div class="mt-2 text-xs font-bold text-slate-400">已實現 - 提領 + 補回</div></div>
+                <div class="card !p-5"><div class="text-xs text-slate-400 font-bold mb-1">已提領獲利</div><div class="text-2xl font-black text-rose-600">-{{ formatCurrency(profitWithdrawalsTotal) }}</div><div class="mt-2 text-xs font-bold text-slate-400">已領出使用的獲利</div></div>
+                <div class="card !p-5"><div class="text-xs text-slate-400 font-bold mb-1">已補回獲利</div><div class="text-2xl font-black text-emerald-700">+{{ formatCurrency(profitRestoresTotal) }}</div><div class="mt-2 text-xs font-bold text-slate-400">補回到獲利池</div></div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div class="card">
+                    <div class="flex items-center justify-between mb-4"><h3 class="text-base font-extrabold text-slate-700 flex items-center gap-2"><i class="fa-solid fa-chart-pie text-indigo-500"></i> 資產組成</h3><button @click="currentTab='cash'" class="text-xs font-black text-indigo-600 hover:underline">查看資金流</button></div>
+                    <div class="space-y-3">
+                        <div class="rounded-2xl bg-slate-50 border border-slate-200 p-4 flex items-center justify-between"><div><div class="text-sm font-black text-slate-700">現金餘額</div><div class="text-xs font-bold text-slate-400">可用現金水位</div></div><div class="font-black text-slate-800">{{ formatCurrency(cashBalance) }}</div></div>
+                        <div class="rounded-2xl bg-slate-50 border border-slate-200 p-4 flex items-center justify-between"><div><div class="text-sm font-black text-slate-700">庫存市值</div><div class="text-xs font-bold text-slate-400">依最新股價估算</div></div><div class="font-black text-slate-800">{{ formatCurrency(estimatedMarketValue) }}</div></div>
+                        <div class="rounded-2xl bg-slate-50 border border-slate-200 p-4 flex items-center justify-between"><div><div class="text-sm font-black text-slate-700">淨投入</div><div class="text-xs font-bold text-slate-400">期初 + 入金 - 出金</div></div><div class="font-black text-slate-800">{{ formatCurrency(cashNetContribution) }}</div></div>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="flex items-center justify-between mb-4"><h3 class="text-base font-extrabold text-slate-700 flex items-center gap-2"><i class="fa-solid fa-tags text-amber-500"></i> 獲利用途分類</h3><button @click="currentTab='cash'" class="text-xs font-black text-amber-600 hover:underline">新增提領/補回</button></div>
+                    <div v-if="profitWithdrawalCategorySummary.length === 0" class="rounded-2xl border border-dashed border-slate-200 p-8 text-center text-slate-400 font-bold">尚無獲利提領分類資料</div>
+                    <div v-else class="space-y-3">
+                        <div v-for="item in profitWithdrawalCategorySummary" :key="item.category" class="rounded-2xl bg-slate-50 border border-slate-200 p-4">
+                            <div class="flex items-center justify-between gap-3"><div class="font-black text-slate-700">{{ item.label }}</div><div class="font-black text-rose-600">{{ formatCurrency(item.amount) }}</div></div>
+                            <div class="mt-2 h-2 rounded-full bg-slate-200 overflow-hidden"><div class="h-full bg-amber-400" :style="{ width: item.percent + '%' }"></div></div>
+                            <div class="mt-1 text-[11px] font-bold text-slate-400 text-right">{{ item.percent }}%</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
 
         <div v-show="currentTab === 'inventory'">
             <div v-if="!showStockDetails">
@@ -755,6 +820,14 @@
                     </div>
                 </div>
 
+
+                <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                    <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200"><div class="text-xs text-slate-400 font-bold mb-1">累計已實現損益</div><div class="text-2xl font-black" :class="totalRealizedPnL >= 0 ? 'text-up' : 'text-down'">{{ totalRealizedPnL > 0 ? '+' : '' }}{{ formatCurrency(totalRealizedPnL) }}</div></div>
+                    <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200"><div class="text-xs text-slate-400 font-bold mb-1">已提領獲利</div><div class="text-2xl font-black text-rose-600">-{{ formatCurrency(profitWithdrawalsTotal) }}</div></div>
+                    <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200"><div class="text-xs text-slate-400 font-bold mb-1">已補回獲利</div><div class="text-2xl font-black text-emerald-700">+{{ formatCurrency(profitRestoresTotal) }}</div></div>
+                    <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200"><div class="text-xs text-slate-400 font-bold mb-1">可用獲利</div><div class="text-2xl font-black" :class="availableRealizedProfit >= 0 ? 'text-up' : 'text-down'">{{ availableRealizedProfit > 0 ? '+' : '' }}{{ formatCurrency(availableRealizedProfit) }}</div></div>
+                </div>
+
                 <div v-if="realizedAnalysisList.length === 0" class="text-center py-24 bg-white rounded-3xl border-2 border-dashed border-slate-300 text-slate-400">
                     <i class="fa-solid fa-chart-pie text-6xl mb-4 opacity-30"></i>
                     <p class="font-bold text-lg">此區間內無已實現損益資料</p>
@@ -1064,6 +1137,19 @@
                         </div>
                     </div>
 
+                    <div class="mt-4 rounded-2xl bg-amber-50 border border-amber-200 p-4">
+                        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+                            <div>
+                                <div class="text-xs font-black text-amber-700 flex items-center gap-2"><i class="fa-solid fa-sack-dollar"></i> 獲利管理</div>
+                                <div class="mt-1 text-sm font-bold text-amber-900">已實現 {{ totalRealizedPnL > 0 ? '+' : '' }}{{ formatCurrency(totalRealizedPnL) }} － 提領 {{ formatCurrency(profitWithdrawalsTotal) }} ＋ 補回 {{ formatCurrency(profitRestoresTotal) }}</div>
+                            </div>
+                            <div class="text-left md:text-right">
+                                <div class="text-[11px] font-bold text-amber-700">可用獲利</div>
+                                <div class="text-2xl font-black" :class="availableRealizedProfit >= 0 ? 'text-up' : 'text-down'">{{ availableRealizedProfit > 0 ? '+' : '' }}{{ formatCurrency(availableRealizedProfit) }}</div>
+                            </div>
+                        </div>
+                    </div>
+
                     <div class="mt-5 text-[12px] text-slate-500 font-bold leading-relaxed">
                         <div class="flex items-start gap-2"><i class="fa-solid fa-circle-info text-slate-400 mt-0.5"></i>
                             <div>計算規則：<span class="text-slate-700">總投入</span>＝期初＋入金－出金；<span class="text-slate-700">現金餘額</span>＝總投入＋賣出淨入－買入支出（已含手續費/稅）；<span class="text-slate-700">總資產</span>＝現金餘額＋持倉市值（估）。</div>
@@ -1110,6 +1196,31 @@
                         </div>
                         <div class="mt-2 text-xs font-bold text-amber-700/80">按下後會自動填入「入金」金額，你只要按送出即可。</div>
                     </div>
+                </div>
+
+                <div class="card">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-base font-extrabold text-slate-700 flex items-center gap-2"><i class="fa-solid fa-sack-dollar text-amber-500"></i> 獲利提領 / 補回</h3>
+                        <div class="text-xs font-black px-3 py-1.5 rounded-full" :class="availableRealizedProfit >= 0 ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-rose-50 text-rose-700 border border-rose-200'">可用獲利 {{ availableRealizedProfit > 0 ? '+' : '' }}{{ formatCurrency(availableRealizedProfit) }}</div>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
+                        <div class="input-group"><label class="text-xs font-bold text-slate-500 mb-2 ml-1">日期</label><input type="date" v-model="profitAdjustmentForm.date" class="w-full h-[50px] px-4 bg-white border border-slate-300 rounded-xl text-slate-700 font-bold outline-none focus:border-amber-500 focus:ring-4 focus:ring-amber-50/50 transition-all shadow-sm"></div>
+                        <div class="input-group"><label class="text-xs font-bold text-slate-500 mb-2 ml-1">類型</label><select v-model="profitAdjustmentForm.type" class="w-full h-[50px] px-4 bg-white border border-slate-300 rounded-xl text-slate-700 font-bold outline-none focus:border-amber-500"><option value="withdraw">提領獲利</option><option value="restore">補回獲利</option></select></div>
+                        <div class="input-group"><label class="text-xs font-bold text-slate-500 mb-2 ml-1">用途分類</label><select v-model="profitAdjustmentForm.category" class="w-full h-[50px] px-4 bg-white border border-slate-300 rounded-xl text-slate-700 font-bold outline-none focus:border-amber-500"><option value="living">生活費</option><option value="travel">旅遊</option><option value="tax">稅金</option><option value="reinvest">再投入其他資產</option><option value="other">其他</option></select></div>
+                        <div class="input-group"><label class="text-xs font-bold text-slate-500 mb-2 ml-1">金額</label><div class="relative flex items-center"><input type="number" v-model.number="profitAdjustmentForm.amount" placeholder="0" class="w-full h-[50px] pl-11 pr-4 bg-white border border-slate-300 rounded-xl text-slate-700 font-bold text-lg outline-none focus:border-amber-500 focus:ring-4 focus:ring-amber-50/50 transition-all shadow-sm placeholder:text-slate-300"><i class="fa-solid fa-dollar-sign absolute left-4 text-slate-400 text-base pointer-events-none"></i></div></div>
+                        <div class="input-group"><label class="text-xs font-bold text-slate-500 mb-2 ml-1">備註（選填）</label><input type="text" v-model="profitAdjustmentForm.note" placeholder="例如：生活費、旅遊、補回" class="w-full h-[50px] px-4 bg-white border border-slate-300 rounded-xl text-slate-700 font-bold outline-none focus:border-amber-500"></div>
+                    </div>
+                    <button @click="addProfitAdjustment" class="btn w-full mt-5 gap-2 !bg-amber-500 hover:!bg-amber-600 !text-white shadow-lg shadow-amber-200"><i class="fa-solid fa-check"></i> 新增獲利紀錄</button>
+                    <div class="mt-5 overflow-hidden rounded-2xl border border-slate-200" v-if="sortedProfitAdjustments.length > 0">
+                        <div class="px-4 py-3 bg-slate-50 text-xs font-black text-slate-500">獲利提領 / 補回紀錄</div>
+                        <div class="divide-y divide-slate-100">
+                            <div v-for="row in sortedProfitAdjustments" :key="row.id" class="px-4 py-3 flex items-center justify-between gap-3">
+                                <div><div class="font-black text-slate-700 text-sm">{{ row.date }}｜{{ row.type === 'withdraw' ? '提領獲利' : '補回獲利' }}｜{{ profitCategoryLabel(row.category) }}</div><div class="text-xs text-slate-400 font-bold">{{ row.note || '-' }}</div></div>
+                                <div class="flex items-center gap-3"><div class="font-black" :class="row.type === 'withdraw' ? 'text-rose-600' : 'text-emerald-700'">{{ row.type === 'withdraw' ? '-' : '+' }}{{ formatCurrency(row.amount) }}</div><button @click="deleteProfitAdjustment(row.id)" class="text-slate-300 hover:text-red-500 hover:bg-red-50 p-2 rounded-lg transition" title="刪除"><i class="fa-solid fa-trash-can"></i></button></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mt-3 text-xs font-bold text-slate-400">＊這不會更動交易產生的已實現損益，只是另外記錄「賺到的錢已領出或補回」。</div>
                 </div>
 
                 <div class="card p-0 overflow-hidden">
@@ -1644,7 +1755,7 @@
                 <div class="p-5 md:p-7">
                     <div class="flex items-start justify-between gap-4 mb-4"><div class="flex items-center gap-3"><div class="w-10 h-10 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center shadow-sm"><i class="fa-solid fa-cloud-arrow-down"></i></div><div><div class="text-lg font-black text-slate-800 leading-tight">備份</div><div class="text-xs font-bold text-slate-400 mt-1">下載 JSON 備份檔，或用備份檔還原資料（會覆蓋本機資料）。</div></div></div><button @click="showExportModal=false" class="w-10 h-10 rounded-full bg-slate-50 border border-slate-200 flex items-center justify-center text-slate-500 hover:bg-slate-100"><i class="fa-solid fa-xmark"></i></button></div>
                     <div class="grid grid-cols-2 gap-2 mb-5"><button @click="backupTab='download'" :class="backupTab==='download' ? 'bg-emerald-600 text-white shadow' : 'bg-slate-50 text-slate-600 border border-slate-200'" class="h-11 rounded-xl font-extrabold transition-all"><i class="fa-solid fa-download mr-2"></i>下載備份</button><button @click="backupTab='restore'" :class="backupTab==='restore' ? 'bg-indigo-600 text-white shadow' : 'bg-slate-50 text-slate-600 border border-slate-200'" class="h-11 rounded-xl font-extrabold transition-all"><i class="fa-solid fa-rotate-right mr-2"></i>還原備份</button></div>
-                    <div v-if="backupTab==='download'"><div class="space-y-4"><div><div class="text-sm font-extrabold text-slate-700 mb-2">檔案名稱</div><div class="flex items-center gap-2"><input v-model="exportFileName" class="flex-1 h-12 rounded-xl px-4 text-slate-700 font-bold bg-slate-50 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-300" placeholder="stock_backup_YYYY-MM-DD"><div class="text-sm font-black text-slate-400">.json</div></div><div class="text-xs font-bold text-slate-400 mt-2">包含：交易紀錄／入出金／自選股／分類／設定參數／最新價格／狀態／更新時間</div></div><div class="flex gap-3"><button @click="showExportModal=false" class="flex-1 h-12 rounded-xl font-extrabold text-slate-600 bg-slate-50 border border-slate-200 hover:bg-slate-100 active:scale-[0.98] transition-all">取消</button><button @click="confirmExport" class="flex-1 h-12 rounded-xl font-extrabold text-white bg-emerald-600 hover:bg-emerald-700 active:scale-[0.98] transition-all flex items-center justify-center gap-2"><i class="fa-solid fa-download"></i> 確認下載</button></div></div></div>
+                    <div v-if="backupTab==='download'"><div class="space-y-4"><div><div class="text-sm font-extrabold text-slate-700 mb-2">檔案名稱</div><div class="flex items-center gap-2"><input v-model="exportFileName" class="flex-1 h-12 rounded-xl px-4 text-slate-700 font-bold bg-slate-50 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-300" placeholder="stock_backup_YYYY-MM-DD"><div class="text-sm font-black text-slate-400">.json</div></div><div class="text-xs font-bold text-slate-400 mt-2">包含：交易紀錄／入出金／獲利提領補回／自選股／分類／設定參數／最新價格／狀態／更新時間</div></div><div class="flex gap-3"><button @click="showExportModal=false" class="flex-1 h-12 rounded-xl font-extrabold text-slate-600 bg-slate-50 border border-slate-200 hover:bg-slate-100 active:scale-[0.98] transition-all">取消</button><button @click="confirmExport" class="flex-1 h-12 rounded-xl font-extrabold text-white bg-emerald-600 hover:bg-emerald-700 active:scale-[0.98] transition-all flex items-center justify-center gap-2"><i class="fa-solid fa-download"></i> 確認下載</button></div></div></div>
                     <div v-else class="space-y-4"><div class="rounded-2xl border border-amber-200 bg-amber-50 p-4"><div class="text-sm font-black text-amber-700 flex items-center gap-2"><i class="fa-solid fa-triangle-exclamation"></i> 還原會覆蓋目前本機資料</div><div class="text-xs font-bold text-amber-700/80 mt-1">建議先下載一份備份，再進行還原。</div></div><div class="rounded-2xl border border-slate-200 bg-white p-4"><div class="text-sm font-extrabold text-slate-700 mb-2">備份檔案</div><div class="flex items-center gap-2"><div class="w-10 h-10 bg-slate-50 rounded-xl flex items-center justify-center text-slate-400 border border-slate-100"><i class="fa-solid fa-file-code"></i></div><div class="flex-1 min-w-0"><div class="text-xs font-bold text-slate-400 uppercase">JSON</div><div class="text-sm font-black text-slate-700 truncate">{{ restoreFileName || '尚未選擇檔案' }}</div></div></div><input ref="restoreFileInput" type="file" accept=".json,application/json" class="hidden" @change="onRestoreBackupFileChange"><div class="flex flex-col md:flex-row gap-3 mt-4"><button @click="$refs.restoreFileInput && $refs.restoreFileInput.click()" class="w-full md:flex-1 h-12 rounded-xl font-extrabold text-slate-600 bg-slate-50 border border-slate-200 hover:bg-slate-100 active:scale-[0.98] transition-all flex items-center justify-center gap-2"><i class="fa-solid fa-folder-open"></i> 選擇檔案</button><button :disabled="!restoreFileObject || restoreBusy" @click="confirmRestoreFromBackupFile" class="w-full md:flex-1 h-12 rounded-xl font-extrabold text-white bg-indigo-600 hover:bg-indigo-700 active:scale-[0.98] disabled:opacity-60 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2"><i class="fa-solid fa-rotate-right"></i> 立即還原</button></div><div v-if="restoreBusy" class="mt-3 text-xs font-bold text-slate-500 flex items-center gap-2"><i class="fa-solid fa-spinner fa-spin"></i> 正在還原備份…</div></div><div class="flex gap-3"><button @click="showExportModal=false" class="flex-1 h-12 rounded-xl font-extrabold text-slate-600 bg-slate-50 border border-slate-200 hover:bg-slate-100 active:scale-[0.98] transition-all">關閉</button><button @click="backupTab='download'" class="flex-1 h-12 rounded-xl font-extrabold text-emerald-700 bg-emerald-50 border border-emerald-200 hover:bg-emerald-100 active:scale-[0.98] transition-all flex items-center justify-center gap-2"><i class="fa-solid fa-download"></i> 先下載備份</button></div></div>
                 </div>
             </div>
@@ -1652,7 +1763,12 @@
 
         <!-- Mobile Bottom Main Tabs -->
         <div class="md:hidden fixed bottom-0 left-0 w-full z-40 bg-white/95 backdrop-blur border-t border-slate-200 px-4 pt-2 pb-[calc(env(safe-area-inset-bottom)+10px)]">
-            <div class="grid grid-cols-3 gap-2">
+            <div class="grid grid-cols-4 gap-2">
+                <button type="button" @click="currentTab = 'dashboard'; showStockDetails = false" class="flex flex-col items-center justify-center py-2 rounded-2xl font-black transition-all"
+                    :class="currentTab === 'dashboard' ? 'bg-slate-900 text-white border border-slate-700 shadow-sm' : 'text-slate-600 hover:bg-slate-50'">
+                    <i class="fa-solid fa-gauge-high text-lg"></i>
+                    <span class="text-[11px] mt-1 tracking-wide">總覽</span>
+                </button>
                 <button type="button" @click="currentTab = 'inventory'; showStockDetails = false" class="flex flex-col items-center justify-center py-2 rounded-2xl font-black transition-all"
                     :class="currentTab === 'inventory' ? 'bg-blue-50 text-blue-700 border border-blue-200 shadow-sm' : 'text-slate-600 hover:bg-slate-50'">
                     <i class="fa-solid fa-briefcase text-lg"></i>
@@ -1693,10 +1809,12 @@ createApp({
             newPortfolioName: '',
 
             isLoggedIn: false, authMode: 'login', authInput: { username: '', password: '', confirmPassword: '' }, rememberUser: false, authError: '', securityConfig: { enabled: true, username: '', passwordHash: '' }, showSecurityModal: false, showChangePasswordModal: false, changePassInput: { old: '', new: '' },
-            currentTab: 'inventory', showStockDetails: false, selectedStock: null,
+            currentTab: 'dashboard', showStockDetails: false, selectedStock: null,
             transactions: [], newTx: { date: new Date().toISOString().split('T')[0], code: '', name: '', type: 'buy', mode: 'cash', price: null, qty: 1000, category: 'core', dayTradeEligible: false },
             cashBook: (() => { try { const v = JSON.parse(localStorage.getItem('tw_stock_cashbook_v1') || '[]'); return Array.isArray(v) ? v : []; } catch(e){ return []; } })(),
+            profitAdjustments: (() => { try { const v = JSON.parse(localStorage.getItem('tw_stock_profit_adjustments_v1') || '[]'); return Array.isArray(v) ? v : []; } catch(e){ return []; } })(),
             cashEntryForm: { date: new Date().toISOString().split('T')[0], type: 'deposit', amount: null, note: '' },
+            profitAdjustmentForm: { date: new Date().toISOString().split('T')[0], type: 'withdraw', category: 'living', amount: null, note: '' },
             cashViewMode: 'all', // all | cashOnly | tradesOnly
 
 
@@ -1740,6 +1858,8 @@ createApp({
                 const savedTx = localStorage.getItem('tw_stock_tx_v6'); if (savedTx) this.transactions = JSON.parse(savedTx);
 const savedCash = localStorage.getItem('tw_stock_cashbook_v1') || ''; if (savedCash) { try { const parsed = JSON.parse(savedCash); this.cashBook = Array.isArray(parsed) ? parsed : []; } catch(_) { this.cashBook = []; } }
         if (!Array.isArray(this.cashBook)) this.cashBook = [];
+        const savedProfitAdjustments = localStorage.getItem('tw_stock_profit_adjustments_v1') || ''; if (savedProfitAdjustments) { try { const parsed = JSON.parse(savedProfitAdjustments); this.profitAdjustments = Array.isArray(parsed) ? parsed : []; } catch(_) { this.profitAdjustments = []; } }
+        if (!Array.isArray(this.profitAdjustments)) this.profitAdjustments = [];
         // Migrate legacy cash entries (ensure portfolioId / normalize fields)
         try {
             let changed = false;
@@ -1884,6 +2004,10 @@ const savedCash = localStorage.getItem('tw_stock_cashbook_v1') || ''; if (savedC
             const pid = this.currentPortfolioId || 'main';
             return (this.cashBook || []).filter(e => (e && (e.portfolioId || 'main') === pid));
         },
+        portfolioProfitAdjustments() {
+            const pid = this.currentPortfolioId || 'main';
+            return (this.profitAdjustments || []).filter(e => (e && (e.portfolioId || 'main') === pid));
+        },
         cashInitialEntry() {
             const list = (this.portfolioCashBook || []).filter(e => e && String(e.type) === 'initial');
             if (list.length === 0) return null;
@@ -1892,6 +2016,20 @@ const savedCash = localStorage.getItem('tw_stock_cashbook_v1') || ''; if (savedC
         cashInitialCapital() { return this.cashInitialEntry ? (Number(this.cashInitialEntry.amount) || 0) : 0; },
         cashDepositsTotal() { return (this.portfolioCashBook || []).filter(e => e && String(e.type) === 'deposit').reduce((s,e) => s + (Number(e.amount) || 0), 0); },
         cashWithdrawalsTotal() { return (this.portfolioCashBook || []).filter(e => e && String(e.type) === 'withdraw').reduce((s,e) => s + (Number(e.amount) || 0), 0); },
+        profitWithdrawalsTotal() { return (this.portfolioProfitAdjustments || []).filter(e => e && String(e.type) === 'withdraw').reduce((s,e) => s + (Number(e.amount) || 0), 0); },
+        profitRestoresTotal() { return (this.portfolioProfitAdjustments || []).filter(e => e && String(e.type) === 'restore').reduce((s,e) => s + (Number(e.amount) || 0), 0); },
+        availableRealizedProfit() { return (Number(this.totalRealizedPnL) || 0) - (Number(this.profitWithdrawalsTotal) || 0) + (Number(this.profitRestoresTotal) || 0); },
+        sortedProfitAdjustments() { return [...(this.portfolioProfitAdjustments || [])].sort((a,b) => (new Date(b.date) - new Date(a.date)) || (Number(b.id || 0) - Number(a.id || 0))); },
+        profitWithdrawalCategorySummary() {
+            const totals = {};
+            (this.portfolioProfitAdjustments || []).forEach(e => {
+                if (!e || String(e.type) !== 'withdraw') return;
+                const key = e.category || 'other';
+                totals[key] = (totals[key] || 0) + (Number(e.amount) || 0);
+            });
+            const total = Object.values(totals).reduce((a,b) => a + b, 0);
+            return Object.keys(totals).map(key => ({ category: key, label: this.profitCategoryLabel(key), amount: totals[key], percent: total > 0 ? Number(((totals[key] / total) * 100).toFixed(1)) : 0 })).sort((a,b) => b.amount - a.amount);
+        },
         cashNetContribution() { return (this.cashInitialCapital || 0) + (this.cashDepositsTotal || 0) - (this.cashWithdrawalsTotal || 0); },
         cashTradeNet() {
             let net = 0;
@@ -2097,11 +2235,18 @@ filteredHoldings() { return this.filter === 'all' ? this.holdings : this.holding
                 });
             }
 
+            if (Array.isArray(this.profitAdjustments)) {
+                this.profitAdjustments.forEach(e => {
+                    if (!e || typeof e !== 'object') return;
+                    if (!e.portfolioId) { e.portfolioId = 'main'; changed = true; }
+                });
+            }
+
             // Persist if needed
             try {
                 localStorage.setItem('tw_stock_portfolios_v1', JSON.stringify(this.portfolios));
                 localStorage.setItem('tw_stock_current_portfolio_v1', this.currentPortfolioId);
-                if (changed) localStorage.setItem('tw_stock_tx_v6', JSON.stringify(this.transactions));
+                if (changed) { localStorage.setItem('tw_stock_tx_v6', JSON.stringify(this.transactions)); localStorage.setItem('tw_stock_profit_adjustments_v1', JSON.stringify(this.profitAdjustments || [])); }
             } catch (_) {}
         },
         openPortfolioModal() { this.newPortfolioName = ''; this.showPortfolioModal = true; },
@@ -2145,6 +2290,7 @@ filteredHoldings() { return this.filter === 'all' ? this.holdings : this.holding
             this.confirmCallback = () => {
                 this.transactions = (this.transactions || []).filter(tx => (tx && (tx.portfolioId || 'main') !== pid));
                 this.cashBook = (this.cashBook || []).filter(e => (e && (e.portfolioId || 'main') !== pid));
+                this.profitAdjustments = (this.profitAdjustments || []).filter(e => (e && (e.portfolioId || 'main') !== pid));
                 this.portfolios = (this.portfolios || []).filter(x => x && x.id !== pid);
                 if (!this.portfolios.some(x => x.id === 'main')) this.portfolios.unshift({ id: 'main', name: '我的帳戶', kind: 'personal', createdAt: new Date().toISOString() });
                 if (this.currentPortfolioId === pid) this.currentPortfolioId = 'main';
@@ -2200,6 +2346,39 @@ filteredHoldings() { return this.filter === 'all' ? this.holdings : this.holding
             };
             this.showConfirmModal = true;
         },
+        profitCategoryLabel(category) {
+            const map = { living: '生活費', travel: '旅遊', tax: '稅金', reinvest: '再投入其他資產', other: '其他' };
+            return map[category || 'other'] || '其他';
+        },
+        addProfitAdjustment() {
+            const pid = this.currentPortfolioId || 'main';
+            const date = String(this.profitAdjustmentForm?.date || '').trim();
+            const type = String(this.profitAdjustmentForm?.type || 'withdraw').trim();
+            const amount = Math.abs(Number(this.profitAdjustmentForm?.amount) || 0);
+            const note = String(this.profitAdjustmentForm?.note || '').trim();
+            const category = String(this.profitAdjustmentForm?.category || 'other').trim();
+            if (!date) { this.openInfoModal('資料不完整', '請選擇日期。'); return; }
+            if (!['withdraw','restore'].includes(type)) { this.openInfoModal('資料不正確', '類型不正確。'); return; }
+            if (!amount || amount <= 0) { this.openInfoModal('資料不完整', '請輸入大於 0 的金額。'); return; }
+            if (!Array.isArray(this.profitAdjustments)) this.profitAdjustments = [];
+            this.profitAdjustments.push({ id: Date.now(), portfolioId: pid, date, type, category, amount, note });
+            this.profitAdjustmentForm.amount = null;
+            this.profitAdjustmentForm.note = '';
+            this.saveData();
+            this.openInfoModal('', type === 'withdraw' ? '獲利提領已新增。' : '獲利補回已新增。');
+        },
+        deleteProfitAdjustment(id) {
+            const raw = Number(id) || 0;
+            if (!raw) return;
+            this.confirmTitle = '刪除獲利紀錄';
+            this.confirmMessage = '確定要刪除此筆「獲利提領／補回」紀錄嗎？';
+            this.confirmCallback = () => {
+                this.profitAdjustments = (this.profitAdjustments || []).filter(e => Number(e?.id) !== raw);
+                this.saveData();
+            };
+            this.showConfirmModal = true;
+        },
+
         deleteCurrentPortfolioCashBookEntries() {
             const pid = this.currentPortfolioId || 'main';
             const name = (this.currentPortfolio && this.currentPortfolio.name) ? this.currentPortfolio.name : pid;
@@ -2972,12 +3151,12 @@ async fetchOnlineSuggestions(query) {
         },
         applyKangHePreset() { this.settings.feeRate = 0.1425; this.settings.discount = 1; this.settings.taxRate = 0.3; this.settings.dayTradeTaxRate = 0.15; this.settings.minFee = 20; },
         saveSettings() { localStorage.setItem('tw_stock_settings_v6', JSON.stringify(this.settings)); this.showSettings = false; },
-        saveData() { localStorage.setItem('tw_stock_tx_v6', JSON.stringify(this.transactions)); localStorage.setItem('tw_stock_cashbook_v1', JSON.stringify(this.cashBook || [])); localStorage.setItem('tw_stock_portfolios_v1', JSON.stringify(this.portfolios || [])); localStorage.setItem('tw_stock_current_portfolio_v1', this.currentPortfolioId || 'main'); localStorage.setItem('tw_stock_names_v1', JSON.stringify(this.nameMap || {})); localStorage.setItem('tw_stock_categories_v1', JSON.stringify(this.categories || [])); },
+        saveData() { localStorage.setItem('tw_stock_tx_v6', JSON.stringify(this.transactions)); localStorage.setItem('tw_stock_cashbook_v1', JSON.stringify(this.cashBook || [])); localStorage.setItem('tw_stock_profit_adjustments_v1', JSON.stringify(this.profitAdjustments || [])); localStorage.setItem('tw_stock_portfolios_v1', JSON.stringify(this.portfolios || [])); localStorage.setItem('tw_stock_current_portfolio_v1', this.currentPortfolioId || 'main'); localStorage.setItem('tw_stock_names_v1', JSON.stringify(this.nameMap || {})); localStorage.setItem('tw_stock_categories_v1', JSON.stringify(this.categories || [])); },
         exportData() { const dateStr = new Date().toISOString().split('T')[0]; this.exportFileName = `stock_backup_${dateStr}`; this.backupTab = 'download'; this.restoreFileName = ''; this.restoreFileObject = null; this.showExportModal = true; },
-        confirmExport() { const dataStr = JSON.stringify({ tx: this.transactions, cashBook: this.cashBook, settings: this.settings, custom: this.customStocks, prices: this.latestPrices, status: this.latestStatus, time: this.lastUpdateTime, portfolios: this.portfolios, currentPortfolioId: this.currentPortfolioId, names: this.nameMap, categories: this.categories, version: 3 }); const blob = new Blob([dataStr], {type: "application/json"}); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = `${this.exportFileName || 'backup'}.json`; a.click(); this.showExportModal = false; },
+        confirmExport() { const dataStr = JSON.stringify({ tx: this.transactions, cashBook: this.cashBook, profitAdjustments: this.profitAdjustments || [], settings: this.settings, custom: this.customStocks, prices: this.latestPrices, status: this.latestStatus, time: this.lastUpdateTime, portfolios: this.portfolios, currentPortfolioId: this.currentPortfolioId, names: this.nameMap, categories: this.categories, version: 3 }); const blob = new Blob([dataStr], {type: "application/json"}); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = `${this.exportFileName || 'backup'}.json`; a.click(); this.showExportModal = false; },
         onRestoreBackupFileChange(e) { const file = e?.target?.files?.[0]; if (!file) return; this.restoreFileName = file.name || ''; this.restoreFileObject = file; },
         async confirmRestoreFromBackupFile() { if (!this.restoreFileObject) return; this.restoreBusy = true; try { const file = this.restoreFileObject; const text = await file.text(); let payload; try { payload = JSON.parse(text); } catch (err) { throw new Error('備份檔案不是有效的 JSON 格式。'); } this._applyBackupPayload(payload); this.openInfoModal('還原成功', '已從備份檔案還原資料，將重新整理以套用所有狀態。'); setTimeout(() => window.location.reload(), 600); } catch (e) { this.openInfoModal('還原失敗', `發生未預期錯誤：${e?.message || e}`); } finally { this.restoreBusy = false; } },
-        _applyBackupPayload(payload) { if (!payload || typeof payload !== 'object') throw new Error('備份檔內容格式不正確。'); const tx = Array.isArray(payload.tx) ? payload.tx : []; const cashBook = Array.isArray(payload.cashBook) ? payload.cashBook : []; const portfolios = Array.isArray(payload.portfolios) ? payload.portfolios : null; const currentPid = (typeof payload.currentPortfolioId === 'string') ? payload.currentPortfolioId : null; const names = (payload.names && typeof payload.names === 'object') ? payload.names : null; const categories = Array.isArray(payload.categories) ? payload.categories : null;  const settings = payload.settings && typeof payload.settings === 'object' ? payload.settings : this.settings; const custom = Array.isArray(payload.custom) ? payload.custom : []; const prices = payload.prices && typeof payload.prices === 'object' ? payload.prices : {}; const status = payload.status && typeof payload.status === 'object' ? payload.status : (this.latestStatus || {}); const time = typeof payload.time === 'string' ? payload.time : ''; this.transactions = tx; this.cashBook = cashBook; if (portfolios) this.portfolios = portfolios; if (currentPid) this.currentPortfolioId = currentPid; this.initPortfoliosAndMigrate(); this.settings = settings; this.customStocks = custom; this.latestPrices = prices; this.latestStatus = status; this.lastUpdateTime = time; localStorage.setItem('tw_stock_tx_v6', JSON.stringify(tx)); localStorage.setItem('tw_stock_cashbook_v1', JSON.stringify(cashBook)); localStorage.setItem('tw_stock_settings_v6', JSON.stringify(settings)); localStorage.setItem('tw_stock_custom_v6', JSON.stringify(custom)); localStorage.setItem('tw_stock_prices_v6', JSON.stringify(prices)); localStorage.setItem('tw_stock_status_v6', JSON.stringify(status)); localStorage.setItem('tw_stock_time_v6', time); if (names) { this.nameMap = names; localStorage.setItem('tw_stock_names_v1', JSON.stringify(names)); } try { this.recomputeAllTradesAndValidate(); } catch (_) {} },
+        _applyBackupPayload(payload) { if (!payload || typeof payload !== 'object') throw new Error('備份檔內容格式不正確。'); const tx = Array.isArray(payload.tx) ? payload.tx : []; const cashBook = Array.isArray(payload.cashBook) ? payload.cashBook : []; const profitAdjustments = Array.isArray(payload.profitAdjustments) ? payload.profitAdjustments : []; const portfolios = Array.isArray(payload.portfolios) ? payload.portfolios : null; const currentPid = (typeof payload.currentPortfolioId === 'string') ? payload.currentPortfolioId : null; const names = (payload.names && typeof payload.names === 'object') ? payload.names : null; const categories = Array.isArray(payload.categories) ? payload.categories : null;  const settings = payload.settings && typeof payload.settings === 'object' ? payload.settings : this.settings; const custom = Array.isArray(payload.custom) ? payload.custom : []; const prices = payload.prices && typeof payload.prices === 'object' ? payload.prices : {}; const status = payload.status && typeof payload.status === 'object' ? payload.status : (this.latestStatus || {}); const time = typeof payload.time === 'string' ? payload.time : ''; this.transactions = tx; this.cashBook = cashBook; this.profitAdjustments = profitAdjustments; if (portfolios) this.portfolios = portfolios; if (currentPid) this.currentPortfolioId = currentPid; this.initPortfoliosAndMigrate(); this.settings = settings; this.customStocks = custom; this.latestPrices = prices; this.latestStatus = status; this.lastUpdateTime = time; localStorage.setItem('tw_stock_tx_v6', JSON.stringify(tx)); localStorage.setItem('tw_stock_cashbook_v1', JSON.stringify(cashBook)); localStorage.setItem('tw_stock_profit_adjustments_v1', JSON.stringify(profitAdjustments)); localStorage.setItem('tw_stock_settings_v6', JSON.stringify(settings)); localStorage.setItem('tw_stock_custom_v6', JSON.stringify(custom)); localStorage.setItem('tw_stock_prices_v6', JSON.stringify(prices)); localStorage.setItem('tw_stock_status_v6', JSON.stringify(status)); localStorage.setItem('tw_stock_time_v6', time); if (names) { this.nameMap = names; localStorage.setItem('tw_stock_names_v1', JSON.stringify(names)); } try { this.recomputeAllTradesAndValidate(); } catch (_) {} },
         _readCloudMeta() { try { return JSON.parse(localStorage.getItem('tw_stock_cloud_meta_v1') || '{}') || {}; } catch(e) { return {}; } },
         _writeCloudMeta(patch) { const cur = this._readCloudMeta(); const next = Object.assign({}, cur, patch || {}); localStorage.setItem('tw_stock_cloud_meta_v1', JSON.stringify(next)); this.gdriveCloudMeta = next; },
         formatDateTime(ts) { if (!ts) return '—'; const d = new Date(ts); if (isNaN(d.getTime())) return '—'; try { return d.toLocaleString('zh-TW', { hour12: false }); } catch (_) { return d.toLocaleString(); } },
@@ -2987,9 +3166,9 @@ async fetchOnlineSuggestions(query) {
         async _ensureGDriveAccessToken() { const cid = (this.gdriveClientId || '').trim(); if (!cid) throw new Error('缺少 Google OAuth Client ID。'); if (!window.google || !google.accounts || !google.accounts.oauth2) { throw new Error('Google Identity Services 尚未載入，請稍後再試。'); } if (!__gdriveTokenClient || __gdriveTokenClientCid !== cid) { __gdriveTokenClient = google.accounts.oauth2.initTokenClient({ client_id: cid, scope: __GDRIVE_SCOPE, callback: () => {} }); __gdriveTokenClientCid = cid; } const token = await new Promise((resolve, reject) => { let finished = false; const timer = setTimeout(() => { if (finished) return; finished = true; reject(new Error('授權逾時。請確認已允許彈出視窗（Popup），並完成帳戶選擇／驗證後再試一次。')); }, 120000); __gdriveTokenClient.callback = (resp) => { if (finished) return; finished = true; clearTimeout(timer); if (resp && resp.access_token) resolve(resp.access_token); else reject(new Error(resp?.error_description || resp?.error || '授權失敗')); }; try { // ✅ 跟 888 一樣：不強制每次都 consent，避免反覆觸發 Google 的再次驗證流程
                     __gdriveTokenClient.requestAccessToken(); } catch (e) { if (finished) return; finished = true; clearTimeout(timer); reject(new Error('無法啟動授權流程。請允許彈出視窗（Popup）後再試一次。')); } }); return token; },
         async _findBackupFileId(accessToken) { const q = encodeURIComponent("name='tw_stock_backup.json' and 'appDataFolder' in parents and trashed=false"); const url = `https://www.googleapis.com/drive/v3/files?spaces=appDataFolder&q=${q}&fields=files(id,name,modifiedTime)&pageSize=1`; const res = await fetch(url, { headers: { Authorization: `Bearer ${accessToken}` }}); if (!res.ok) throw new Error(`Drive 查詢失敗（${res.status}）`); const j = await res.json(); return (j.files && j.files[0] && j.files[0].id) ? { id: j.files[0].id, modifiedTime: j.files[0].modifiedTime || '' } : null; },
-        _buildBackupPayload() { return { tx: this.transactions, cashBook: this.cashBook, settings: this.settings, custom: this.customStocks, prices: this.latestPrices, status: this.latestStatus, time: this.lastUpdateTime, portfolios: this.portfolios, currentPortfolioId: this.currentPortfolioId, names: this.nameMap, categories: this.categories, version: 3, exportedAt: new Date().toISOString() }; },
+        _buildBackupPayload() { return { tx: this.transactions, cashBook: this.cashBook, profitAdjustments: this.profitAdjustments || [], settings: this.settings, custom: this.customStocks, prices: this.latestPrices, status: this.latestStatus, time: this.lastUpdateTime, portfolios: this.portfolios, currentPortfolioId: this.currentPortfolioId, names: this.nameMap, categories: this.categories, version: 3, exportedAt: new Date().toISOString() }; },
         async uploadToGDrive() { this.gdriveBusy = true; this.gdriveBusyText = '正在授權／連線…'; try { const accessToken = await this._ensureGDriveAccessToken(); const payload = this._buildBackupPayload(); const fileInfo = await this._findBackupFileId(accessToken); const fileId = fileInfo && fileInfo.id ? fileInfo.id : null; const boundary = '-------314159265358979323846'; const metadata = fileId ? { name: 'tw_stock_backup.json' } : { name: 'tw_stock_backup.json', parents: ['appDataFolder'] }; const multipartBody = `--${boundary}\r\n` + `Content-Type: application/json; charset=UTF-8\r\n\r\n` + `${JSON.stringify(metadata)}\r\n` + `--${boundary}\r\n` + `Content-Type: application/json; charset=UTF-8\r\n\r\n` + `${JSON.stringify(payload)}\r\n` + `--${boundary}--`; const uploadUrl = fileId ? `https://www.googleapis.com/upload/drive/v3/files/${fileId}?uploadType=multipart&fields=id,modifiedTime` : `https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id,modifiedTime`; const method = fileId ? 'PATCH' : 'POST'; const res = await fetch(uploadUrl, { method, headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': `multipart/related; boundary=${boundary}` }, body: multipartBody }); if (!res.ok) { const t = await res.text().catch(()=>''); throw new Error(`上傳失敗（${res.status}）${t ? '：' + t : ''}`); } let uploadInfo = null; try { uploadInfo = await res.json(); } catch(_) { uploadInfo = null; } const nowIso = new Date().toISOString(); this._writeCloudMeta({ lastCloudUploadAt: nowIso, lastAction: 'upload', cloudFileExists: true, cloudFileModifiedTime: (uploadInfo && uploadInfo.modifiedTime) ? uploadInfo.modifiedTime : (fileInfo && fileInfo.modifiedTime ? fileInfo.modifiedTime : '') }); this.openInfoModal('上傳成功', '已將資料備份到 Google 雲端。'); } catch (e) { this.openInfoModal('上傳失敗', `發生未預期錯誤：${e?.message || e}`); } finally { this.gdriveBusy = false; this.gdriveBusyText = ''; } },
-        async restoreFromGDrive() { this.gdriveBusy = true; this.gdriveBusyText = '正在授權／下載備份…'; try { const accessToken = await this._ensureGDriveAccessToken(); const fileInfo = await this._findBackupFileId(accessToken); const fileId = fileInfo && fileInfo.id ? fileInfo.id : null; if (!fileId) { this.openInfoModal('回復失敗', '雲端找不到備份檔案（tw_stock_backup.json）。'); return; } const url = `https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`; const res = await fetch(url, { headers: { Authorization: `Bearer ${accessToken}` }}); if (!res.ok) throw new Error(`下載失敗（${res.status}）`); const payload = await res.json(); if (!payload || typeof payload !== 'object') throw new Error('備份檔內容格式不正確。'); const tx = Array.isArray(payload.tx) ? payload.tx : []; const cashBook = Array.isArray(payload.cashBook) ? payload.cashBook : []; const settings = payload.settings && typeof payload.settings === 'object' ? payload.settings : this.settings; const custom = Array.isArray(payload.custom) ? payload.custom : []; const prices = payload.prices && typeof payload.prices === 'object' ? payload.prices : {}; const status = payload.status && typeof payload.status === 'object' ? payload.status : {}; const time = typeof payload.time === 'string' ? payload.time : ''; const names = (payload.names && typeof payload.names === 'object') ? payload.names : null; const categories = Array.isArray(payload.categories) ? payload.categories : null; const portfoliosRaw = Array.isArray(payload.portfolios) ? payload.portfolios : []; let portfolios = (portfoliosRaw || []).filter(p => p && typeof p === 'object' && p.id && p.name); if (!portfolios.some(p => p.id === 'main')) portfolios = [{ id: 'main', name: '我的帳戶' }, ...portfolios.filter(p => p.id !== 'main')]; let currentPortfolioId = (typeof payload.currentPortfolioId === 'string' && payload.currentPortfolioId) ? payload.currentPortfolioId : 'main'; if (!portfolios.some(p => p.id === currentPortfolioId)) currentPortfolioId = 'main'; this.transactions = tx; this.cashBook = cashBook; this.settings = settings; this.customStocks = custom; this.latestPrices = prices; this.latestStatus = status; this.lastUpdateTime = time; this.portfolios = portfolios; this.currentPortfolioId = currentPortfolioId; if (names) { this.nameMap = names; } if (categories) { this.categories = categories; } localStorage.setItem('tw_stock_tx_v6', JSON.stringify(tx)); localStorage.setItem('tw_stock_cashbook_v1', JSON.stringify(cashBook)); localStorage.setItem('tw_stock_settings_v6', JSON.stringify(settings)); localStorage.setItem('tw_stock_custom_v6', JSON.stringify(custom)); localStorage.setItem('tw_stock_prices_v6', JSON.stringify(prices)); localStorage.setItem('tw_stock_status_v6', JSON.stringify(status)); localStorage.setItem('tw_stock_time_v6', time); localStorage.setItem('tw_stock_portfolios_v1', JSON.stringify(portfolios)); localStorage.setItem('tw_stock_current_portfolio_v1', currentPortfolioId); if (names) localStorage.setItem('tw_stock_names_v1', JSON.stringify(names)); if (categories) localStorage.setItem('tw_stock_categories_v1', JSON.stringify(categories)); const nowIso = new Date().toISOString(); this._writeCloudMeta({ lastCloudRestoreAt: nowIso, lastAction: 'restore', cloudFileExists: true, cloudFileModifiedTime: (fileInfo && fileInfo.modifiedTime) ? fileInfo.modifiedTime : (this.gdriveCloudMeta && this.gdriveCloudMeta.cloudFileModifiedTime ? this.gdriveCloudMeta.cloudFileModifiedTime : '') }); this.openInfoModal('回復成功', '已從雲端回復資料，將重新整理以套用所有狀態。'); setTimeout(() => window.location.reload(), 600); } catch (e) { this.openInfoModal('回復失敗', `發生未預期錯誤：${e?.message || e}`); } finally { this.gdriveBusy = false; this.gdriveBusyText = ''; } },
+        async restoreFromGDrive() { this.gdriveBusy = true; this.gdriveBusyText = '正在授權／下載備份…'; try { const accessToken = await this._ensureGDriveAccessToken(); const fileInfo = await this._findBackupFileId(accessToken); const fileId = fileInfo && fileInfo.id ? fileInfo.id : null; if (!fileId) { this.openInfoModal('回復失敗', '雲端找不到備份檔案（tw_stock_backup.json）。'); return; } const url = `https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`; const res = await fetch(url, { headers: { Authorization: `Bearer ${accessToken}` }}); if (!res.ok) throw new Error(`下載失敗（${res.status}）`); const payload = await res.json(); if (!payload || typeof payload !== 'object') throw new Error('備份檔內容格式不正確。'); const tx = Array.isArray(payload.tx) ? payload.tx : []; const cashBook = Array.isArray(payload.cashBook) ? payload.cashBook : []; const profitAdjustments = Array.isArray(payload.profitAdjustments) ? payload.profitAdjustments : []; const settings = payload.settings && typeof payload.settings === 'object' ? payload.settings : this.settings; const custom = Array.isArray(payload.custom) ? payload.custom : []; const prices = payload.prices && typeof payload.prices === 'object' ? payload.prices : {}; const status = payload.status && typeof payload.status === 'object' ? payload.status : {}; const time = typeof payload.time === 'string' ? payload.time : ''; const names = (payload.names && typeof payload.names === 'object') ? payload.names : null; const categories = Array.isArray(payload.categories) ? payload.categories : null; const portfoliosRaw = Array.isArray(payload.portfolios) ? payload.portfolios : []; let portfolios = (portfoliosRaw || []).filter(p => p && typeof p === 'object' && p.id && p.name); if (!portfolios.some(p => p.id === 'main')) portfolios = [{ id: 'main', name: '我的帳戶' }, ...portfolios.filter(p => p.id !== 'main')]; let currentPortfolioId = (typeof payload.currentPortfolioId === 'string' && payload.currentPortfolioId) ? payload.currentPortfolioId : 'main'; if (!portfolios.some(p => p.id === currentPortfolioId)) currentPortfolioId = 'main'; this.transactions = tx; this.cashBook = cashBook; this.profitAdjustments = profitAdjustments; this.settings = settings; this.customStocks = custom; this.latestPrices = prices; this.latestStatus = status; this.lastUpdateTime = time; this.portfolios = portfolios; this.currentPortfolioId = currentPortfolioId; if (names) { this.nameMap = names; } if (categories) { this.categories = categories; } localStorage.setItem('tw_stock_tx_v6', JSON.stringify(tx)); localStorage.setItem('tw_stock_cashbook_v1', JSON.stringify(cashBook)); localStorage.setItem('tw_stock_profit_adjustments_v1', JSON.stringify(profitAdjustments)); localStorage.setItem('tw_stock_settings_v6', JSON.stringify(settings)); localStorage.setItem('tw_stock_custom_v6', JSON.stringify(custom)); localStorage.setItem('tw_stock_prices_v6', JSON.stringify(prices)); localStorage.setItem('tw_stock_status_v6', JSON.stringify(status)); localStorage.setItem('tw_stock_time_v6', time); localStorage.setItem('tw_stock_portfolios_v1', JSON.stringify(portfolios)); localStorage.setItem('tw_stock_current_portfolio_v1', currentPortfolioId); if (names) localStorage.setItem('tw_stock_names_v1', JSON.stringify(names)); if (categories) localStorage.setItem('tw_stock_categories_v1', JSON.stringify(categories)); const nowIso = new Date().toISOString(); this._writeCloudMeta({ lastCloudRestoreAt: nowIso, lastAction: 'restore', cloudFileExists: true, cloudFileModifiedTime: (fileInfo && fileInfo.modifiedTime) ? fileInfo.modifiedTime : (this.gdriveCloudMeta && this.gdriveCloudMeta.cloudFileModifiedTime ? this.gdriveCloudMeta.cloudFileModifiedTime : '') }); this.openInfoModal('回復成功', '已從雲端回復資料，將重新整理以套用所有狀態。'); setTimeout(() => window.location.reload(), 600); } catch (e) { this.openInfoModal('回復失敗', `發生未預期錯誤：${e?.message || e}`); } finally { this.gdriveBusy = false; this.gdriveBusyText = ''; } },
                         addCategory() {
             const raw = String(this.newCategoryName || '').trim();
             if (!raw) return;
