@@ -2119,6 +2119,7 @@ filteredHoldings() { return this.filter === 'all' ? this.holdings : this.holding
     },
     methods: {
 
+
         scheduleAutoSave(scope) {
             window.StockSaveStatus.schedule(this, scope, () => {
                 window.StockStorage.saveCoreData(this);
