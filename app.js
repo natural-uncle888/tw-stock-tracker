@@ -1272,6 +1272,144 @@ createApp({
                             尚未查詢。按「查詢最新資料」即可從期交所免費 Open Data 取得最新臺股期貨法人未平倉資料。
                         </div>
                     </div>
+
+                    <div class="rounded-2xl border border-emerald-100 bg-emerald-50/70 p-4 shadow-sm">
+                        <div class="flex flex-col md:flex-row md:items-end md:justify-between gap-3 mb-4">
+                            <div class="flex-1">
+                                <div class="text-base font-extrabold text-slate-800 flex items-center gap-2">
+                                    <i class="fa-solid fa-chart-line text-emerald-600"></i> 個股籌碼 / 注意處置查詢
+                                </div>
+                                <div class="text-xs font-bold text-slate-500 mt-1">免費資料來源：TWSE / TPEx 公開資料。提供三大法人、融資融券快照，並檢查是否列入注意股、累計異常或處置股。</div>
+                            </div>
+                            <div class="flex flex-col sm:flex-row gap-2 w-full md:w-auto">
+                                <input v-model.trim="chipQueryCode" @keyup.enter="queryStockChipData" inputmode="numeric" placeholder="輸入股票代號，例如 2330" class="h-11 px-4 rounded-xl bg-white border border-emerald-200 text-sm font-bold focus:outline-none focus:ring-4 focus:ring-emerald-100 focus:border-emerald-400 w-full sm:w-56">
+                                <select v-model.number="chipQueryDays" class="h-11 px-3 rounded-xl bg-white border border-emerald-200 text-sm font-bold text-slate-700 focus:outline-none focus:ring-4 focus:ring-emerald-100">
+                                    <option :value="10">近 10 筆</option>
+                                    <option :value="20">近 20 筆</option>
+                                    <option :value="60">近 60 筆</option>
+                                </select>
+                                <button @click="queryStockChipData" :disabled="chipLoading || stockRiskLoading" class="h-11 px-4 rounded-xl font-extrabold text-white bg-emerald-600 hover:bg-emerald-700 active:scale-[0.98] disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2">
+                                    <i class="fa-solid" :class="(chipLoading || stockRiskLoading) ? 'fa-spinner fa-spin' : 'fa-magnifying-glass-chart'"></i>
+                                    {{ (chipLoading || stockRiskLoading) ? '查詢中…' : '查詢籌碼 / 注意' }}
+                                </button>
+                            </div>
+                        </div>
+
+                        <div v-if="chipError" class="mb-3 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-bold text-rose-700">
+                            <i class="fa-solid fa-triangle-exclamation mr-2"></i>{{ chipError }}
+                        </div>
+                        <div v-if="stockRiskError" class="mb-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-bold text-amber-700">
+                            <i class="fa-solid fa-circle-info mr-2"></i>{{ stockRiskError }}
+                        </div>
+
+                        <div v-if="chipRows.length || stockRiskData.fetchedAt" class="space-y-4">
+                            <div class="rounded-2xl bg-white border p-4" :class="stockRiskSummary.className || 'text-slate-600 bg-slate-50 border-slate-200'">
+                                <div class="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-3">
+                                    <div>
+                                        <div class="text-xs font-black opacity-70">注意 / 處置狀態</div>
+                                        <div class="mt-1 flex flex-wrap items-center gap-2">
+                                            <span class="text-2xl font-black">{{ stockRiskSummary.label || '未查詢' }}</span>
+                                            <span class="px-2 py-1 rounded-lg bg-white/70 border border-current/10 text-xs font-black">注意 {{ stockRiskSummary.attentionCount || 0 }}</span>
+                                            <span class="px-2 py-1 rounded-lg bg-white/70 border border-current/10 text-xs font-black">累計異常 {{ stockRiskSummary.warningCount || 0 }}</span>
+                                            <span class="px-2 py-1 rounded-lg bg-white/70 border border-current/10 text-xs font-black">處置 {{ stockRiskSummary.dispositionCount || 0 }}</span>
+                                        </div>
+                                        <div class="mt-1 text-[11px] font-bold opacity-70">查詢區間：近 {{ stockRiskData.lookbackDays || stockRiskLookbackDays }} 天 · 更新：{{ stockRiskLastUpdate || stockRiskData.fetchedAtLabel || '-' }}</div>
+                                    </div>
+                                    <button @click="queryStockRiskData(chipQueryCode)" :disabled="stockRiskLoading" class="h-10 px-4 rounded-xl font-black bg-white/80 border border-current/20 hover:bg-white disabled:opacity-60 flex items-center justify-center gap-2">
+                                        <i class="fa-solid" :class="stockRiskLoading ? 'fa-spinner fa-spin' : 'fa-shield-halved'"></i>
+                                        只查注意 / 處置
+                                    </button>
+                                </div>
+                                <div v-if="stockRiskRecords.length" class="mt-3 overflow-x-auto rounded-xl bg-white/80 border border-current/10">
+                                    <table class="w-full text-sm min-w-[760px]">
+                                        <thead class="bg-white/70 opacity-80">
+                                            <tr>
+                                                <th class="px-4 py-3 text-left font-black">類型</th>
+                                                <th class="px-4 py-3 text-left font-black">來源</th>
+                                                <th class="px-4 py-3 text-left font-black">日期 / 期間</th>
+                                                <th class="px-4 py-3 text-left font-black">條件 / 原因 / 措施</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr v-for="(row, idx) in stockRiskRecords" :key="idx" class="border-t border-current/10">
+                                                <td class="px-4 py-3 font-black">{{ row.type === 'disposition' ? '處置' : (row.type === 'warning' ? '累計異常' : '注意') }}</td>
+                                                <td class="px-4 py-3 font-bold">{{ row.source }}</td>
+                                                <td class="px-4 py-3 font-bold">{{ row.dateLabel || row.startDateLabel || '-' }}<span v-if="row.endDateLabel"> ～ {{ row.endDateLabel }}</span></td>
+                                                <td class="px-4 py-3 font-bold leading-relaxed">{{ row.measure || row.reason || row.rawText || '-' }}</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <div v-else class="mt-3 rounded-xl bg-white/65 border border-current/10 px-4 py-3 text-sm font-bold">
+                                    目前查詢區間內沒有找到注意、累計異常或處置紀錄。官方盤後資料仍可能延遲更新。
+                                </div>
+                            </div>
+
+                            <div v-if="chipRows.length" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                                <div class="rounded-2xl bg-white border border-emerald-100 p-4">
+                                    <div class="text-xs font-bold text-slate-400">股票 / 市場</div>
+                                    <div class="mt-1 text-xl font-black text-slate-800">{{ chipData.code }} {{ chipData.name || '' }}</div>
+                                    <div class="mt-1 text-[11px] font-bold text-slate-400">{{ chipData.market || '-' }} · 更新：{{ chipLastUpdate || chipData.fetchedAtLabel || '-' }}</div>
+                                </div>
+                                <div class="rounded-2xl bg-white border border-emerald-100 p-4">
+                                    <div class="text-xs font-bold text-slate-400">最新三大法人合計</div>
+                                    <div class="mt-1 text-2xl font-black" :class="chipSummary.latest?.totalNetLots >= 0 ? 'text-up' : 'text-down'">{{ chipSummary.latest?.totalNetLots >= 0 ? '+' : '' }}{{ formatCurrency(chipSummary.latest?.totalNetLots || 0) }} 張</div>
+                                    <div class="mt-1 text-[11px] font-bold text-slate-400">資料日：{{ chipSummary.latest?.dateLabel || '-' }}</div>
+                                </div>
+                                <div class="rounded-2xl bg-white border border-emerald-100 p-4">
+                                    <div class="text-xs font-bold text-slate-400">近 5 / 20 筆合計</div>
+                                    <div class="mt-1 text-lg font-black" :class="chipSummary.total5 >= 0 ? 'text-up' : 'text-down'">5 筆：{{ chipSummary.total5 >= 0 ? '+' : '' }}{{ formatCurrency(chipSummary.total5 || 0) }} 張</div>
+                                    <div class="mt-1 text-sm font-extrabold" :class="chipSummary.total20 >= 0 ? 'text-up' : 'text-down'">20 筆：{{ chipSummary.total20 >= 0 ? '+' : '' }}{{ formatCurrency(chipSummary.total20 || 0) }} 張</div>
+                                </div>
+                                <div class="rounded-2xl bg-white border border-emerald-100 p-4">
+                                    <div class="text-xs font-bold text-slate-400">籌碼摘要</div>
+                                    <div class="mt-1 text-2xl font-black" :class="chipSummary.signal === '偏多' ? 'text-up' : (chipSummary.signal === '偏空' ? 'text-down' : 'text-slate-700')">{{ chipSummary.signal || '中性' }}</div>
+                                    <div class="mt-1 text-[11px] font-bold text-slate-400">連續{{ chipSummary.streak >= 0 ? '買超' : '賣超' }} {{ Math.abs(chipSummary.streak || 0) }} 筆</div>
+                                </div>
+                            </div>
+
+                            <div v-if="chipRows.length" class="grid grid-cols-1 lg:grid-cols-3 gap-3">
+                                <div class="lg:col-span-2 overflow-x-auto bg-white rounded-2xl border border-emerald-100">
+                                    <table class="w-full text-sm min-w-[840px]">
+                                        <thead class="bg-slate-50 text-slate-500">
+                                            <tr>
+                                                <th class="px-4 py-3 text-left font-black">日期</th>
+                                                <th class="px-4 py-3 text-right font-black">外資</th>
+                                                <th class="px-4 py-3 text-right font-black">投信</th>
+                                                <th class="px-4 py-3 text-right font-black">自營商</th>
+                                                <th class="px-4 py-3 text-right font-black">三大法人合計</th>
+                                                <th class="px-4 py-3 text-right font-black">占成交量</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr v-for="row in chipRows" :key="row.date" class="border-t border-slate-100 hover:bg-emerald-50/50">
+                                                <td class="px-4 py-3 font-extrabold text-slate-700">{{ row.dateLabel }}</td>
+                                                <td class="px-4 py-3 text-right font-bold" :class="row.foreignNetLots >= 0 ? 'text-up' : 'text-down'">{{ row.foreignNetLots >= 0 ? '+' : '' }}{{ formatCurrency(row.foreignNetLots) }}</td>
+                                                <td class="px-4 py-3 text-right font-bold" :class="row.trustNetLots >= 0 ? 'text-up' : 'text-down'">{{ row.trustNetLots >= 0 ? '+' : '' }}{{ formatCurrency(row.trustNetLots) }}</td>
+                                                <td class="px-4 py-3 text-right font-bold" :class="row.dealerNetLots >= 0 ? 'text-up' : 'text-down'">{{ row.dealerNetLots >= 0 ? '+' : '' }}{{ formatCurrency(row.dealerNetLots) }}</td>
+                                                <td class="px-4 py-3 text-right font-black" :class="row.totalNetLots >= 0 ? 'text-up' : 'text-down'">{{ row.totalNetLots >= 0 ? '+' : '' }}{{ formatCurrency(row.totalNetLots) }}</td>
+                                                <td class="px-4 py-3 text-right font-bold text-slate-600">{{ formatPercentValue(row.institutionalVolumeRatio) }}</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <div class="rounded-2xl bg-white border border-emerald-100 p-4 space-y-3">
+                                    <div class="font-extrabold text-slate-700">融資融券快照</div>
+                                    <div v-if="chipMarginRows.length" class="space-y-2 text-sm">
+                                        <div class="flex justify-between gap-3"><span class="font-bold text-slate-500">資料日</span><span class="font-black text-slate-800">{{ chipMarginRows[0].dateLabel }}</span></div>
+                                        <div class="flex justify-between gap-3"><span class="font-bold text-slate-500">融資餘額</span><span class="font-black text-slate-800">{{ formatCurrency(chipMarginRows[0].financeBalance) }}</span></div>
+                                        <div class="flex justify-between gap-3"><span class="font-bold text-slate-500">融券餘額</span><span class="font-black text-slate-800">{{ formatCurrency(chipMarginRows[0].shortBalance) }}</span></div>
+                                        <div class="text-xs text-slate-400 leading-relaxed pt-2 border-t border-slate-100">融資融券欄位會依官方資料格式盡量解析；若資料源格式調整，可能只顯示三大法人。</div>
+                                    </div>
+                                    <div v-else class="text-sm font-bold text-slate-500 leading-relaxed">目前沒有抓到融資融券資料；三大法人買賣超仍可正常作為籌碼摘要。</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div v-else class="rounded-2xl border border-dashed border-emerald-200 bg-white/70 p-6 text-center text-slate-500 font-bold">
+                            輸入股票代號後可查詢近 10 / 20 / 60 筆三大法人買賣超，並檢查近 60 天注意 / 處置相關公告。這是盤後資料，不是即時交易建議。
+                        </div>
+                    </div>
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div class="rounded-2xl border border-slate-200 bg-white shadow-sm p-4">
                             <div class="flex items-center justify-between mb-3">
@@ -1681,6 +1819,8 @@ createApp({
     </div> `,
     data() {
         const persisted = window.StockStorage.loadInitialState();
+        const chipInitial = persisted.chipCache?.stocks?.[persisted.chipLastQuery] || {};
+        const riskInitial = persisted.stockRiskCache?.stocks?.[persisted.stockRiskLastQuery || persisted.chipLastQuery] || {};
         return {
             showGDriveModal: false, gdriveBusy: false, gdriveBusyText: '', gdriveCloudMeta: persisted.gdriveCloudMeta,
             showCommodityModal: false,
@@ -1689,6 +1829,21 @@ createApp({
             institutionalOiAttemptTs: persisted.institutionalOiAttemptTs || 0,
             institutionalOiError: persisted.institutionalOiError || '',
             institutionalOiLoading: false,
+            chipQueryCode: persisted.chipLastQuery || '',
+            chipQueryDays: 20,
+            chipData: chipInitial,
+            chipCache: persisted.chipCache || { version: 2, stocks: {} },
+            chipLastQuery: persisted.chipLastQuery || '',
+            chipLastUpdate: persisted.chipLastUpdate || '',
+            chipError: persisted.chipError || '',
+            chipLoading: false,
+            stockRiskData: riskInitial,
+            stockRiskCache: persisted.stockRiskCache || { version: 2, stocks: {} },
+            stockRiskLastQuery: persisted.stockRiskLastQuery || persisted.chipLastQuery || '',
+            stockRiskLastUpdate: persisted.stockRiskLastUpdate || '',
+            stockRiskError: persisted.stockRiskError || '',
+            stockRiskLoading: false,
+            stockRiskLookbackDays: 60,
             gdriveClientId: persisted.gdriveClientId, gdriveClientIdInput: persisted.gdriveClientId,
             // --- Portfolios (separate books) ---
             showPortfolioModal: false,
@@ -1826,6 +1981,11 @@ const savedCash = localStorage.getItem(window.StockStorage.KEYS.cashBook) || '';
         institutionalOiRows() { return Array.isArray(this.institutionalOiData?.rows) ? this.institutionalOiData.rows : []; },
         institutionalForeignOiNet() { const row = this.institutionalOiRows.find(r => r && /外資/.test(String(r.identity || ''))); return row ? Number(row.oiNet || 0) : 0; },
         institutionalTotalOiNet() { return this.institutionalOiRows.reduce((sum, row) => sum + Number(row?.oiNet || 0), 0); },
+        chipRows() { return Array.isArray(this.chipData?.institutionalRows) ? this.chipData.institutionalRows : []; },
+        chipMarginRows() { return Array.isArray(this.chipData?.marginRows) ? this.chipData.marginRows : []; },
+        chipSummary() { return this.chipData?.summary || {}; },
+        stockRiskRecords() { return Array.isArray(this.stockRiskData?.records) ? this.stockRiskData.records : []; },
+        stockRiskSummary() { return this.stockRiskData?.summary || { label: '未查詢', level: 'unknown', className: 'text-slate-600 bg-slate-50 border-slate-200' }; },
         // --- NEW: Analysis Computed Properties ---
         realizedAnalysisList() {
             // Use existing filteredTransactions (so date filter works)
@@ -2233,6 +2393,14 @@ filteredHoldings() { return this.filter === 'all' ? this.holdings : this.holding
         },
 
         async fetchTaiexFuturesInstitutionalOi() { return window.StockInstitutionalOiService.fetchTaiexFuturesInstitutionalOi.call(this); },
+        async queryStockChipData() {
+            const payload = await window.StockChipService.queryStockChipData.call(this);
+            if (window.StockRiskService) await window.StockRiskService.queryStockRiskData.call(this, this.chipQueryCode);
+            return payload;
+        },
+        async queryStockRiskData(code) { return window.StockRiskService.queryStockRiskData.call(this, code); },
+        loadCachedStockChip(code) { return window.StockChipService.loadCachedStockChip.call(this, code); },
+        loadCachedStockRisk(code) { return window.StockRiskService.loadCachedStockRisk.call(this, code); },
 
         async fetchStockPrices() { return window.StockPriceService.fetchStockPrices.call(this); },
         async fetchGlobalIndices() { return window.StockPriceService.fetchGlobalIndices.call(this); },
@@ -2520,6 +2688,7 @@ displayNameWithCode(code, fallbackName) {
 
 formatPrice2(val) { const num = Number(val); if (!Number.isFinite(num)) return '0.00'; const fixed = num.toFixed(2); const parts = fixed.split('.'); const intPart = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ","); return intPart + '.' + (parts[1] || '00'); },
         formatCurrency(val) { return Math.round(val || 0).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ","); },
+        formatPercentValue(value) { const n = Number(value); if (!Number.isFinite(n)) return "-"; return (n * 100).toFixed(2) + "%"; },
         formatSignedAmountK(val) { const n = Number(val || 0); const sign = n > 0 ? "+" : (n < 0 ? "-" : ""); return sign + this.formatCurrency(Math.abs(n)) + " 千元"; }
     }
 }).mount('#app');

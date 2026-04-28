@@ -51,6 +51,14 @@
     institutionalOiLastUpdate: 'tw_stock_institutional_oi_time_v1',
     institutionalOiAttemptTs: 'tw_stock_institutional_oi_attempt_ts_v1',
     institutionalOiError: 'tw_stock_institutional_oi_error_v1',
+    chipCache: 'tw_stock_chip_cache_v2',
+    chipLastQuery: 'tw_stock_chip_last_query_v1',
+    chipLastUpdate: 'tw_stock_chip_last_update_v1',
+    chipError: 'tw_stock_chip_error_v1',
+    stockRiskCache: 'tw_stock_risk_cache_v1',
+    stockRiskLastQuery: 'tw_stock_risk_last_query_v1',
+    stockRiskLastUpdate: 'tw_stock_risk_last_update_v1',
+    stockRiskError: 'tw_stock_risk_error_v1',
   });
 
   const BACKUP_FIELDS = Object.freeze({
@@ -223,6 +231,22 @@
     setString('schemaVersion', SCHEMA_VERSION);
   }
 
+  function saveChipData(state) {
+    setJSON('chipCache', normalizeObject(state.chipCache));
+    setString('chipLastQuery', state.chipLastQuery || state.chipQueryCode || '');
+    setString('chipLastUpdate', state.chipLastUpdate || '');
+    setString('chipError', state.chipError || '');
+    setString('schemaVersion', SCHEMA_VERSION);
+  }
+
+  function saveStockRiskData(state) {
+    setJSON('stockRiskCache', normalizeObject(state.stockRiskCache));
+    setString('stockRiskLastQuery', state.stockRiskLastQuery || state.chipQueryCode || '');
+    setString('stockRiskLastUpdate', state.stockRiskLastUpdate || '');
+    setString('stockRiskError', state.stockRiskError || '');
+    setString('schemaVersion', SCHEMA_VERSION);
+  }
+
   function applyBackupPayload(payload, vm) {
     const normalized = normalizeBackupPayload(payload, vm || {});
     vm.transactions = normalized.transactions;
@@ -278,6 +302,14 @@
       institutionalOiLastUpdate: getString('institutionalOiLastUpdate', ''),
       institutionalOiAttemptTs: getNumber('institutionalOiAttemptTs', 0),
       institutionalOiError: getString('institutionalOiError', ''),
+      chipCache: normalizeObject(getJSON('chipCache', { version: 2, stocks: {} })),
+      chipLastQuery: getString('chipLastQuery', ''),
+      chipLastUpdate: getString('chipLastUpdate', ''),
+      chipError: getString('chipError', ''),
+      stockRiskCache: normalizeObject(getJSON('stockRiskCache', { version: 2, stocks: {} })),
+      stockRiskLastQuery: getString('stockRiskLastQuery', ''),
+      stockRiskLastUpdate: getString('stockRiskLastUpdate', ''),
+      stockRiskError: getString('stockRiskError', ''),
     };
   }
 
@@ -320,6 +352,8 @@
     saveSettings,
     saveMarketData,
     saveInstitutionalOiData,
+    saveChipData,
+    saveStockRiskData,
     migrate,
   };
 
