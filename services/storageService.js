@@ -43,6 +43,7 @@
     helpAutoOpen: 'tw_stock_help_autopen_v1',
     helpSeen: 'tw_stock_help_seen_v1',
     gdriveClientId: 'tw_stock_gdrive_client_id_v1',
+    gdriveDeviceId: 'tw_stock_gdrive_device_id_v1',
     cloudMeta: 'tw_stock_cloud_meta_v1',
     globalIndexTimeTimestamp: 'tw_stock_global_time_ts_v1',
     globalIndexUpdateError: 'tw_stock_global_update_error_v1',
