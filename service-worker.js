@@ -1,5 +1,5 @@
 /* 台股損益管理 PWA Service Worker */
-const CACHE_VERSION = 'stock-tracker-pwa-v14-20260514-gdrive-delete';
+const CACHE_VERSION = 'stock-tracker-pwa-v15-20260514-local-css';
 const APP_SHELL_CACHE = `${CACHE_VERSION}-shell`;
 const RUNTIME_CACHE = `${CACHE_VERSION}-runtime`;
 
@@ -16,6 +16,7 @@ const APP_SHELL = [
   './rise-logo-red-192.png',
   './rise-logo-red-512.png',
   './rise-logo-red.svg',
+  './app.css',
   './app.js',
   './services/storageService.js',
   './services/saveStatusService.js',
