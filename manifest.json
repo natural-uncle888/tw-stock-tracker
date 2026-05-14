@@ -1,0 +1,86 @@
+{
+  "name": "台股損益管理",
+  "short_name": "台股帳本",
+  "description": "台股損益、庫存、資金流與族群分類管理工具。",
+  "id": "./?source=pwa",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#f8fbff",
+  "theme_color": "#2563eb",
+  "lang": "zh-TW",
+  "categories": [
+    "finance",
+    "productivity",
+    "utilities"
+  ],
+  "icons": [
+    {
+      "src": "./rise-logo-red-16.png",
+      "sizes": "16x16",
+      "type": "image/png"
+    },
+    {
+      "src": "./rise-logo-red-32.png",
+      "sizes": "32x32",
+      "type": "image/png"
+    },
+    {
+      "src": "./rise-logo-red-48.png",
+      "sizes": "48x48",
+      "type": "image/png"
+    },
+    {
+      "src": "./rise-logo-red-64.png",
+      "sizes": "64x64",
+      "type": "image/png"
+    },
+    {
+      "src": "./rise-logo-red-180.png",
+      "sizes": "180x180",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "./rise-logo-red-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "./rise-logo-red-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "庫存管理",
+      "short_name": "庫存",
+      "description": "查看目前持股庫存",
+      "url": "./?tab=inventory",
+      "icons": [
+        {
+          "src": "./rise-logo-red-192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "資金流",
+      "short_name": "資金",
+      "description": "查看入金、出金與資金流",
+      "url": "./?tab=cash",
+      "icons": [
+        {
+          "src": "./rise-logo-red-192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    }
+  ]
+}
