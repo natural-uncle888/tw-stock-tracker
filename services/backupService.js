@@ -481,7 +481,11 @@
 
         this.gdriveBusyText = files.length > 1 ? `正在刪除 ${files.length} 個雲端備份檔…` : '正在刪除雲端備份檔…';
         for (const file of files) {
-          if (file && file.id) await this._deleteDriveFile(accessToken, file.id);
+          if (file && file.id) {
+            // Use the service method directly so this works even when the Vue app
+            // has not exposed a wrapper method for the internal helper.
+            await window.StockBackupService._deleteDriveFile.call(this, accessToken, file.id);
+          }
         }
 
         const nowIso = new Date().toISOString();

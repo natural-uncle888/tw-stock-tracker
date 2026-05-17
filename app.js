@@ -4253,6 +4253,7 @@ const savedCash = localStorage.getItem(window.StockStorage.KEYS.cashBook) || '';
         async _findBackupFileId(accessToken) { return window.StockBackupService._findBackupFileId.call(this, accessToken); },
         _buildBackupPayload() { return window.StockBackupService._buildBackupPayload.call(this); },
         async _downloadBackupPayload(accessToken, fileId) { return window.StockBackupService._downloadBackupPayload.call(this, accessToken, fileId); },
+        async _deleteDriveFile(accessToken, fileId) { return window.StockBackupService._deleteDriveFile.call(this, accessToken, fileId); },
         async uploadToGDrive() { return window.StockBackupService.uploadToGDrive.call(this); },
         async restoreFromGDrive() { return window.StockBackupService.restoreFromGDrive.call(this); },
         triggerDeleteGDriveBackup() {
