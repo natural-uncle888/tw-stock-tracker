@@ -764,6 +764,7 @@ createApp({
                                 <div class="flex-1">
                                     <div class="flex flex-wrap items-center gap-2">
                                         <span class="text-xs font-black px-2.5 py-1 rounded-full bg-white/80 border border-current/10">{{ institutionalOiAnalysis.signal }}</span>
+                                        <span class="text-xs font-black px-2.5 py-1 rounded-full bg-white/70 border border-current/10">多空判讀</span>
                                         <span class="text-base md:text-lg font-black">{{ institutionalOiAnalysis.title }}</span>
                                     </div>
                                     <p class="mt-2 text-sm font-bold leading-relaxed opacity-90">{{ institutionalOiAnalysis.summary }}</p>
@@ -965,6 +966,7 @@ createApp({
                                 <div class="flex-1">
                                     <div class="flex flex-wrap items-center gap-2">
                                         <span class="text-xs font-black px-2.5 py-1 rounded-full bg-white/80 border border-current/10">{{ chipAutoAnalysis.signal }}</span>
+                                        <span class="text-xs font-black px-2.5 py-1 rounded-full bg-white/70 border border-current/10">自動解讀</span>
                                         <span class="text-base md:text-lg font-black">{{ chipAutoAnalysis.title }}</span>
                                     </div>
                                     <p class="mt-2 text-sm font-bold leading-relaxed opacity-90">{{ chipAutoAnalysis.summary }}</p>
