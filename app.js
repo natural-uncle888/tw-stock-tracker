@@ -807,30 +807,31 @@ createApp({
                 </div>
 
                 <div class="rounded-3xl border border-emerald-100 bg-gradient-to-br from-emerald-50 to-white p-4 md:p-5 shadow-sm">
-                    <div class="flex flex-col md:flex-row md:items-end md:justify-between gap-3 mb-4">
-                        <div class="flex-1">
-                            <div class="text-base font-extrabold text-slate-800 flex items-center gap-2">
-                                <i class="fa-solid fa-chart-line text-emerald-600"></i> 個股籌碼 / 注意處置查詢
+                    <div class="flex flex-col gap-3 mb-4">
+                        <div class="min-w-0">
+                            <div class="text-base font-extrabold text-slate-800 flex items-center gap-2 leading-snug">
+                                <i class="fa-solid fa-chart-line text-emerald-600 shrink-0"></i>
+                                <span class="min-w-0 break-words">個股籌碼 / 注意處置查詢</span>
                             </div>
-                            <div class="text-xs font-bold text-slate-500 mt-1">免費資料來源：TWSE / TPEx 公開資料。提供三大法人、融資融券快照，並檢查是否列入注意股、累計異常或處置股。</div>
+                            <div class="text-xs font-bold text-slate-500 mt-1 leading-relaxed break-words">免費資料來源：TWSE / TPEx 公開資料。提供三大法人、融資融券快照，並檢查是否列入注意股、累計異常或處置股。</div>
                         </div>
-                        <div class="flex flex-col sm:flex-row gap-2 w-full md:w-auto">
-                            <input v-model.trim="chipQueryCode" @keyup.enter="queryStockChipData" inputmode="numeric" placeholder="輸入股票代號，例如 2330" class="h-11 px-4 rounded-xl bg-white border border-emerald-200 text-sm font-bold focus:outline-none focus:ring-4 focus:ring-emerald-100 focus:border-emerald-400 w-full sm:w-56">
-                            <select v-model.number="chipQueryDays" class="h-11 px-3 rounded-xl bg-white border border-emerald-200 text-sm font-bold text-slate-700 focus:outline-none focus:ring-4 focus:ring-emerald-100">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-2 w-full">
+                            <input v-model.trim="chipQueryCode" @keyup.enter="queryStockChipData" inputmode="numeric" placeholder="輸入股票代號，例如 2330" class="h-11 px-4 rounded-xl bg-white border border-emerald-200 text-sm font-bold focus:outline-none focus:ring-4 focus:ring-emerald-100 focus:border-emerald-400 w-full min-w-0">
+                            <select v-model.number="chipQueryDays" class="h-11 px-3 rounded-xl bg-white border border-emerald-200 text-sm font-bold text-slate-700 focus:outline-none focus:ring-4 focus:ring-emerald-100 w-full min-w-0">
                                 <option :value="10">近 10 筆</option>
                                 <option :value="20">近 20 筆</option>
                                 <option :value="60">近 60 筆</option>
                             </select>
-                            <button @click="queryStockChipData" :disabled="chipBatchLoading || chipLoading || stockRiskLoading" class="h-11 px-4 rounded-xl font-extrabold text-white bg-emerald-600 hover:bg-emerald-700 active:scale-[0.98] disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2">
-                                <i class="fa-solid" :class="(chipLoading || stockRiskLoading) ? 'fa-spinner fa-spin' : 'fa-magnifying-glass-chart'"></i>
-                                {{ (chipLoading || stockRiskLoading) ? '查詢中…' : '查詢個股籌碼 / 注意' }}
+                            <button @click="queryStockChipData" :disabled="chipBatchLoading || chipLoading || stockRiskLoading" class="h-11 px-4 rounded-xl font-extrabold text-white bg-emerald-600 hover:bg-emerald-700 active:scale-[0.98] disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2 w-full min-w-0">
+                                <i class="fa-solid shrink-0" :class="(chipLoading || stockRiskLoading) ? 'fa-spinner fa-spin' : 'fa-magnifying-glass-chart'"></i>
+                                <span class="truncate">{{ (chipLoading || stockRiskLoading) ? '查詢中…' : '查詢個股籌碼 / 注意' }}</span>
                             </button>
-                            <button @click="queryAllHoldingChipData" :disabled="chipBatchLoading || chipLoading || stockRiskLoading || !holdings.length" class="h-11 px-4 rounded-xl font-extrabold text-white bg-cyan-600 hover:bg-cyan-700 active:scale-[0.98] disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2">
-                                <i class="fa-solid" :class="chipBatchLoading ? 'fa-spinner fa-spin' : 'fa-layer-group'"></i>
-                                {{ chipBatchLoading ? ('查持股 ' + chipBatchDone + '/' + chipBatchTotal) : '一鍵查持股' }}
+                            <button @click="queryAllHoldingChipData" :disabled="chipBatchLoading || chipLoading || stockRiskLoading || !holdings.length" class="h-11 px-4 rounded-xl font-extrabold text-white bg-cyan-600 hover:bg-cyan-700 active:scale-[0.98] disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2 w-full min-w-0">
+                                <i class="fa-solid shrink-0" :class="chipBatchLoading ? 'fa-spinner fa-spin' : 'fa-layer-group'"></i>
+                                <span class="truncate">{{ chipBatchLoading ? ('查持股 ' + chipBatchDone + '/' + chipBatchTotal) : '一鍵查持股' }}</span>
                             </button>
                         </div>
-                        <div v-if="chipBatchLoading || chipBatchMessage" class="mt-3 rounded-2xl border px-4 py-3 text-sm font-bold" :class="chipBatchLoading ? 'border-cyan-200 bg-cyan-50 text-cyan-700' : 'border-slate-200 bg-slate-50 text-slate-600'">
+                        <div v-if="chipBatchLoading || chipBatchMessage" class="rounded-2xl border px-4 py-3 text-sm font-bold w-full" :class="chipBatchLoading ? 'border-cyan-200 bg-cyan-50 text-cyan-700' : 'border-slate-200 bg-slate-50 text-slate-600'">
                             <i class="fa-solid mr-2" :class="chipBatchLoading ? 'fa-spinner fa-spin' : 'fa-circle-check'"></i>{{ chipBatchMessage || ('正在查詢目前持股：' + chipBatchDone + '/' + chipBatchTotal) }}
                         </div>
                     </div>

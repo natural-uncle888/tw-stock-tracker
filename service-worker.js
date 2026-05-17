@@ -1,5 +1,5 @@
 /* 台股損益管理 PWA Service Worker */
-const CACHE_VERSION = 'stock-tracker-pwa-v15-20260517-gdrive-delete-fix';
+const CACHE_VERSION = 'stock-tracker-pwa-v16-20260517-market-panel-layout-fix';
 const APP_SHELL_CACHE = `${CACHE_VERSION}-shell`;
 const RUNTIME_CACHE = `${CACHE_VERSION}-runtime`;
 
