@@ -718,7 +718,7 @@ createApp({
                         </button>
                     </div>
                 </div>
-                <div class="grid grid-cols-1 2xl:grid-cols-2 gap-4">
+                <div class="grid grid-cols-1 gap-5">
                 <div class="rounded-3xl border border-indigo-100 bg-gradient-to-br from-indigo-50 to-white p-4 md:p-5 shadow-sm">
                     <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-4">
                         <div>
@@ -925,7 +925,7 @@ createApp({
                                     {{ chipOverviewCard.dateLabel || chipSummary.latest?.dateLabel || '-' }}
                                 </div>
                             </div>
-                            <div class="p-4 md:p-5 grid grid-cols-1 lg:grid-cols-2 gap-4">
+                            <div class="p-4 md:p-5 grid grid-cols-1 gap-4">
                                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
                                     <div v-for="item in chipOverviewCard.items" :key="item.key" class="flex items-center justify-between gap-3 rounded-2xl border border-slate-100 bg-slate-50/70 px-4 py-3">
                                         <div class="font-black text-slate-600">{{ item.label }}</div>
@@ -980,8 +980,8 @@ createApp({
                             </div>
                         </div>
 
-                        <div v-if="chipRows.length" class="grid grid-cols-1 lg:grid-cols-3 gap-3">
-                            <div class="lg:col-span-2 overflow-x-auto bg-white rounded-2xl border border-emerald-100">
+                        <div v-if="chipRows.length" class="grid grid-cols-1 gap-3">
+                            <div class="overflow-x-auto bg-white rounded-2xl border border-emerald-100">
                                 <table class="w-full text-sm min-w-[840px]">
                                     <thead class="bg-slate-50 text-slate-500">
                                         <tr>
