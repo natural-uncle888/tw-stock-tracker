@@ -742,6 +742,20 @@
         }
 
         /* NEW: Sub-Tab Switcher Styles */
+
+        /* Desktop readable page width for data-heavy pages */
+        .page-readable {
+            width: 100%;
+            max-width: 1180px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        @media (min-width: 1280px) {
+            .page-readable { max-width: 1120px; }
+        }
+        @media (max-width: 767px) {
+            .page-readable { max-width: none; }
+        }
         .sub-tab-container { @apply flex p-1 bg-slate-200/50 rounded-xl mb-6 border border-slate-200; }
         .sub-tab-item { @apply flex-1 py-2.5 text-sm font-bold text-slate-500 rounded-lg transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer select-none; }
         .sub-tab-item.active { @apply bg-white text-blue-600 shadow-sm; }

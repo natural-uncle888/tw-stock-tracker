@@ -1,5 +1,5 @@
 /* 台股損益管理 PWA Service Worker */
-const CACHE_VERSION = 'stock-tracker-pwa-v20-20260517-inventory-detail-scope';
+const CACHE_VERSION = 'stock-tracker-pwa-v21-20260517-history-cash-readable';
 const APP_SHELL_CACHE = `${CACHE_VERSION}-shell`;
 const RUNTIME_CACHE = `${CACHE_VERSION}-runtime`;
 
