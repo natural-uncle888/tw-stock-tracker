@@ -98,7 +98,7 @@
             localStorage.setItem(window.StockStorage.KEYS.priceUpdateMissingCount, String(this.lastPriceUpdateMissingCount));
     
             if (missingCount > 0) {
-                this.openInfoModal('部分更新成功', ` ${updatedCount} 檔，${missingCount} 檔未更新（沿用上次價格）。`);
+                this.openInfoModal('部分更新成功', `${updatedPriceCount} 檔股價已更新，${missingCount} 檔未更新（沿用上次價格）。`);
             } else {
                 this.openInfoModal('更新成功', '股價與警示狀態已同步！');
             }
