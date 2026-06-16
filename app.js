@@ -441,10 +441,10 @@ createApp({
                             <div class="absolute bottom-0 left-0 w-full h-1.5" :class="idx.change >= 0 ? 'bg-red-500' : 'bg-green-500'"></div>
                         </div>
                     </div>
-                    <div class="app-modal-close-bottom -mx-4 md:-mx-6 mt-6 px-4 md:px-6 pt-4 pb-1 border-t border-slate-100">
-                        <button @click="showGlobalIndices = false" class="w-full h-12 rounded-2xl bg-slate-900 hover:bg-slate-800 text-white font-black shadow-lg active:scale-[0.99] transition-all flex items-center justify-center gap-2">
-                            <i class="fa-solid fa-chevron-down"></i>
-                            關閉全球指數（夜）
+                    <div class="app-modal-close-bottom global-index-close-wrap -mx-4 md:-mx-6 mt-6 px-4 md:px-6 pt-4 pb-1 border-t border-slate-100">
+                        <button @click="showGlobalIndices = false" class="global-index-close-btn" style="background:#0f172a !important;color:#ffffff !important;">
+                            <i class="fa-solid fa-chevron-down" style="color:#ffffff !important;"></i>
+                            <span style="color:#ffffff !important;">關閉全球指數（夜）</span>
                         </button>
                     </div>
                 </div>

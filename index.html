@@ -184,6 +184,40 @@
             z-index: 30;
             background: linear-gradient(to top, rgba(255,255,255,.98), rgba(255,255,255,.92) 70%, rgba(255,255,255,0));
         }
+
+        /* 強制修正全球指數（夜）底部關閉按鈕：避免 Tailwind/CDN 或 sticky 白底蓋色 */
+        .global-index-close-wrap {
+            overflow: visible !important;
+        }
+        .global-index-close-btn {
+            width: 100% !important;
+            height: 3rem !important;
+            border-radius: 1rem !important;
+            background: #0f172a !important;
+            color: #ffffff !important;
+            border: 0 !important;
+            box-shadow: 0 16px 32px -18px rgba(15, 23, 42, .85) !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            gap: .5rem !important;
+            font-weight: 900 !important;
+            line-height: 1 !important;
+            opacity: 1 !important;
+            visibility: visible !important;
+            position: relative !important;
+            z-index: 50 !important;
+            -webkit-appearance: none !important;
+            appearance: none !important;
+        }
+        .global-index-close-btn:hover { background: #1e293b !important; }
+        .global-index-close-btn i,
+        .global-index-close-btn span {
+            color: #ffffff !important;
+            opacity: 1 !important;
+            visibility: visible !important;
+        }
+
         @supports not (height: 100dvh) {
             .app-modal-panel { max-height: calc(100vh - 2rem); }
         }
@@ -802,7 +836,7 @@
 <script src="./services/chipService.js"></script>
 <script src="./services/stockRiskService.js"></script>
 <script src="./services/backupService.js"></script>
-<script src="./app.js"></script>
+<script src="./app.js?v=20260616-close-v2"></script>
 
 <script>
   // PWA 離線 App：首次開啟需連線載入資源，之後可離線打開並讀取本機資料。
