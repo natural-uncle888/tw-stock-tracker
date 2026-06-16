@@ -168,6 +168,26 @@
         .modal-scroll::-webkit-scrollbar-thumb { background: rgba(148,163,184,.42); border-radius: 9999px; }
         .modal-scroll::-webkit-scrollbar-thumb:hover { background: rgba(100,116,139,.58); }
 
+        /* Modal overlay fix: keep market/global panels above mobile bottom nav and leave a safe bottom area */
+        .app-modal-overlay {
+            z-index: 1000 !important;
+            padding-top: max(1rem, env(safe-area-inset-top));
+            padding-bottom: max(1rem, calc(env(safe-area-inset-bottom) + 1rem));
+        }
+        .app-modal-panel {
+            max-height: min(88vh, calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 2rem));
+            padding-bottom: calc(env(safe-area-inset-bottom) + 1rem) !important;
+        }
+        .app-modal-close-bottom {
+            position: sticky;
+            bottom: calc(env(safe-area-inset-bottom) + .75rem);
+            z-index: 30;
+            background: linear-gradient(to top, rgba(255,255,255,.98), rgba(255,255,255,.92) 70%, rgba(255,255,255,0));
+        }
+        @supports not (height: 100dvh) {
+            .app-modal-panel { max-height: calc(100vh - 2rem); }
+        }
+
         @keyframes slide-up { from { transform: translateY(100%); } to { transform: translateY(0); } }
         .animate-slide-up { animation: slide-up 0.3s cubic-bezier(0.16, 1, 0.3, 1); }
         @keyframes modal-pop { from { transform: translateY(16px) scale(0.96); opacity: 0; } to { transform: translateY(0) scale(1); opacity: 1; } }
