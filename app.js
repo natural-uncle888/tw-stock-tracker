@@ -441,10 +441,12 @@ createApp({
                             <div class="absolute bottom-0 left-0 w-full h-1.5" :class="idx.change >= 0 ? 'bg-red-500' : 'bg-green-500'"></div>
                         </div>
                     </div>
-                    <button @click="showGlobalIndices = false" class="app-modal-close-bottom mt-6 w-full h-12 rounded-2xl bg-slate-900 hover:bg-slate-800 text-white font-black shadow-lg active:scale-[0.99] transition-all flex items-center justify-center gap-2">
-                        <i class="fa-solid fa-chevron-down"></i>
-                        關閉全球指數（夜）
-                    </button>
+                    <div class="app-modal-close-bottom -mx-4 md:-mx-6 mt-6 px-4 md:px-6 pt-4 pb-1 border-t border-slate-100">
+                        <button @click="showGlobalIndices = false" class="w-full h-12 rounded-2xl bg-slate-900 hover:bg-slate-800 text-white font-black shadow-lg active:scale-[0.99] transition-all flex items-center justify-center gap-2">
+                            <i class="fa-solid fa-chevron-down"></i>
+                            關閉全球指數（夜）
+                        </button>
+                    </div>
                 </div>
             </div>
 
