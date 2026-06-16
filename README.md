@@ -50,3 +50,14 @@ window.STOCK_TRACKER_GOOGLE_CLIENT_ID = 'xxxxxxxxxxxx-xxxxxxxxxxxxxxxxxxxxxxxxxx
 - 匯出我的族群資料庫：只匯出個股族群資料與下拉選單，不包含交易與資金資料。
 
 專案根目錄附有：`taiwan_hot_stock_category_database_2026.json`，可直接匯入網站使用。
+
+
+## 2026-06-16 modalfix2
+
+修正手機版「市場觀察」與「全球指數（夜）」彈窗底部被底部導航列遮住的問題：
+
+- 彈窗 z-index 提升到 9999。
+- 手機版彈窗預留底部導航列高度，避免關閉按鈕被蓋住。
+- 開啟彈窗時隱藏底部導航列、右下角新增按鈕與浮動更新按鈕。
+- Service Worker 版本更新並改成同站 JS/CSS 優先網路，避免 PWA 快取吃到舊版檔案。
+- index.html 對 app.js 與 services 加上版本參數，強制瀏覽器載入新版。

@@ -58,7 +58,7 @@ createApp({
         </div>
     </div>
 
-    <div v-if="isLoggedIn" class="app-shell max-w-7xl mx-auto p-4 md:p-8 pb-32" @click="closeContextMenu" @contextmenu.prevent>
+    <div v-if="isLoggedIn" class="app-shell max-w-7xl mx-auto p-4 md:p-8 pb-32" :class="{ 'modal-open-lock': showGlobalIndices || showInventoryMarketPanel }" @click="closeContextMenu" @contextmenu.prevent>
 
 
         <div class="floating-price-update floating-position-target"
@@ -404,7 +404,7 @@ createApp({
                 </div>
             </div>
 
-            <div v-if="showGlobalIndices" class="app-modal-overlay fixed inset-0 bg-slate-900/45 backdrop-blur-sm flex items-center justify-center p-4 md:p-6" @click.self="showGlobalIndices = false">
+            <div v-if="showGlobalIndices" class="app-modal-overlay fixed inset-0 bg-slate-900/45 backdrop-blur-sm flex items-center justify-center p-4 md:p-6" style="z-index: 9999;" @click.self="showGlobalIndices = false">
                 <div class="app-modal-panel relative w-full max-w-6xl overflow-y-auto modal-scroll rounded-[2rem] bg-white border border-slate-200 shadow-[0_28px_90px_-35px_rgba(15,23,42,0.75)] p-4 md:p-6 animate-modal-pop">
                     <button @click="showGlobalIndices = false" aria-label="關閉全球指數" title="關閉" class="absolute right-4 top-4 z-10 w-11 h-11 rounded-full bg-slate-100 hover:bg-slate-200 border border-slate-200 text-slate-600 hover:text-slate-900 active:scale-95 transition-all shadow-sm flex items-center justify-center">
                         <i class="fa-solid fa-xmark text-lg"></i>
@@ -448,7 +448,7 @@ createApp({
                 </div>
             </div>
 
-            <button v-if="!showGlobalIndices && !showInventoryMarketPanel" @click="showAddModal = true" class="md:hidden fixed bottom-24 right-5 w-16 h-16 bg-blue-600 text-white rounded-full shadow-2xl shadow-blue-500/40 z-50 flex items-center justify-center text-3xl active:scale-90 transition-transform"><i class="fa-solid fa-plus"></i></button>
+            <button v-if="!showGlobalIndices && !showInventoryMarketPanel" @click="showAddModal = true" class="mobile-fab md:hidden fixed bottom-24 right-5 w-16 h-16 bg-blue-600 text-white rounded-full shadow-2xl shadow-blue-500/40 z-50 flex items-center justify-center text-3xl active:scale-90 transition-transform"><i class="fa-solid fa-plus"></i></button>
 
             <!-- Mobile Add Transaction Modal -->
             <div v-if="showAddModal" @click.self="showAddModal = false" class="fixed inset-0 bg-slate-900/70 backdrop-blur-sm z-[95] md:hidden flex items-end justify-center">
@@ -691,7 +691,7 @@ createApp({
                 </div>
             </div>
 
-            <div v-if="showInventoryMarketPanel" class="app-modal-overlay fixed inset-0 bg-slate-900/45 backdrop-blur-sm flex items-center justify-center p-4 md:p-6" @click.self="showInventoryMarketPanel = false">
+            <div v-if="showInventoryMarketPanel" class="app-modal-overlay fixed inset-0 bg-slate-900/45 backdrop-blur-sm flex items-center justify-center p-4 md:p-6" style="z-index: 9999;" @click.self="showInventoryMarketPanel = false">
                 <div class="app-modal-panel relative w-full max-w-7xl overflow-y-auto modal-scroll rounded-[2rem] bg-white border border-slate-200 shadow-[0_28px_90px_-35px_rgba(15,23,42,0.75)] p-4 md:p-6 animate-modal-pop">
                     <button @click="showInventoryMarketPanel = false" aria-label="關閉市場觀察" title="關閉" class="absolute right-4 top-4 z-10 w-11 h-11 rounded-full bg-slate-100 hover:bg-slate-200 border border-slate-200 text-slate-600 hover:text-slate-900 active:scale-95 transition-all shadow-sm flex items-center justify-center">
                         <i class="fa-solid fa-xmark text-lg"></i>
@@ -2464,7 +2464,7 @@ createApp({
         </div>
 
         <!-- Mobile Bottom Main Tabs -->
-        <div v-if="!showGlobalIndices && !showInventoryMarketPanel" class="md:hidden fixed bottom-0 left-0 w-full z-40 bg-white/95 backdrop-blur border-t border-slate-200 px-3 pt-2 pb-[calc(env(safe-area-inset-bottom)+10px)] shadow-[0_-16px_40px_-28px_rgba(15,23,42,.6)]">
+        <div v-if="!showGlobalIndices && !showInventoryMarketPanel" class="mobile-bottom-nav md:hidden fixed bottom-0 left-0 w-full z-40 bg-white/95 backdrop-blur border-t border-slate-200 px-3 pt-2 pb-[calc(env(safe-area-inset-bottom)+10px)] shadow-[0_-16px_40px_-28px_rgba(15,23,42,.6)]">
             <div class="grid grid-cols-4 gap-2">
                 <button type="button" @click="currentTab = 'dashboard'; showStockDetails = false" class="mobile-main-tab mobile-main-tab--dashboard flex flex-col items-center justify-center py-2"
                     :class="currentTab === 'dashboard' ? 'active' : 'hover:bg-slate-50'">

@@ -15,7 +15,7 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="apple-mobile-web-app-title" content="台股損益管理">
-    <link rel="manifest" href="./manifest.json">
+    <link rel="manifest" href="./manifest.json?v=20260616-modalfix2">
     <link rel="apple-touch-icon" sizes="180x180" href="./rise-logo-red-180.png">
     
     <style type="text/tailwindcss">
@@ -168,24 +168,69 @@
         .modal-scroll::-webkit-scrollbar-thumb { background: rgba(148,163,184,.42); border-radius: 9999px; }
         .modal-scroll::-webkit-scrollbar-thumb:hover { background: rgba(100,116,139,.58); }
 
-        /* Modal overlay fix: keep market/global panels above mobile bottom nav and leave a safe bottom area */
+        /* Modal overlay fix v2: avoid mobile bottom nav covering market/global modal close buttons.
+           Works even when the old mobile nav is still visible due to browser/PWA cache. */
+        :root {
+            --app-mobile-nav-space: calc(env(safe-area-inset-bottom) + 118px);
+        }
         .app-modal-overlay {
-            z-index: 1000 !important;
-            padding-top: max(1rem, env(safe-area-inset-top));
-            padding-bottom: max(1rem, calc(env(safe-area-inset-bottom) + 1rem));
+            z-index: 9999 !important;
+            min-height: 100vh;
+            min-height: 100dvh;
+            padding-top: max(.75rem, env(safe-area-inset-top)) !important;
+            padding-bottom: max(1rem, calc(env(safe-area-inset-bottom) + 1rem)) !important;
         }
         .app-modal-panel {
-            max-height: min(88vh, calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 2rem));
+            max-height: calc(100vh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 1.5rem);
+            max-height: calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 1.5rem);
+            overflow-y: auto !important;
+            overscroll-behavior: contain;
+            -webkit-overflow-scrolling: touch;
             padding-bottom: calc(env(safe-area-inset-bottom) + 1rem) !important;
         }
         .app-modal-close-bottom {
             position: sticky;
-            bottom: calc(env(safe-area-inset-bottom) + .75rem);
-            z-index: 30;
-            background: linear-gradient(to top, rgba(255,255,255,.98), rgba(255,255,255,.92) 70%, rgba(255,255,255,0));
+            bottom: 0;
+            z-index: 60;
+            background: linear-gradient(to top, rgba(255,255,255,1), rgba(255,255,255,.96) 72%, rgba(255,255,255,0));
+        }
+        @media (max-width: 767px) {
+            .modal-open-lock .mobile-bottom-nav,
+            .modal-open-lock .mobile-fab,
+            .modal-open-lock .floating-price-update,
+            .modal-open-lock .floating-position-toolbar {
+                display: none !important;
+                pointer-events: none !important;
+            }
+            .app-modal-overlay {
+                align-items: flex-start !important;
+                padding-left: .75rem !important;
+                padding-right: .75rem !important;
+                /* Reserve the exact area used by the mobile bottom nav. This prevents overlap even if the nav is not hidden by cache. */
+                padding-bottom: var(--app-mobile-nav-space) !important;
+            }
+            .app-modal-panel {
+                margin-top: max(.35rem, env(safe-area-inset-top));
+                margin-bottom: .75rem;
+                max-height: calc(100vh - env(safe-area-inset-top) - var(--app-mobile-nav-space) - .75rem) !important;
+                max-height: calc(100dvh - env(safe-area-inset-top) - var(--app-mobile-nav-space) - .75rem) !important;
+            }
+            .app-modal-close-bottom {
+                bottom: 0;
+                padding-bottom: calc(env(safe-area-inset-bottom) + .85rem) !important;
+            }
+        }
+        @media (min-width: 768px) {
+            .app-modal-overlay {
+                align-items: center !important;
+            }
         }
         @supports not (height: 100dvh) {
+            .app-modal-overlay { min-height: 100vh; }
             .app-modal-panel { max-height: calc(100vh - 2rem); }
+            @media (max-width: 767px) {
+                .app-modal-panel { max-height: calc(100vh - 8.5rem) !important; }
+            }
         }
 
         @keyframes slide-up { from { transform: translateY(100%); } to { transform: translateY(0); } }
@@ -792,23 +837,23 @@
   // 設定後，分享此網站給其他人時，對方可用自己的 Google 帳號備份到自己的 Drive AppDataFolder。
   window.STOCK_TRACKER_GOOGLE_CLIENT_ID = '894514639805-g3073pmjvadbasfp1g25r24rjhl9iacb.apps.googleusercontent.com';
 </script>
-<script src="./services/storageService.js"></script>
-<script src="./services/saveStatusService.js"></script>
-<script src="./services/stockCategoryService.js"></script>
-<script src="./services/tradeService.js"></script>
-<script src="./services/cashService.js"></script>
-<script src="./services/priceService.js"></script>
-<script src="./services/institutionalOiService.js"></script>
-<script src="./services/chipService.js"></script>
-<script src="./services/stockRiskService.js"></script>
-<script src="./services/backupService.js"></script>
-<script src="./app.js"></script>
+<script src="./services/storageService.js?v=20260616-modalfix2"></script>
+<script src="./services/saveStatusService.js?v=20260616-modalfix2"></script>
+<script src="./services/stockCategoryService.js?v=20260616-modalfix2"></script>
+<script src="./services/tradeService.js?v=20260616-modalfix2"></script>
+<script src="./services/cashService.js?v=20260616-modalfix2"></script>
+<script src="./services/priceService.js?v=20260616-modalfix2"></script>
+<script src="./services/institutionalOiService.js?v=20260616-modalfix2"></script>
+<script src="./services/chipService.js?v=20260616-modalfix2"></script>
+<script src="./services/stockRiskService.js?v=20260616-modalfix2"></script>
+<script src="./services/backupService.js?v=20260616-modalfix2"></script>
+<script src="./app.js?v=20260616-modalfix2"></script>
 
 <script>
   // PWA 離線 App：首次開啟需連線載入資源，之後可離線打開並讀取本機資料。
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
-      navigator.serviceWorker.register('./service-worker.js')
+      navigator.serviceWorker.register('./service-worker.js?v=20260616-modalfix2')
         .catch((err) => console.warn('Service worker registration failed:', err));
     });
   }
