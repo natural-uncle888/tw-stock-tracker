@@ -237,7 +237,7 @@ createApp({
                 <div class="card !p-5 border-rose-100 bg-rose-50/40"><div class="text-xs text-rose-500 font-bold mb-1">已入帳現金股利</div><div class="text-2xl font-black text-rose-600">+{{ formatCurrency(dividendCashSettledNet) }}</div><div class="mt-2 text-xs font-bold text-rose-400">投資收益，不計入本金</div></div>
                 <div class="card !p-5 border-orange-100 bg-orange-50/40"><div class="text-xs text-orange-500 font-bold mb-1">應收現金股利</div><div class="text-2xl font-black text-orange-600">+{{ formatCurrency(dividendReceivable) }}</div><div class="mt-2 text-xs font-bold text-orange-400">已除息、尚未付款</div></div>
                 <div class="card !p-5 border-indigo-100 bg-indigo-50/40"><div class="text-xs text-indigo-500 font-bold mb-1">應收股票股利市值</div><div class="text-2xl font-black text-indigo-600">+{{ formatCurrency(stockDividendReceivableValue) }}</div><div class="mt-2 text-xs font-bold text-indigo-400">已除權、尚未撥股估值</div></div>
-                <button type="button" @click="openDividendManagerModal" class="card !p-5 text-left hover:border-rose-300 hover:bg-rose-50 transition"><div class="text-xs text-slate-400 font-bold mb-1"><i class="fa-solid fa-gift text-rose-500 mr-1"></i>權息管理</div><div class="text-2xl font-black text-slate-800">{{ portfolioCorporateActions.length }}</div><div class="mt-2 text-xs font-bold text-slate-400">新增 / 編輯除權息事件</div></button>
+                <button type="button" @click="openDividendManagerModal" class="card !p-5 text-left hover:border-rose-300 hover:bg-rose-50 transition"><div class="text-xs text-slate-400 font-bold mb-1"><i class="fa-solid fa-gift text-rose-500 mr-1"></i>權息管理</div><div class="text-2xl font-black text-slate-800">{{ portfolioCorporateActions.length }}</div><div class="mt-2 text-xs font-bold text-slate-400">新增 / 編輯共用權息公告</div></button>
             </div>
 
 
@@ -1886,14 +1886,14 @@ createApp({
         <div v-if="showDividendManagerModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex justify-center items-start z-[90] p-4 md:p-8 overflow-y-auto">
             <div class="bg-white rounded-[2rem] w-full max-w-6xl shadow-2xl border border-white/80 overflow-hidden my-6">
                 <div class="px-6 py-5 bg-gradient-to-r from-rose-600 to-orange-500 text-white flex items-center justify-between gap-4">
-                    <div><h3 class="text-2xl font-black flex items-center gap-3"><i class="fa-solid fa-gift"></i> 權息管理</h3><p class="text-sm font-bold text-rose-100 mt-1">現金股利會進入股利現金流；股票股利會增加庫存股數但不增加成本。</p></div>
+                    <div><h3 class="text-2xl font-black flex items-center gap-3"><i class="fa-solid fa-gift"></i> 權息管理</h3><p class="text-sm font-bold text-rose-100 mt-1">權息公告資料跨投資帳本共用；權利股數、應收股利與入帳金額依目前帳本獨立計算。</p></div>
                     <button @click="closeDividendManagerModal" class="w-11 h-11 rounded-2xl bg-white/15 hover:bg-white/25 transition"><i class="fa-solid fa-xmark text-xl"></i></button>
                 </div>
 
                 <div class="p-6 grid grid-cols-1 lg:grid-cols-5 gap-6">
                     <div class="lg:col-span-2 space-y-4">
                         <div class="rounded-2xl border border-slate-200 p-5 bg-slate-50/60">
-                            <div class="flex items-center justify-between mb-4"><h4 class="font-black text-slate-800">{{ dividendForm.id ? '編輯權息事件' : '新增權息事件' }}</h4><button type="button" @click="resetDividendForm" class="text-xs font-black text-slate-500 hover:text-slate-800">清空</button></div>
+                            <div class="flex items-center justify-between mb-4"><h4 class="font-black text-slate-800">{{ dividendForm.id ? '編輯共用權息公告' : '新增共用權息公告' }}</h4><button type="button" @click="resetDividendForm" class="text-xs font-black text-slate-500 hover:text-slate-800">清空</button></div>
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div class="input-group relative">
                                     <label class="text-xs font-bold text-slate-500 mb-2 ml-1 flex justify-between">股票代號 / 名稱 <span v-if="isDividendSearching" class="text-rose-600 text-xs animate-pulse">搜尋中...</span></label>
@@ -1930,13 +1930,13 @@ createApp({
                                     <input type="number" step="0.01" v-model.number="dividendForm.prevClose" placeholder="除權息日前一交易日再填" class="w-full h-[46px] px-4 bg-white border border-slate-300 rounded-xl font-bold outline-none focus:border-rose-500">
                                     <p class="mt-1 text-[11px] font-bold text-slate-400 leading-relaxed">公告時通常未知；除權息日當天或之後可按「抓前收盤價」，也可手動填入。</p>
                                 </div>
-                                <div class="input-group"><label class="text-xs font-bold text-slate-500 mb-2 ml-1">權利股數（選填覆寫）</label><input type="number" step="1" v-model.number="dividendForm.eligibleQty" placeholder="空白＝依除權息日前持股自算" class="w-full h-[46px] px-4 bg-white border border-slate-300 rounded-xl font-bold outline-none focus:border-rose-500"></div>
-                                <div class="input-group"><label class="text-xs font-bold text-slate-500 mb-2 ml-1">扣繳稅額（選填）</label><input type="number" step="1" v-model.number="dividendForm.taxWithheld" placeholder="0" class="w-full h-[46px] px-4 bg-white border border-slate-300 rounded-xl font-bold outline-none focus:border-rose-500"></div>
-                                <div class="input-group"><label class="text-xs font-bold text-slate-500 mb-2 ml-1">零股折現（選填）</label><input type="number" step="1" v-model.number="dividendForm.fractionalShareCash" placeholder="0" class="w-full h-[46px] px-4 bg-white border border-slate-300 rounded-xl font-bold outline-none focus:border-rose-500"></div>
+                                <div class="input-group"><label class="text-xs font-bold text-slate-500 mb-2 ml-1">本帳本權利股數（選填覆寫）</label><input type="number" step="1" v-model.number="dividendForm.eligibleQty" placeholder="空白＝依除權息日前持股自算" class="w-full h-[46px] px-4 bg-white border border-slate-300 rounded-xl font-bold outline-none focus:border-rose-500"></div>
+                                <div class="input-group"><label class="text-xs font-bold text-slate-500 mb-2 ml-1">本帳本扣繳稅額（選填）</label><input type="number" step="1" v-model.number="dividendForm.taxWithheld" placeholder="0" class="w-full h-[46px] px-4 bg-white border border-slate-300 rounded-xl font-bold outline-none focus:border-rose-500"></div>
+                                <div class="input-group"><label class="text-xs font-bold text-slate-500 mb-2 ml-1">本帳本零股折現（選填）</label><input type="number" step="1" v-model.number="dividendForm.fractionalShareCash" placeholder="0" class="w-full h-[46px] px-4 bg-white border border-slate-300 rounded-xl font-bold outline-none focus:border-rose-500"></div>
                                 <div class="input-group md:col-span-2"><label class="text-xs font-bold text-slate-500 mb-2 ml-1">備註</label><input v-model="dividendForm.note" placeholder="例如：手動輸入、公告來源" class="w-full h-[46px] px-4 bg-white border border-slate-300 rounded-xl font-bold outline-none focus:border-rose-500"></div>
                             </div>
-                            <button @click="saveDividendAction" class="btn w-full mt-5 gap-2 !bg-rose-600 hover:!bg-rose-700 !text-white shadow-lg shadow-rose-200"><i class="fa-solid fa-check"></i> 儲存權息事件</button>
-                            <div class="mt-3 text-xs font-bold text-slate-400 leading-relaxed">規則：除權息日當天買進不列入權利股數；當天賣出仍保留權利。股票股利會在股票發放日增加股數、成本不變。</div>
+                            <button @click="saveDividendAction" class="btn w-full mt-5 gap-2 !bg-rose-600 hover:!bg-rose-700 !text-white shadow-lg shadow-rose-200"><i class="fa-solid fa-check"></i> 儲存權息公告</button>
+                            <div class="mt-3 text-xs font-bold text-slate-400 leading-relaxed">規則：公告資料會跨帳本共用；本帳本權利股數若留空，會依本帳本除權息日前持股自算。除權息日當天買進不列入，當天賣出仍保留權利。</div>
                         </div>
                     </div>
 
@@ -1945,12 +1945,12 @@ createApp({
                             <div class="rounded-2xl bg-rose-50 border border-rose-100 p-4"><div class="text-xs font-bold text-rose-500">已入帳股利</div><div class="mt-1 text-xl font-black text-rose-700">{{ formatCurrency(dividendCashSettledNet) }}</div></div>
                             <div class="rounded-2xl bg-orange-50 border border-orange-100 p-4"><div class="text-xs font-bold text-orange-500">應收現金</div><div class="mt-1 text-xl font-black text-orange-700">{{ formatCurrency(dividendReceivable) }}</div></div>
                             <div class="rounded-2xl bg-indigo-50 border border-indigo-100 p-4"><div class="text-xs font-bold text-indigo-500">應收股票估值</div><div class="mt-1 text-xl font-black text-indigo-700">{{ formatCurrency(stockDividendReceivableValue) }}</div></div>
-                            <div class="rounded-2xl bg-slate-50 border border-slate-200 p-4"><div class="text-xs font-bold text-slate-500">事件數</div><div class="mt-1 text-xl font-black text-slate-800">{{ portfolioCorporateActions.length }}</div></div>
+                            <div class="rounded-2xl bg-slate-50 border border-slate-200 p-4"><div class="text-xs font-bold text-slate-500">共用公告數</div><div class="mt-1 text-xl font-black text-slate-800">{{ portfolioCorporateActions.length }}</div></div>
                         </div>
 
                         <div class="rounded-2xl border border-slate-200 overflow-hidden">
-                            <div class="px-5 py-4 bg-slate-50 border-b border-slate-200 flex items-center justify-between"><h4 class="font-black text-slate-700">權息事件列表</h4><span class="text-xs font-bold text-slate-400">{{ currentPortfolio.name }}</span></div>
-                            <div v-if="portfolioCorporateActions.length === 0" class="p-10 text-center text-slate-400 font-bold"><i class="fa-solid fa-circle-info text-3xl mb-3 opacity-40"></i><div>尚無權息事件</div></div>
+                            <div class="px-5 py-4 bg-slate-50 border-b border-slate-200 flex items-center justify-between"><h4 class="font-black text-slate-700">權息公告列表</h4><span class="text-xs font-bold text-slate-400">{{ currentPortfolio.name }}｜權益獨立計算</span></div>
+                            <div v-if="portfolioCorporateActions.length === 0" class="p-10 text-center text-slate-400 font-bold"><i class="fa-solid fa-circle-info text-3xl mb-3 opacity-40"></i><div>尚無權息公告</div></div>
                             <div v-else class="divide-y divide-slate-100 max-h-[560px] overflow-y-auto">
                                 <div v-for="action in portfolioCorporateActions" :key="action.id" class="p-5 hover:bg-slate-50 transition">
                                     <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
@@ -2746,6 +2746,15 @@ const savedCash = localStorage.getItem(window.StockStorage.KEYS.cashBook) || '';
         const savedProfitAdjustments = localStorage.getItem(window.StockStorage.KEYS.profitAdjustments) || ''; if (savedProfitAdjustments) { try { const parsed = JSON.parse(savedProfitAdjustments); this.profitAdjustments = Array.isArray(parsed) ? parsed : []; } catch(_) { this.profitAdjustments = []; } }
         if (!Array.isArray(this.profitAdjustments)) this.profitAdjustments = [];
         if (!Array.isArray(this.corporateActions)) this.corporateActions = [];
+        try {
+            if (window.StockDividendService && typeof window.StockDividendService.normalizeSharedActions === 'function') {
+                const before = JSON.stringify(this.corporateActions || []);
+                this.corporateActions = window.StockDividendService.normalizeSharedActions(this.corporateActions || []);
+                if (JSON.stringify(this.corporateActions || []) !== before) {
+                    localStorage.setItem(window.StockStorage.KEYS.corporateActions, JSON.stringify(this.corporateActions || []));
+                }
+            }
+        } catch(_) {}
         // Migrate legacy cash entries (ensure portfolioId / normalize fields)
         try {
             let changed = false;
@@ -3496,8 +3505,8 @@ const savedCash = localStorage.getItem(window.StockStorage.KEYS.cashBook) || '';
         dividendHistoryRows() {
             return (this.portfolioCorporateActions || []).flatMap(a => {
                 const rows = [];
-                if (Number(a.cashDividendPerShare || 0) > 0) rows.push({ ...a, historyKind: 'cashDividend', historyDate: a.cashPaymentDate || a.exDate, historyLabel: '現金股利', historyAmount: Number(a.cashDividendNet || 0) });
-                if (Number(a.stockDividendRatio || 0) > 0) rows.push({ ...a, historyKind: 'stockDividend', historyDate: a.stockPaymentDate || a.exDate, historyLabel: '股票股利', historyAmount: Number(a.stockDividendQty || 0) });
+                if (Number(a.cashDividendPerShare || 0) > 0 && Number(a.cashDividendNet || 0) !== 0) rows.push({ ...a, historyKind: 'cashDividend', historyDate: a.cashPaymentDate || a.exDate, historyLabel: '現金股利', historyAmount: Number(a.cashDividendNet || 0) });
+                if (Number(a.stockDividendRatio || 0) > 0 && Number(a.stockDividendQty || 0) > 0) rows.push({ ...a, historyKind: 'stockDividend', historyDate: a.stockPaymentDate || a.exDate, historyLabel: '股票股利', historyAmount: Number(a.stockDividendQty || 0) });
                 return rows;
             }).sort((a, b) => (new Date(b.historyDate || 0) - new Date(a.historyDate || 0)) || String(a.code).localeCompare(String(b.code)));
         },
@@ -4073,7 +4082,9 @@ const savedCash = localStorage.getItem(window.StockStorage.KEYS.cashBook) || '';
                 this.transactions = (this.transactions || []).filter(tx => (tx && (tx.portfolioId || 'main') !== pid));
                 this.cashBook = (this.cashBook || []).filter(e => (e && (e.portfolioId || 'main') !== pid));
                 this.profitAdjustments = (this.profitAdjustments || []).filter(e => (e && (e.portfolioId || 'main') !== pid));
-                this.corporateActions = (this.corporateActions || []).filter(e => (e && (e.portfolioId || 'main') !== pid));
+                this.corporateActions = window.StockDividendService && typeof window.StockDividendService.removePortfolioOverrides === 'function'
+                    ? window.StockDividendService.removePortfolioOverrides(this.corporateActions || [], pid)
+                    : (this.corporateActions || []).filter(e => (e && (e.portfolioId || 'main') !== pid));
                 this.portfolios = (this.portfolios || []).filter(x => x && x.id !== pid);
                 if (!this.portfolios.some(x => x.id === 'main')) this.portfolios.unshift({ id: 'main', name: '我的帳戶', kind: 'personal', createdAt: new Date().toISOString() });
                 if (this.currentPortfolioId === pid) this.currentPortfolioId = 'main';
@@ -4288,7 +4299,10 @@ ${picked.date} 收盤價：${close}`);
             const payload = window.StockDividendService.normalizeAction({
                 ...(existing || {}),
                 id: f.id || `ca_${Date.now()}_${Math.floor(Math.random() * 100000)}`,
-                portfolioId: this.currentPortfolioId || 'main',
+                shared: true,
+                scope: 'shared',
+                portfolioId: window.StockDividendService.SHARED_PORTFOLIO_ID || 'shared',
+                sharedKey: existing?.sharedKey,
                 code,
                 name,
                 actionType,
@@ -4302,6 +4316,7 @@ ${picked.date} 收盤價：${close}`);
                 stockDividendPerShareYuan: stock,
                 prevClose: Math.max(0, Number(f.prevClose) || 0),
                 eligibleQty: Math.max(0, Math.floor(Number(f.eligibleQty) || 0)),
+                lockedAt: Math.max(0, Math.floor(Number(f.eligibleQty) || 0)) > 0 ? new Date().toISOString() : '',
                 taxWithheld: Math.max(0, Number(f.taxWithheld) || 0),
                 fractionalShareCash: Math.max(0, Number(f.fractionalShareCash) || 0),
                 note: String(f.note || '').trim(),
@@ -4309,19 +4324,17 @@ ${picked.date} 收盤價：${close}`);
                 updatedAt: new Date().toISOString()
             });
             if (!Array.isArray(this.corporateActions)) this.corporateActions = [];
-            const idx = this.corporateActions.findIndex(a => a && a.id === payload.id);
-            if (idx >= 0) this.corporateActions[idx] = payload;
-            else this.corporateActions.push(payload);
+            this.corporateActions = window.StockDividendService.upsertSharedAction(this.corporateActions, payload, this.currentPortfolioId || 'main');
             this.nameMap[code] = name;
             this.saveData();
             this.resetDividendForm();
-            this.openInfoModal('', '權息事件已儲存。');
+            this.openInfoModal('', '權息公告已儲存。公告資料會跨投資帳本共用，本帳本權益會依交易紀錄獨立計算。');
         },
         deleteDividendAction(id) {
             const raw = String(id || '');
             if (!raw) return;
-            this.confirmTitle = '刪除權息事件';
-            this.confirmMessage = '確定要刪除此筆除權息 / 股利事件嗎？這會同步影響應收股利、股利現金流與股票股利股數。';
+            this.confirmTitle = '刪除權息公告';
+            this.confirmMessage = '確定要刪除此筆共用權息公告嗎？這會從所有投資帳本移除此公告，並同步影響各帳本的應收股利、股利現金流與股票股利股數。';
             this.confirmCallback = () => {
                 this.corporateActions = (this.corporateActions || []).filter(a => String(a && a.id) !== raw);
                 this.saveData();
@@ -4354,7 +4367,7 @@ ${picked.date} 收盤價：${close}`);
             const parts = [];
             if (Number(action.cashDividendPerShare || 0) > 0) parts.push(`現金 ${action.cashDividendPerShare} 元/股`);
             if (Number(action.stockDividendPerShareYuan || 0) > 0) parts.push(`股票 ${action.stockDividendPerShareYuan} 元/股`);
-            if (Number(action.eligibleQty || 0) > 0) parts.push(`權利股數 ${this.formatCurrency(action.eligibleQty)} 股`);
+            if (Number(action.eligibleQty || 0) > 0) parts.push(`本帳本權利股數 ${this.formatCurrency(action.eligibleQty)} 股`);
             return parts.join('｜') || '-';
         },
         openRealizedDetail(code) { this.realizedDetailCode = code; this.showRealizedDetail = true; },

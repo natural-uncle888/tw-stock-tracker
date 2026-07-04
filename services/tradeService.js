@@ -350,9 +350,7 @@
     
                 // -------- Pass 4: apply position state (avg cost) using posQty/posAmount + settled stock dividends --------
                 const pid = (list[0] && (list[0].portfolioId || 'main')) || 'main';
-                const dividendEvents = window.StockDividendService ? (this.corporateActions || [])
-                    .filter(a => a && (a.portfolioId || 'main') === pid)
-                    .map(a => window.StockDividendService.enrichAction(a, this.transactions || [], this.corporateActions || []))
+                const dividendEvents = window.StockDividendService ? window.StockDividendService.portfolioActionsFor(this, pid)
                     .filter(a => a && a.stockPaymentDate && a.stockSettled && Number(a.stockDividendQty || 0) > 0)
                     .map(a => ({
                         kind: 'stock_dividend',
