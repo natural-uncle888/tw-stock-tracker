@@ -1,5 +1,5 @@
 /* 台股損益管理 PWA Service Worker */
-const CACHE_VERSION = 'stock-tracker-pwa-v25-20260704-name-override';
+const CACHE_VERSION = 'stock-tracker-pwa-v26-20260704-header-icon-cache-fix';
 const APP_SHELL_CACHE = `${CACHE_VERSION}-shell`;
 const RUNTIME_CACHE = `${CACHE_VERSION}-runtime`;
 
@@ -91,8 +91,14 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // JS / CSS / 圖示 / CDN：優先快取，讓 App 可以離線啟動。
-  if (['script', 'style', 'image', 'font'].includes(request.destination) || url.origin !== self.location.origin) {
+  // 同源 JS / CSS：優先網路，避免 PWA 快取造成 app.js 更新後仍顯示舊版 UI。
+  if (url.origin === self.location.origin && ['script', 'style'].includes(request.destination)) {
+    event.respondWith(networkFirst(request));
+    return;
+  }
+
+  // 圖示 / 字型 / CDN：優先快取，讓 App 可以離線啟動。
+  if (['image', 'font'].includes(request.destination) || url.origin !== self.location.origin) {
     event.respondWith(cacheFirst(request));
     return;
   }

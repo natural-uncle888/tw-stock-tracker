@@ -832,24 +832,30 @@
   // 設定後，分享此網站給其他人時，對方可用自己的 Google 帳號備份到自己的 Drive AppDataFolder。
   window.STOCK_TRACKER_GOOGLE_CLIENT_ID = '894514639805-g3073pmjvadbasfp1g25r24rjhl9iacb.apps.googleusercontent.com';
 </script>
-<script src="./services/storageService.js"></script>
-<script src="./services/saveStatusService.js"></script>
-<script src="./services/stockCategoryService.js"></script>
-<script src="./services/tradeService.js"></script>
-<script src="./services/dividendService.js"></script>
-<script src="./services/cashService.js"></script>
-<script src="./services/priceService.js"></script>
-<script src="./services/institutionalOiService.js"></script>
-<script src="./services/chipService.js"></script>
-<script src="./services/stockRiskService.js"></script>
-<script src="./services/backupService.js"></script>
-<script src="./app.js?v=20260704-name-override-v2"></script>
+<script src="./services/storageService.js?v=20260704-header-icon-cache-fix-v3"></script>
+<script src="./services/saveStatusService.js?v=20260704-header-icon-cache-fix-v3"></script>
+<script src="./services/stockCategoryService.js?v=20260704-header-icon-cache-fix-v3"></script>
+<script src="./services/tradeService.js?v=20260704-header-icon-cache-fix-v3"></script>
+<script src="./services/dividendService.js?v=20260704-header-icon-cache-fix-v3"></script>
+<script src="./services/cashService.js?v=20260704-header-icon-cache-fix-v3"></script>
+<script src="./services/priceService.js?v=20260704-header-icon-cache-fix-v3"></script>
+<script src="./services/institutionalOiService.js?v=20260704-header-icon-cache-fix-v3"></script>
+<script src="./services/chipService.js?v=20260704-header-icon-cache-fix-v3"></script>
+<script src="./services/stockRiskService.js?v=20260704-header-icon-cache-fix-v3"></script>
+<script src="./services/backupService.js?v=20260704-header-icon-cache-fix-v3"></script>
+<script src="./app.js?v=20260704-header-icon-cache-fix-v3"></script>
 
 <script>
   // PWA 離線 App：首次開啟需連線載入資源，之後可離線打開並讀取本機資料。
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
-      navigator.serviceWorker.register('./service-worker.js')
+      let swReloaded = false;
+      navigator.serviceWorker.addEventListener('controllerchange', () => {
+        if (swReloaded) return;
+        swReloaded = true;
+        window.location.reload();
+      });
+      navigator.serviceWorker.register('./service-worker.js?v=20260704-header-icon-cache-fix-v3')
         .catch((err) => console.warn('Service worker registration failed:', err));
     });
   }

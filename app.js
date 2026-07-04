@@ -150,7 +150,7 @@ createApp({
                     <button @click="openCategoryManagerModal" class="mobile-tool-action mobile-tool-action--categorymgr" title="族群管理"><i class="fa-solid fa-list-check"></i></button>
                     <button @click="showGDriveModal = true" class="mobile-tool-action mobile-tool-action--gdrive" title="Google 雲端備份"><i class="fa-solid fa-cloud-arrow-up"></i></button>
                     <button @click="openCommodityModal" class="mobile-tool-action mobile-tool-action--commodity" title="商品期貨"><i class="fa-solid fa-chart-line"></i></button>
-                    <button @click="openDividendManagerModal" class="mobile-tool-action mobile-tool-action--dividend" title="權息管理"><i class="fa-solid fa-coins"></i></button>
+                    <button @click="openDividendManagerModal" class="mobile-tool-action mobile-tool-action--dividend" title="權息管理"><i class="fa-solid fa-gift"></i></button>
                     <button @click="showHelpModal = true" class="mobile-tool-action mobile-tool-action--help" title="說明"><i class="fa-solid fa-circle-question"></i></button>
                 </div>
             </div>
@@ -199,7 +199,7 @@ createApp({
                 <button @click="openCategoryManagerModal" class="btn btn-secondary toolbar-action toolbar-action--categorymgr !h-12 !w-12 !p-0 !rounded-2xl" title="族群管理" aria-label="族群管理"><i class="fa-solid fa-list-check"></i></button>
                 <button @click="showGDriveModal = true" class="btn btn-secondary toolbar-action toolbar-action--gdrive !h-12 !w-12 !p-0 !rounded-2xl" title="Google 雲端備份" aria-label="Google 雲端備份"><i class="fa-solid fa-cloud-arrow-up"></i></button>
                 <button @click="openCommodityModal" class="btn btn-secondary toolbar-action toolbar-action--commodity !h-12 !w-12 !p-0 !rounded-2xl" title="商品期貨" aria-label="商品期貨"><i class="fa-solid fa-chart-line"></i></button>
-                <button @click="openDividendManagerModal" class="btn btn-secondary toolbar-action toolbar-action--dividend !h-12 !w-12 !p-0 !rounded-2xl" title="權息管理" aria-label="權息管理"><i class="fa-solid fa-coins"></i></button>
+                <button @click="openDividendManagerModal" class="btn btn-secondary toolbar-action toolbar-action--dividend !h-12 !w-12 !p-0 !rounded-2xl" title="權息管理" aria-label="權息管理"><i class="fa-solid fa-gift"></i></button>
                     <button @click="showHelpModal = true" class="btn btn-secondary toolbar-action toolbar-action--help !h-12 !w-12 !p-0 !rounded-2xl" title="使用說明" aria-label="使用說明"><i class="fa-solid fa-circle-question"></i></button>
                 </div>
             </div>
@@ -237,7 +237,7 @@ createApp({
                 <div class="card !p-5 border-rose-100 bg-rose-50/40"><div class="text-xs text-rose-500 font-bold mb-1">已入帳現金股利</div><div class="text-2xl font-black text-rose-600">+{{ formatCurrency(dividendCashSettledNet) }}</div><div class="mt-2 text-xs font-bold text-rose-400">投資收益，不計入本金</div></div>
                 <div class="card !p-5 border-orange-100 bg-orange-50/40"><div class="text-xs text-orange-500 font-bold mb-1">應收現金股利</div><div class="text-2xl font-black text-orange-600">+{{ formatCurrency(dividendReceivable) }}</div><div class="mt-2 text-xs font-bold text-orange-400">已除息、尚未付款</div></div>
                 <div class="card !p-5 border-indigo-100 bg-indigo-50/40"><div class="text-xs text-indigo-500 font-bold mb-1">應收股票股利市值</div><div class="text-2xl font-black text-indigo-600">+{{ formatCurrency(stockDividendReceivableValue) }}</div><div class="mt-2 text-xs font-bold text-indigo-400">已除權、尚未撥股估值</div></div>
-                <button type="button" @click="openDividendManagerModal" class="card !p-5 text-left hover:border-rose-300 hover:bg-rose-50 transition"><div class="text-xs text-slate-400 font-bold mb-1"><i class="fa-solid fa-coins text-rose-500 mr-1"></i>權息管理</div><div class="text-2xl font-black text-slate-800">{{ portfolioCorporateActions.length }}</div><div class="mt-2 text-xs font-bold text-slate-400">新增 / 編輯除權息事件</div></button>
+                <button type="button" @click="openDividendManagerModal" class="card !p-5 text-left hover:border-rose-300 hover:bg-rose-50 transition"><div class="text-xs text-slate-400 font-bold mb-1"><i class="fa-solid fa-gift text-rose-500 mr-1"></i>權息管理</div><div class="text-2xl font-black text-slate-800">{{ portfolioCorporateActions.length }}</div><div class="mt-2 text-xs font-bold text-slate-400">新增 / 編輯除權息事件</div></button>
             </div>
 
 
@@ -1211,7 +1211,7 @@ createApp({
                 </div>
 
                 <div v-if="dividendHistoryRows.length" class="card !p-0 overflow-hidden mb-6 border-rose-100">
-                    <div class="px-6 py-4 bg-rose-50 border-b border-rose-100 flex items-center justify-between"><h3 class="text-base font-extrabold text-rose-700 flex items-center gap-2"><i class="fa-solid fa-coins"></i> 權息紀錄</h3><button @click="openDividendManagerModal" class="text-xs font-black text-rose-600 hover:underline">管理權息</button></div>
+                    <div class="px-6 py-4 bg-rose-50 border-b border-rose-100 flex items-center justify-between"><h3 class="text-base font-extrabold text-rose-700 flex items-center gap-2"><i class="fa-solid fa-gift"></i> 權息紀錄</h3><button @click="openDividendManagerModal" class="text-xs font-black text-rose-600 hover:underline">管理權息</button></div>
                     <div class="divide-y divide-slate-100">
                         <div v-for="row in dividendHistoryRows.slice(0, 8)" :key="row.id + '-' + row.historyKind" class="px-6 py-4 flex flex-col md:flex-row md:items-center md:justify-between gap-2">
                             <div><div class="font-black text-slate-800">{{ row.historyDate || row.exDate }}｜{{ row.historyLabel }}｜{{ displayNameOnly(row.code, row.name) }} <span class="text-slate-400">({{ row.code }})</span></div><div class="text-xs font-bold text-slate-400 mt-1">{{ dividendActionSummary(row) }}</div></div>
@@ -1886,7 +1886,7 @@ createApp({
         <div v-if="showDividendManagerModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex justify-center items-start z-[90] p-4 md:p-8 overflow-y-auto">
             <div class="bg-white rounded-[2rem] w-full max-w-6xl shadow-2xl border border-white/80 overflow-hidden my-6">
                 <div class="px-6 py-5 bg-gradient-to-r from-rose-600 to-orange-500 text-white flex items-center justify-between gap-4">
-                    <div><h3 class="text-2xl font-black flex items-center gap-3"><i class="fa-solid fa-coins"></i> 權息管理</h3><p class="text-sm font-bold text-rose-100 mt-1">現金股利會進入股利現金流；股票股利會增加庫存股數但不增加成本。</p></div>
+                    <div><h3 class="text-2xl font-black flex items-center gap-3"><i class="fa-solid fa-gift"></i> 權息管理</h3><p class="text-sm font-bold text-rose-100 mt-1">現金股利會進入股利現金流；股票股利會增加庫存股數但不增加成本。</p></div>
                     <button @click="closeDividendManagerModal" class="w-11 h-11 rounded-2xl bg-white/15 hover:bg-white/25 transition"><i class="fa-solid fa-xmark text-xl"></i></button>
                 </div>
 
