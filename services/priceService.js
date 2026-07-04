@@ -71,7 +71,7 @@
                 this.latestStatus[res.code] = res.status;
     
                 if (res.name && typeof res.name === 'string') {
-                    const n = res.name.trim();
+                    const n = (window.resolveTwStockName ? window.resolveTwStockName(res.code, res.name, this.nameMap) : res.name).trim();
                     if (n && /[\u4e00-\u9fff]/.test(n) && !/yahoo|奇摩股市|yahoo股市/i.test(n) && n.length <= 40) {
                         if (!this.nameMap) this.nameMap = {};
                         this.nameMap[res.code] = n;
@@ -133,16 +133,23 @@
             if (data.quotes && data.quotes.length > 0) {
                 const onlineResults = data.quotes
                     .filter(q => q.symbol && (q.symbol.endsWith('.TW') || q.symbol.endsWith('.TWO')))
-                    .map(q => ({
-                        code: q.symbol.replace(/\.TW(O)?$/, ''),
-                        name: q.longname || q.shortname || '',
-                        isOnline: true
-                    }));
+                    .map(q => {
+                        const code = String(q.symbol || '').replace(/\.TW(O)?$/, '').toUpperCase();
+                        const rawName = q.longname || q.shortname || '';
+                        const name = window.resolveTwStockName ? window.resolveTwStockName(code, rawName, this.nameMap) : rawName;
+                        return { code, name, isOnline: true };
+                    });
     
                 const existingCodes = new Set(this.suggestions.map(s => s.code));
                 onlineResults.forEach(item => {
                     if (!existingCodes.has(item.code)) this.suggestions.push(item);
                 });
+                const currentTerm = String(this.searchText || '').trim().split(/\s+/)[0].toUpperCase();
+                const exactOnline = onlineResults.find(item => item.code === currentTerm);
+                if (exactOnline) {
+                    this.newTx.code = exactOnline.code;
+                    this.newTx.name = exactOnline.name;
+                }
             }
         } catch (e) {
         } finally {

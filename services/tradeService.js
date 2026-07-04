@@ -2,9 +2,148 @@
   'use strict';
 
   window.StockTradeService = {
-            holdings() { const ordered = [...this.portfolioTransactions].sort((a, b) => new Date(a.date) - new Date(b.date)); const state = {}; const realized = {}; ordered.forEach(tx => { if (!tx || !tx.code) return; const code = String(tx.code).trim(); if (!state[code]) state[code] = { qty: 0, cost: 0, category: tx.category, name: (this.nameMap && this.nameMap[code]) ? this.nameMap[code] : tx.name }; if (!realized[code]) realized[code] = 0; realized[code] += (tx.realizedPnL !== null && tx.realizedPnL !== undefined) ? Number(tx.realizedPnL) : 0; const qty = Number(tx.posQty ?? tx.qty) || 0; const totalAmount = Number(tx.posAmount ?? tx.totalAmount) || 0; if (qty <= 0 || totalAmount < 0) return; // should already be normalized by recompute
-                    // Update open position state (supports long & short)
-                    if (tx.type === 'buy') { if (state[code].qty >= 0) { state[code].qty += qty; state[code].cost += totalAmount; } else { const absShort = Math.abs(state[code].qty); const coverQty = Math.min(qty, absShort); const avgEntry = state[code].cost / state[code].qty; const coverAmount = totalAmount * (coverQty / qty); state[code].qty += coverQty; state[code].cost += avgEntry * coverQty; const remain = qty - coverQty; if (remain > 0) { const remainAmount = totalAmount - coverAmount; state[code].qty += remain; state[code].cost += remainAmount; } } } else if (tx.type === 'sell') { if (state[code].qty <= 0) { state[code].qty -= qty; state[code].cost -= totalAmount; } else { const closeQty = Math.min(qty, state[code].qty); const avgEntry = state[code].cost / state[code].qty; const closeAmount = totalAmount * (closeQty / qty); state[code].qty -= closeQty; state[code].cost -= avgEntry * closeQty; const remain = qty - closeQty; if (remain > 0) { const remainAmount = totalAmount - closeAmount; state[code].qty -= remain; state[code].cost -= remainAmount; } } } if (Math.abs(state[code].qty) < 1e-9) { state[code].qty = 0; state[code].cost = 0; } state[code].category = tx.category || state[code].category; state[code].name = tx.name || state[code].name; }); return Object.entries(state).filter(([code, s]) => s.qty !== 0).map(([code, s]) => { const entryAvgPrice = s.cost / s.qty; const currentPrice = this.latestPrices[code] || entryAvgPrice; const absQty = Math.abs(s.qty); const marketValueAbs = currentPrice * absQty; let unrealizedPnL = 0; if (s.qty > 0) { unrealizedPnL = (currentPrice * s.qty) - s.cost; } else { unrealizedPnL = (-s.cost) - marketValueAbs; } const investedBase = Math.abs(s.cost); const roi = investedBase > 0 ? ((unrealizedPnL / investedBase) * 100).toFixed(2) : 0; const status = this.latestStatus[code] || { isWarning: false, disposition: 0 }; return { code, name: (this.nameMap && this.nameMap[code]) ? this.nameMap[code] : (s.name || code), qty: s.qty, category: s.category || 'core', realizedPnL: (realized[code] || 0), totalCost: s.cost, buyAvgPrice: entryAvgPrice, entryAvgPrice, investedBase, currentPrice, unrealizedPnL, roi, isWarning: status.isWarning, disposition: status.disposition }; }).sort((a,b) => (b.category || '').localeCompare(a.category || '') || a.code.localeCompare(b.code)); },
+            holdings() {
+                const orderedTx = [...(this.portfolioTransactions || [])].sort((a, b) => {
+                    const da = new Date(a.date).getTime();
+                    const db = new Date(b.date).getTime();
+                    if (da !== db) return da - db;
+                    return (Number(a.id || 0) - Number(b.id || 0));
+                });
+                const dividendEffects = window.StockDividendService ? window.StockDividendService.stockDividendPositionEffects(this) : [];
+                const events = [
+                    ...orderedTx.map(tx => ({ kind: 'trade', date: tx.date, sortId: Number(tx.id || 0), tx })),
+                    ...dividendEffects.map(effect => ({ kind: 'stock_dividend', date: effect.date, sortId: Number(String(effect.id || '').replace(/\D/g, '').slice(-10)) || 0, effect })),
+                ].sort((a, b) => {
+                    const da = new Date(a.date).getTime();
+                    const db = new Date(b.date).getTime();
+                    if (da !== db) return da - db;
+                    if (a.kind !== b.kind) return a.kind === 'stock_dividend' ? -1 : 1;
+                    return (a.sortId || 0) - (b.sortId || 0);
+                });
+
+                const state = {};
+                const realized = {};
+                const ensureState = (code, seed) => {
+                    if (!state[code]) {
+                        state[code] = {
+                            qty: 0,
+                            cost: 0,
+                            category: seed && seed.category,
+                            name: (this.nameMap && this.nameMap[code]) ? this.nameMap[code] : (seed && seed.name) || code,
+                        };
+                    }
+                    if (!realized[code]) realized[code] = 0;
+                    return state[code];
+                };
+
+                const applyTrade = (tx) => {
+                    if (!tx || !tx.code) return;
+                    const code = String(tx.code).trim();
+                    const s = ensureState(code, tx);
+                    realized[code] += (tx.realizedPnL !== null && tx.realizedPnL !== undefined) ? Number(tx.realizedPnL) : 0;
+                    const qty = Number(tx.posQty ?? tx.qty) || 0;
+                    const totalAmount = Number(tx.posAmount ?? tx.totalAmount) || 0;
+                    if (qty <= 0 || totalAmount < 0) return;
+
+                    if (tx.type === 'buy') {
+                        if (s.qty >= 0) {
+                            s.qty += qty;
+                            s.cost += totalAmount;
+                        } else {
+                            const absShort = Math.abs(s.qty);
+                            const coverQty = Math.min(qty, absShort);
+                            const avgEntry = s.cost / s.qty;
+                            const coverAmount = totalAmount * (coverQty / qty);
+                            s.qty += coverQty;
+                            s.cost += avgEntry * coverQty;
+                            const remain = qty - coverQty;
+                            if (remain > 0) {
+                                const remainAmount = totalAmount - coverAmount;
+                                s.qty += remain;
+                                s.cost += remainAmount;
+                            }
+                        }
+                    } else if (tx.type === 'sell') {
+                        if (s.qty <= 0) {
+                            s.qty -= qty;
+                            s.cost -= totalAmount;
+                        } else {
+                            const closeQty = Math.min(qty, s.qty);
+                            const avgEntry = s.cost / s.qty;
+                            const closeAmount = totalAmount * (closeQty / qty);
+                            s.qty -= closeQty;
+                            s.cost -= avgEntry * closeQty;
+                            const remain = qty - closeQty;
+                            if (remain > 0) {
+                                const remainAmount = totalAmount - closeAmount;
+                                s.qty -= remain;
+                                s.cost -= remainAmount;
+                            }
+                        }
+                    }
+                    if (Math.abs(s.qty) < 1e-9) { s.qty = 0; s.cost = 0; }
+                    s.category = tx.category || s.category;
+                    s.name = tx.name || s.name;
+                };
+
+                const applyStockDividend = (effect) => {
+                    if (!effect || !effect.code) return;
+                    const code = String(effect.code).trim();
+                    const s = ensureState(code, effect);
+                    const qtyEffect = Number(effect.qtyEffect) || 0;
+                    if (!qtyEffect) return;
+                    s.qty += qtyEffect;
+                    // Stock dividends increase share count but do not increase original cost.
+                    s.cost += Number(effect.costEffect) || 0;
+                    if (Math.abs(s.qty) < 1e-9) { s.qty = 0; s.cost = 0; }
+                    s.name = effect.name || s.name;
+                };
+
+                events.forEach(event => {
+                    if (event.kind === 'stock_dividend') applyStockDividend(event.effect);
+                    else applyTrade(event.tx);
+                });
+
+                return Object.entries(state).filter(([code, s]) => s.qty !== 0).map(([code, s]) => {
+                    const entryAvgPrice = s.qty ? (s.cost / s.qty) : 0;
+                    const currentPrice = this.latestPrices[code] || entryAvgPrice;
+                    const absQty = Math.abs(s.qty);
+                    const marketValueAbs = currentPrice * absQty;
+                    let unrealizedPnL = 0;
+                    if (s.qty > 0) {
+                        unrealizedPnL = (currentPrice * s.qty) - s.cost;
+                    } else {
+                        unrealizedPnL = (-s.cost) - marketValueAbs;
+                    }
+                    const investedBase = Math.abs(s.cost);
+                    const roi = investedBase > 0 ? ((unrealizedPnL / investedBase) * 100).toFixed(2) : 0;
+                    const status = this.latestStatus[code] || { isWarning: false, disposition: 0 };
+                    const dividendSummary = window.StockDividendService ? window.StockDividendService.dividendSummaryByCode(this, code) : { settledCash: 0, receivableCash: 0, settledStockQty: 0, receivableStockQty: 0, totalCash: 0 };
+                    const totalReturnPnL = unrealizedPnL + (realized[code] || 0) + Number(dividendSummary.totalCash || 0);
+                    const totalReturnRoi = investedBase > 0 ? ((totalReturnPnL / investedBase) * 100).toFixed(2) : 0;
+                    return {
+                        code,
+                        name: (this.nameMap && this.nameMap[code]) ? this.nameMap[code] : (s.name || code),
+                        qty: s.qty,
+                        category: s.category || 'core',
+                        realizedPnL: (realized[code] || 0),
+                        totalCost: s.cost,
+                        buyAvgPrice: entryAvgPrice,
+                        entryAvgPrice,
+                        investedBase,
+                        currentPrice,
+                        unrealizedPnL,
+                        roi,
+                        dividendSummary,
+                        dividendIncome: Number(dividendSummary.totalCash || 0),
+                        dividendStockQty: Number(dividendSummary.settledStockQty || 0),
+                        totalReturnPnL,
+                        totalReturnRoi,
+                        isWarning: status.isWarning,
+                        disposition: status.disposition,
+                    };
+                }).sort((a,b) => (b.category || '').localeCompare(a.category || '') || a.code.localeCompare(b.code));
+            },
                     filterCategories() {
                 const cats = Array.isArray(this.categories) ? this.categories : [];
                 // Show only categories that are used in current holdings, excluding 'all'
@@ -209,8 +348,45 @@
                     }
                 }
     
-                // -------- Pass 4: apply position state (avg cost) using posQty/posAmount --------
-                for (const tx of ordered) {
+                // -------- Pass 4: apply position state (avg cost) using posQty/posAmount + settled stock dividends --------
+                const pid = (list[0] && (list[0].portfolioId || 'main')) || 'main';
+                const dividendEvents = window.StockDividendService ? (this.corporateActions || [])
+                    .filter(a => a && (a.portfolioId || 'main') === pid)
+                    .map(a => window.StockDividendService.enrichAction(a, this.transactions || [], this.corporateActions || []))
+                    .filter(a => a && a.stockPaymentDate && a.stockSettled && Number(a.stockDividendQty || 0) > 0)
+                    .map(a => ({
+                        kind: 'stock_dividend',
+                        date: a.stockPaymentDate,
+                        sortId: Number(String(a.id || '').replace(/\D/g, '').slice(-10)) || 0,
+                        code: a.code,
+                        name: a.name,
+                        qtyEffect: Number(a.stockDividendQty || 0),
+                    })) : [];
+                const positionEvents = [
+                    ...ordered.map(tx => ({ kind: 'trade', date: tx.date, sortId: Number(tx.id || 0), tx })),
+                    ...dividendEvents,
+                ].sort((a, b) => {
+                    const da = new Date(a.date).getTime();
+                    const db = new Date(b.date).getTime();
+                    if (da !== db) return da - db;
+                    if (a.kind !== b.kind) return a.kind === 'stock_dividend' ? -1 : 1;
+                    return (a.sortId || 0) - (b.sortId || 0);
+                });
+
+                for (const event of positionEvents) {
+                    if (event.kind === 'stock_dividend') {
+                        const code = event.code;
+                        if (!code) continue;
+                        if (!state[code]) state[code] = { qty: 0, cost: 0 };
+                        state[code].qty += Number(event.qtyEffect || 0);
+                        if (Math.abs(state[code].qty) < 1e-9) {
+                            state[code].qty = 0;
+                            state[code].cost = 0;
+                        }
+                        continue;
+                    }
+
+                    const tx = event.tx;
                     if (!tx || !tx.code) continue;
                     const code = tx.code;
                     if (!state[code]) state[code] = { qty: 0, cost: 0 };

@@ -46,7 +46,15 @@
                 return net;
             },
     
-            cashBalance() { return (this.cashNetContribution || 0) + (this.cashTradeNet || 0); },
+            dividendCashSettledNet() { return window.StockDividendService ? window.StockDividendService.settledCashNet(this) : 0; },
+
+            dividendReceivable() { return window.StockDividendService ? window.StockDividendService.cashReceivable(this) : 0; },
+
+            stockDividendReceivableValue() { return window.StockDividendService ? window.StockDividendService.stockReceivableValue(this) : 0; },
+
+            dividendIncomeTotal() { return (Number(this.dividendCashSettledNet) || 0) + (Number(this.dividendReceivable) || 0) + (Number(this.stockDividendReceivableValue) || 0); },
+
+            cashBalance() { return (this.cashNetContribution || 0) + (this.cashTradeNet || 0) + (this.dividendCashSettledNet || 0); },
     
             signedMarketValue() {
                 return (this.holdings || []).reduce((sum, h) => {
@@ -55,7 +63,7 @@
                 }, 0);
             },
     
-            netAssetValue() { return (this.cashBalance || 0) + (this.signedMarketValue || 0); },
+            netAssetValue() { return (this.cashBalance || 0) + (this.signedMarketValue || 0) + (this.dividendReceivable || 0) + (this.stockDividendReceivableValue || 0); },
     
             cashTotalPnL() { return (this.netAssetValue || 0) - (this.cashNetContribution || 0); },
     
@@ -96,6 +104,11 @@
                         sortId: Number(e.id) || 0
                     });
                 });
+                // Dividends (investment income, not deposits)
+                if (window.StockDividendService) {
+                    window.StockDividendService.cashLedgerRows(this).forEach(row => rows.push(row));
+                }
+
                 // Trades
                 (this.portfolioTransactions || []).forEach(tx => {
                     if (!tx) return;
@@ -135,6 +148,7 @@
                 const all = this.cashLedgerRowsAll || [];
                 if (mode === 'cashOnly') return all.filter(r => r.kind === 'cash');
                 if (mode === 'tradesOnly') return all.filter(r => r.kind === 'trade');
+                if (mode === 'dividendsOnly') return all.filter(r => r.kind === 'dividend');
                 return all;
             },
     

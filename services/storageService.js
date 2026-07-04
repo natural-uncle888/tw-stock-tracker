@@ -1,7 +1,7 @@
 (function(window) {
   'use strict';
 
-  const SCHEMA_VERSION = 4;
+  const SCHEMA_VERSION = 5;
 
   const DEFAULT_CATEGORIES = [
     { id: 'core', name: '核心持股', label: '核心', shortLabel: '核心' },
@@ -22,6 +22,7 @@
     transactions: 'tw_stock_tx_v6',
     cashBook: 'tw_stock_cashbook_v1',
     profitAdjustments: 'tw_stock_profit_adjustments_v1',
+    corporateActions: 'tw_stock_corporate_actions_v1',
     settings: 'tw_stock_settings_v6',
     customStocks: 'tw_stock_custom_v6',
     prices: 'tw_stock_prices_v6',
@@ -68,6 +69,7 @@
     transactions: 'tx',
     cashBook: 'cashBook',
     profitAdjustments: 'profitAdjustments',
+    corporateActions: 'corporateActions',
     settings: 'settings',
     customStocks: 'custom',
     prices: 'prices',
@@ -169,6 +171,7 @@
       transactions: normalizeArray(payload[fields.transactions]),
       cashBook: normalizeArray(payload[fields.cashBook]),
       profitAdjustments: normalizeArray(payload[fields.profitAdjustments]),
+      corporateActions: normalizeArray(payload[fields.corporateActions] || currentState.corporateActions),
       settings: Object.assign({}, DEFAULT_SETTINGS, normalizeObject(payload[fields.settings] || currentState.settings)),
       customStocks: normalizeArray(payload[fields.customStocks]),
       prices: normalizeObject(payload[fields.prices]),
@@ -193,6 +196,7 @@
       [fields.transactions]: normalizeArray(state.transactions),
       [fields.cashBook]: normalizeArray(state.cashBook),
       [fields.profitAdjustments]: normalizeArray(state.profitAdjustments),
+      [fields.corporateActions]: normalizeArray(state.corporateActions),
       [fields.settings]: Object.assign({}, DEFAULT_SETTINGS, normalizeObject(state.settings)),
       [fields.customStocks]: normalizeArray(state.customStocks),
       [fields.prices]: normalizeObject(state.latestPrices || state.prices),
@@ -211,6 +215,7 @@
     setJSON('transactions', normalizeArray(state.transactions));
     setJSON('cashBook', normalizeArray(state.cashBook));
     setJSON('profitAdjustments', normalizeArray(state.profitAdjustments));
+    setJSON('corporateActions', normalizeArray(state.corporateActions));
     setJSON('portfolios', normalizePortfolios(state.portfolios));
     setString('currentPortfolioId', state.currentPortfolioId || 'main');
     setJSON('stockNames', normalizeObject(state.nameMap || state.stockNames));
@@ -263,6 +268,7 @@
     vm.transactions = normalized.transactions;
     vm.cashBook = normalized.cashBook;
     vm.profitAdjustments = normalized.profitAdjustments;
+    vm.corporateActions = normalized.corporateActions;
     vm.settings = normalized.settings;
     vm.customStocks = normalized.customStocks;
     vm.latestPrices = normalized.prices;
@@ -292,6 +298,7 @@
       transactions: normalizeArray(getJSON('transactions', [])),
       cashBook: normalizeArray(getJSON('cashBook', [])),
       profitAdjustments: normalizeArray(getJSON('profitAdjustments', [])),
+      corporateActions: normalizeArray(getJSON('corporateActions', [])),
       globalIndicesLastTs: getNumber('globalIndexTimeTimestamp', null),
       globalIndicesError: getFlag('globalIndexUpdateError'),
       globalIndicesPartial: getFlag('globalIndexUpdatePartial'),

@@ -1,5 +1,34 @@
 const { createApp } = Vue;
 
+window.TW_STOCK_NAME_OVERRIDES = Object.freeze({
+    ...(window.TW_STOCK_NAME_OVERRIDES || {}),
+    '00991A': '主動復華未來50'
+});
+
+window.resolveTwStockName = function(code, fallbackName = '', nameMap = null) {
+    const rawCode = String(code || '').trim();
+    const c = rawCode.toUpperCase();
+    const overrides = window.TW_STOCK_NAME_OVERRIDES || {};
+    if (c && overrides[c]) return overrides[c];
+
+    let n = '';
+    try {
+        if (nameMap && c && nameMap[c]) n = String(nameMap[c] || '');
+        else if (nameMap && rawCode && nameMap[rawCode]) n = String(nameMap[rawCode] || '');
+    } catch (_) {}
+    if (!n) n = String(fallbackName || '');
+
+    n = n.replace(/\s+/g, ' ').trim();
+    n = n.replace(/(走勢圖|即時行情|技術分析|討論|個股|公司資料|股價|ETF\s*報價|ETF\s*資訊)/g, '').trim();
+    n = n.replace(/\(\s*[0-9A-Za-z]{4,8}(?:\.(?:TW|TWO))?\s*\)/gi, '').trim();
+    if (c) {
+        const escaped = c.replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&');
+        n = n.replace(new RegExp('\\b' + escaped + '(?:\\.(?:TW|TWO))?\\b', 'ig'), '').trim();
+    }
+    n = n.replace(/\s{2,}/g, ' ').trim();
+    return n;
+};
+
 createApp({
     template: `
     
@@ -121,6 +150,7 @@ createApp({
                     <button @click="openCategoryManagerModal" class="w-10 h-10 rounded-full bg-emerald-50 text-emerald-600 border border-emerald-200 flex items-center justify-center active:bg-emerald-100" title="族群管理"><i class="fa-solid fa-list-check"></i></button>
                     <button @click="showGDriveModal = true" class="mobile-tool-action mobile-tool-action--gdrive" title="Google 雲端備份"><i class="fa-solid fa-cloud-arrow-up"></i></button>
                     <button @click="openCommodityModal" class="mobile-tool-action mobile-tool-action--commodity" title="商品期貨"><i class="fa-solid fa-chart-line"></i></button>
+                    <button @click="openDividendManagerModal" class="w-10 h-10 rounded-full bg-rose-50 text-rose-600 border border-rose-200 flex items-center justify-center active:bg-rose-100" title="權息管理"><svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v18"></path><path d="M17 6H9.5a3.5 3.5 0 0 0 0 7H14a3.5 3.5 0 0 1 0 7H6"></path></svg></button>
                     <button @click="showHelpModal = true" class="w-10 h-10 rounded-full bg-blue-50 text-blue-600 border border-blue-200 flex items-center justify-center active:bg-blue-100 shadow-sm" title="說明"><i class="fa-solid fa-circle-question text-lg"></i></button>
                 </div>
             </div>
@@ -169,6 +199,7 @@ createApp({
                 <button @click="openCategoryManagerModal" class="btn btn-secondary toolbar-action toolbar-action--categorymgr !h-12 !w-12 !p-0 !rounded-2xl" title="族群管理" aria-label="族群管理"><i class="fa-solid fa-list-check"></i></button>
                 <button @click="showGDriveModal = true" class="btn btn-secondary toolbar-action toolbar-action--gdrive !h-12 !w-12 !p-0 !rounded-2xl" title="Google 雲端備份" aria-label="Google 雲端備份"><i class="fa-solid fa-cloud-arrow-up"></i></button>
                 <button @click="openCommodityModal" class="btn btn-secondary toolbar-action toolbar-action--commodity !h-12 !w-12 !p-0 !rounded-2xl" title="商品期貨" aria-label="商品期貨"><i class="fa-solid fa-chart-line"></i></button>
+                <button @click="openDividendManagerModal" class="btn btn-secondary toolbar-action !h-12 !w-12 !p-0 !rounded-2xl" title="權息管理" aria-label="權息管理"><svg class="w-5 h-5 text-rose-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v18"></path><path d="M17 6H9.5a3.5 3.5 0 0 0 0 7H14a3.5 3.5 0 0 1 0 7H6"></path></svg></button>
                     <button @click="showHelpModal = true" class="btn btn-secondary toolbar-action toolbar-action--help !h-12 !w-12 !p-0 !rounded-2xl" title="使用說明" aria-label="使用說明"><i class="fa-solid fa-circle-question"></i></button>
                 </div>
             </div>
@@ -182,13 +213,14 @@ createApp({
                 <div class="relative z-10 flex flex-col lg:flex-row lg:items-end lg:justify-between gap-6">
                     <div>
                         <div class="dashboard-portfolio-pill inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/10 border border-white/10 text-xs font-black text-slate-200 mb-4"><i class="fa-solid fa-gauge-high shrink-0"></i><span class="shrink-0">Dashboard 總覽｜</span><span class="portfolio-name-truncate">{{ currentPortfolio.name }}</span></div>
-                        <div class="text-sm font-bold text-slate-300">總資產（現金 + 庫存市值）</div>
+                        <div class="text-sm font-bold text-slate-300">總資產（現金 + 庫存市值 + 應收股利）</div>
                         <div class="mt-2 text-4xl md:text-5xl font-black tracking-tight">{{ formatCurrency(netAssetValue) }}</div>
                         <div class="mt-3 text-sm font-black" :class="cashTotalPnL >= 0 ? 'text-red-200' : 'text-green-200'">總損益：{{ cashTotalPnL >= 0 ? '+' : '' }}{{ formatCurrency(cashTotalPnL) }}（{{ cashRoiPercent }}%）</div>
                     </div>
                     <div class="grid grid-cols-2 gap-3 w-full lg:w-[420px]">
                         <div class="rounded-2xl bg-white/10 border border-white/10 p-4"><div class="text-xs font-bold text-slate-300">現金餘額</div><div class="mt-1 text-xl font-black" :class="cashBalance >= 0 ? 'text-emerald-200' : 'text-rose-200'">{{ cashBalance >= 0 ? '' : '-' }}{{ formatCurrency(Math.abs(cashBalance)) }}</div></div>
                         <div class="rounded-2xl bg-white/10 border border-white/10 p-4"><div class="text-xs font-bold text-slate-300">庫存市值</div><div class="mt-1 text-xl font-black text-white">{{ formatCurrency(estimatedMarketValue) }}</div></div>
+                        <div class="rounded-2xl bg-white/10 border border-white/10 p-4"><div class="text-xs font-bold text-slate-300">股利收益</div><div class="mt-1 text-xl font-black text-rose-100">+{{ formatCurrency(dividendIncomeTotal) }}</div></div>
                         <div class="rounded-2xl bg-white/10 border border-white/10 p-4"><div class="text-xs font-bold text-slate-300">已實現損益</div><div class="mt-1 text-xl font-black" :class="totalRealizedPnL >= 0 ? 'text-red-200' : 'text-green-200'">{{ totalRealizedPnL >= 0 ? '+' : '' }}{{ formatCurrency(totalRealizedPnL) }}</div></div>
                         <div class="rounded-2xl bg-white/10 border border-white/10 p-4"><div class="text-xs font-bold text-slate-300">未實現損益</div><div class="mt-1 text-xl font-black" :class="totalUnrealizedPnL >= 0 ? 'text-red-200' : 'text-green-200'">{{ totalUnrealizedPnL >= 0 ? '+' : '' }}{{ formatCurrency(totalUnrealizedPnL) }}</div></div>
                     </div>
@@ -199,6 +231,13 @@ createApp({
                 <div class="card !p-5"><div class="text-xs text-slate-400 font-bold mb-1">可用獲利</div><div class="text-2xl font-black" :class="availableRealizedProfit >= 0 ? 'text-red-600' : 'text-green-600'">{{ availableRealizedProfit >= 0 ? '+' : '' }}{{ formatCurrency(availableRealizedProfit) }}</div><div class="mt-2 text-xs font-bold text-slate-400">已實現 - 提領 + 補回</div></div>
                 <div class="card !p-5"><div class="text-xs text-slate-400 font-bold mb-1">已提領獲利</div><div class="text-2xl font-black text-rose-600">-{{ formatCurrency(profitWithdrawalsTotal) }}</div><div class="mt-2 text-xs font-bold text-slate-400">已領出使用的獲利</div></div>
                 <div class="card !p-5"><div class="text-xs text-slate-400 font-bold mb-1">已補回獲利</div><div class="text-2xl font-black text-emerald-700">+{{ formatCurrency(profitRestoresTotal) }}</div><div class="mt-2 text-xs font-bold text-slate-400">補回到獲利池</div></div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div class="card !p-5 border-rose-100 bg-rose-50/40"><div class="text-xs text-rose-500 font-bold mb-1">已入帳現金股利</div><div class="text-2xl font-black text-rose-600">+{{ formatCurrency(dividendCashSettledNet) }}</div><div class="mt-2 text-xs font-bold text-rose-400">投資收益，不計入本金</div></div>
+                <div class="card !p-5 border-orange-100 bg-orange-50/40"><div class="text-xs text-orange-500 font-bold mb-1">應收現金股利</div><div class="text-2xl font-black text-orange-600">+{{ formatCurrency(dividendReceivable) }}</div><div class="mt-2 text-xs font-bold text-orange-400">已除息、尚未付款</div></div>
+                <div class="card !p-5 border-indigo-100 bg-indigo-50/40"><div class="text-xs text-indigo-500 font-bold mb-1">應收股票股利市值</div><div class="text-2xl font-black text-indigo-600">+{{ formatCurrency(stockDividendReceivableValue) }}</div><div class="mt-2 text-xs font-bold text-indigo-400">已除權、尚未撥股估值</div></div>
+                <button type="button" @click="openDividendManagerModal" class="card !p-5 text-left hover:border-rose-300 hover:bg-rose-50 transition"><div class="text-xs text-slate-400 font-bold mb-1"><svg class="inline w-4 h-4 mr-1 text-rose-500 align-[-2px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v18"></path><path d="M17 6H9.5a3.5 3.5 0 0 0 0 7H14a3.5 3.5 0 0 1 0 7H6"></path></svg>權息管理</div><div class="text-2xl font-black text-slate-800">{{ portfolioCorporateActions.length }}</div><div class="mt-2 text-xs font-bold text-slate-400">新增 / 編輯除權息事件</div></button>
             </div>
 
 
@@ -233,6 +272,7 @@ createApp({
                     <div class="space-y-3">
                         <div class="rounded-2xl bg-slate-50 border border-slate-200 p-4 flex items-center justify-between"><div><div class="text-sm font-black text-slate-700">現金餘額</div><div class="text-xs font-bold text-slate-400">可用現金水位</div></div><div class="font-black text-slate-800">{{ formatCurrency(cashBalance) }}</div></div>
                         <div class="rounded-2xl bg-slate-50 border border-slate-200 p-4 flex items-center justify-between"><div><div class="text-sm font-black text-slate-700">庫存市值</div><div class="text-xs font-bold text-slate-400">依最新股價估算</div></div><div class="font-black text-slate-800">{{ formatCurrency(estimatedMarketValue) }}</div></div>
+                        <div class="rounded-2xl bg-slate-50 border border-slate-200 p-4 flex items-center justify-between"><div><div class="text-sm font-black text-slate-700">應收股利</div><div class="text-xs font-bold text-slate-400">現金 + 股票股利估值</div></div><div class="font-black text-orange-600">{{ formatCurrency(dividendReceivable + stockDividendReceivableValue) }}</div></div>
                         <div class="rounded-2xl bg-slate-50 border border-slate-200 p-4 flex items-center justify-between"><div><div class="text-sm font-black text-slate-700">淨投入</div><div class="text-xs font-bold text-slate-400">期初 + 入金 - 出金</div></div><div class="font-black text-slate-800">{{ formatCurrency(cashNetContribution) }}</div></div>
                     </div>
                 </div>
@@ -1170,6 +1210,16 @@ createApp({
                     <button v-if="historyTypeFilter !== 'all'" @click="historyTypeFilter = 'all'" class="text-xs font-bold text-slate-500 hover:text-slate-700">清除篩選</button>
                 </div>
 
+                <div v-if="dividendHistoryRows.length" class="card !p-0 overflow-hidden mb-6 border-rose-100">
+                    <div class="px-6 py-4 bg-rose-50 border-b border-rose-100 flex items-center justify-between"><h3 class="text-base font-extrabold text-rose-700 flex items-center gap-2"><svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v18"></path><path d="M17 6H9.5a3.5 3.5 0 0 0 0 7H14a3.5 3.5 0 0 1 0 7H6"></path></svg> 權息紀錄</h3><button @click="openDividendManagerModal" class="text-xs font-black text-rose-600 hover:underline">管理權息</button></div>
+                    <div class="divide-y divide-slate-100">
+                        <div v-for="row in dividendHistoryRows.slice(0, 8)" :key="row.id + '-' + row.historyKind" class="px-6 py-4 flex flex-col md:flex-row md:items-center md:justify-between gap-2">
+                            <div><div class="font-black text-slate-800">{{ row.historyDate || row.exDate }}｜{{ row.historyLabel }}｜{{ displayNameOnly(row.code, row.name) }} <span class="text-slate-400">({{ row.code }})</span></div><div class="text-xs font-bold text-slate-400 mt-1">{{ dividendActionSummary(row) }}</div></div>
+                            <div class="text-right"><div class="font-black" :class="row.historyKind==='cashDividend' ? 'text-rose-600' : 'text-indigo-600'">{{ row.historyKind==='cashDividend' ? '+' + formatCurrency(row.historyAmount) : '+' + formatCurrency(row.historyAmount) + ' 股' }}</div><div class="text-[11px] font-bold text-slate-400">{{ dividendStatusLabel(row) }}</div></div>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="md:hidden space-y-4">
                     <div v-for="tx in displayedHistoryTransactions" :key="tx.id" class="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 relative overflow-hidden">
                         <div class="flex justify-between items-start mb-3">
@@ -1655,6 +1705,7 @@ createApp({
                             <button @click="cashViewMode='all'" class="px-4 py-2 rounded-xl text-sm font-black border transition" :class="cashViewMode==='all' ? 'bg-emerald-600 text-white border-emerald-600' : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'">全部</button>
                             <button @click="cashViewMode='cashOnly'" class="px-4 py-2 rounded-xl text-sm font-black border transition" :class="cashViewMode==='cashOnly' ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'">只看入出金</button>
                             <button @click="cashViewMode='tradesOnly'" class="px-4 py-2 rounded-xl text-sm font-black border transition" :class="cashViewMode==='tradesOnly' ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'">只看買賣</button>
+                            <button @click="cashViewMode='dividendsOnly'" class="px-4 py-2 rounded-xl text-sm font-black border transition" :class="cashViewMode==='dividendsOnly' ? 'bg-rose-600 text-white border-rose-600' : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'">只看股利</button>
                             <button @click="triggerClearCashBook" class="px-4 py-2 rounded-xl text-sm font-black border border-rose-200 text-rose-600 bg-rose-50 hover:bg-rose-100 transition" title="清空目前帳本的期初/入金/出金（不影響交易）"><i class="fa-solid fa-trash-can mr-2"></i>清空入出金</button>
                         </div>
                     </div>
@@ -1668,7 +1719,7 @@ createApp({
                         <div class="rounded-2xl bg-slate-50 border border-slate-200 p-4">
                             <div class="flex items-center justify-between"><div class="text-slate-500 text-xs font-bold">現金餘額</div><i class="fa-solid fa-wallet text-slate-400"></i></div>
                             <div class="mt-1 text-xl font-black" :class="cashBalance >= 0 ? 'text-emerald-700' : 'text-rose-600'">{{ cashBalance >= 0 ? '' : '-' }}{{ formatCurrency(Math.abs(cashBalance)) }}</div>
-                            <div class="mt-1 text-[11px] text-slate-400 font-bold">買賣淨額：{{ cashTradeNet >= 0 ? '+' : '' }}{{ formatCurrency(cashTradeNet) }}</div>
+                            <div class="mt-1 text-[11px] text-slate-400 font-bold">買賣淨額：{{ cashTradeNet >= 0 ? '+' : '' }}{{ formatCurrency(cashTradeNet) }}｜股利 +{{ formatCurrency(dividendCashSettledNet) }}</div>
                         </div>
                         <div class="rounded-2xl bg-slate-50 border border-slate-200 p-4">
                             <div class="flex items-center justify-between"><div class="text-slate-500 text-xs font-bold">持倉市值（估）</div><i class="fa-solid fa-coins text-slate-400"></i></div>
@@ -1676,9 +1727,10 @@ createApp({
                             <div class="mt-1 text-[11px] text-slate-400 font-bold">未實現：{{ totalUnrealizedPnL >= 0 ? '+' : '' }}{{ formatCurrency(totalUnrealizedPnL) }}</div>
                         </div>
                         <div class="rounded-2xl bg-slate-50 border border-slate-200 p-4">
-                            <div class="flex items-center justify-between"><div class="text-slate-500 text-xs font-bold">總資產（含現金）</div><i class="fa-solid fa-chart-pie text-slate-400"></i></div>
+                            <div class="flex items-center justify-between"><div class="text-slate-500 text-xs font-bold">總資產（含應收股利）</div><i class="fa-solid fa-chart-pie text-slate-400"></i></div>
                             <div class="mt-1 text-xl font-black text-slate-800">{{ formatCurrency(netAssetValue) }}</div>
                             <div class="mt-1 text-[11px] font-bold" :class="cashTotalPnL >= 0 ? 'text-up' : 'text-down'">總損益：{{ cashTotalPnL >= 0 ? '+' : '' }}{{ formatCurrency(cashTotalPnL) }}（{{ cashRoiPercent }}%）</div>
+                            <div class="mt-1 text-[11px] text-orange-500 font-bold">應收股利：{{ formatCurrency(dividendReceivable + stockDividendReceivableValue) }}</div>
                         </div>
                     </div>
 
@@ -1697,7 +1749,7 @@ createApp({
 
                     <div class="mt-5 text-[12px] text-slate-500 font-bold leading-relaxed">
                         <div class="flex items-start gap-2"><i class="fa-solid fa-circle-info text-slate-400 mt-0.5"></i>
-                            <div>計算規則：<span class="text-slate-700">總投入</span>＝期初＋入金－出金；<span class="text-slate-700">現金餘額</span>＝總投入＋賣出淨入－買入支出（已含手續費/稅）；<span class="text-slate-700">總資產</span>＝現金餘額＋持倉市值（估）。</div>
+                            <div>計算規則：<span class="text-slate-700">總投入</span>＝期初＋入金－出金；<span class="text-slate-700">現金餘額</span>＝總投入＋賣出淨入－買入支出＋已入帳現金股利；<span class="text-slate-700">總資產</span>＝現金餘額＋持倉市值（估）＋應收現金股利＋應收股票股利估值。</div>
                         </div>
                     </div>
                 </div>
@@ -1771,7 +1823,7 @@ createApp({
                 <div class="card p-0 overflow-hidden">
                     <div class="px-6 py-4 border-b border-slate-200 bg-slate-50 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
                         <h3 class="text-base font-extrabold text-slate-700 flex items-center gap-2"><i class="fa-solid fa-receipt text-slate-400"></i> 資金流水帳（含交易）</h3>
-                        <div class="text-xs font-bold text-slate-400">顯示：{{ cashViewMode==='all' ? '全部' : (cashViewMode==='cashOnly' ? '入出金' : '買賣') }}</div>
+                        <div class="text-xs font-bold text-slate-400">顯示：{{ cashViewMode==='all' ? '全部' : (cashViewMode==='cashOnly' ? '入出金' : (cashViewMode==='dividendsOnly' ? '股利' : '買賣')) }}</div>
                     </div>
 
                     <div class="md:hidden divide-y divide-slate-100">
@@ -1780,7 +1832,7 @@ createApp({
                                 <div class="min-w-0">
                                     <div class="text-xs font-bold text-slate-400 flex items-center gap-2"><i class="fa-regular fa-calendar"></i> {{ row.date }}</div>
                                     <div class="mt-2 flex items-center gap-2">
-                                        <span class="px-2.5 py-1 rounded-lg text-[11px] font-black" :class="row.kind==='cash' ? (row.subType==='withdraw' ? 'bg-rose-50 text-rose-600' : 'bg-emerald-50 text-emerald-700') : (row.amount >= 0 ? 'bg-green-50 text-green-600' : 'bg-red-50 text-red-600')">{{ row.kind==='cash' ? row.label : row.txType }}</span>
+                                        <span class="px-2.5 py-1 rounded-lg text-[11px] font-black" :class="ledgerBadgeClass(row)">{{ row.kind==='cash' ? row.label : (row.kind==='dividend' ? row.label : row.txType) }}</span>
                                         <div class="font-black text-slate-800 truncate">{{ row.title }}</div>
                                     </div>
                                     <div v-if="row.note" class="mt-1 text-[11px] text-slate-400 font-bold truncate">{{ row.note }}</div>
@@ -1813,7 +1865,7 @@ createApp({
                             <tbody class="divide-y divide-slate-100">
                                 <tr v-for="row in cashLedgerRowsDisplayed" :key="row.id" class="hover:bg-slate-50 transition bg-white">
                                     <td class="p-5 pl-8 text-slate-600 font-bold whitespace-nowrap">{{ row.date }}</td>
-                                    <td class="p-5 whitespace-nowrap"><span class="px-3 py-1.5 rounded-lg text-xs font-black" :class="row.kind==='cash' ? (row.subType==='withdraw' ? 'bg-rose-100 text-rose-700' : 'bg-emerald-100 text-emerald-700') : (row.amount >= 0 ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700')">{{ row.kind==='cash' ? row.label : row.txType }}</span></td>
+                                    <td class="p-5 whitespace-nowrap"><span class="px-3 py-1.5 rounded-lg text-xs font-black" :class="ledgerBadgeClass(row, true)">{{ row.kind==='cash' ? row.label : (row.kind==='dividend' ? row.label : row.txType) }}</span></td>
                                     <td class="p-5"><div class="font-black text-slate-800">{{ row.title }}</div><div v-if="row.note" class="text-xs text-slate-400 font-bold mt-1">{{ row.note }}</div></td>
                                     <td class="p-5 text-right font-black text-emerald-700">{{ row.inAmount > 0 ? formatCurrency(row.inAmount) : '-' }}</td>
                                     <td class="p-5 text-right font-black text-rose-600">{{ row.outAmount > 0 ? formatCurrency(row.outAmount) : '-' }}</td>
@@ -1826,6 +1878,88 @@ createApp({
                                 <tr v-if="cashLedgerRowsDisplayed.length === 0"><td colspan="7" class="p-12 text-center text-slate-400 font-bold">此模式無資料</td></tr>
                             </tbody>
                         </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div v-if="showDividendManagerModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex justify-center items-start z-[90] p-4 md:p-8 overflow-y-auto">
+            <div class="bg-white rounded-[2rem] w-full max-w-6xl shadow-2xl border border-white/80 overflow-hidden my-6">
+                <div class="px-6 py-5 bg-gradient-to-r from-rose-600 to-orange-500 text-white flex items-center justify-between gap-4">
+                    <div><h3 class="text-2xl font-black flex items-center gap-3"><svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v18"></path><path d="M17 6H9.5a3.5 3.5 0 0 0 0 7H14a3.5 3.5 0 0 1 0 7H6"></path></svg> 權息管理</h3><p class="text-sm font-bold text-rose-100 mt-1">現金股利會進入股利現金流；股票股利會增加庫存股數但不增加成本。</p></div>
+                    <button @click="closeDividendManagerModal" class="w-11 h-11 rounded-2xl bg-white/15 hover:bg-white/25 transition"><i class="fa-solid fa-xmark text-xl"></i></button>
+                </div>
+
+                <div class="p-6 grid grid-cols-1 lg:grid-cols-5 gap-6">
+                    <div class="lg:col-span-2 space-y-4">
+                        <div class="rounded-2xl border border-slate-200 p-5 bg-slate-50/60">
+                            <div class="flex items-center justify-between mb-4"><h4 class="font-black text-slate-800">{{ dividendForm.id ? '編輯權息事件' : '新增權息事件' }}</h4><button type="button" @click="resetDividendForm" class="text-xs font-black text-slate-500 hover:text-slate-800">清空</button></div>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div class="input-group relative">
+                                    <label class="text-xs font-bold text-slate-500 mb-2 ml-1 flex justify-between">股票代號 / 名稱 <span v-if="isDividendSearching" class="text-rose-600 text-xs animate-pulse">搜尋中...</span></label>
+                                    <div class="relative flex items-center">
+                                        <input type="text" v-model="dividendSearchText" @input="lookupDividendStock" placeholder="如: 2330" class="w-full h-[46px] pl-10 pr-4 bg-white border border-slate-300 rounded-xl font-bold outline-none focus:border-rose-500 focus:ring-4 focus:ring-rose-50/60 transition placeholder:text-slate-300">
+                                        <i class="fa-solid fa-magnifying-glass absolute left-4 text-slate-400 text-sm pointer-events-none"></i>
+                                    </div>
+                                    <div v-if="showDividendSuggestions && dividendSuggestions.length > 0" class="suggestions-list !top-[54px]">
+                                        <div v-for="s in dividendSuggestions" :key="'dividend-' + s.code" @click="selectDividendSuggestion(s)" class="suggestion-item group">
+                                            <div>
+                                                <span class="font-black text-rose-600 mr-2 w-14 inline-block">{{ s.code }}</span>
+                                                <span class="text-slate-700 font-bold">{{ s.name }}</span>
+                                                <span v-if="s.isOnline" class="ml-2 text-[10px] bg-green-100 text-green-700 px-1.5 py-0.5 rounded font-bold">線上</span>
+                                            </div>
+                                            <i class="fa-solid fa-plus text-slate-300 group-hover:text-rose-500"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="input-group"><label class="text-xs font-bold text-slate-500 mb-2 ml-1">股票名稱</label><input v-model="dividendForm.name" placeholder="台積電" class="w-full h-[46px] px-4 bg-white border border-slate-300 rounded-xl font-bold outline-none focus:border-rose-500"></div>
+                                <div class="input-group"><label class="text-xs font-bold text-slate-500 mb-2 ml-1">除權息日</label><input type="date" v-model="dividendForm.exDate" class="w-full h-[46px] px-4 bg-white border border-slate-300 rounded-xl font-bold outline-none focus:border-rose-500"></div>
+                                <div class="input-group"><label class="text-xs font-bold text-slate-500 mb-2 ml-1">基準日（選填）</label><input type="date" v-model="dividendForm.recordDate" class="w-full h-[46px] px-4 bg-white border border-slate-300 rounded-xl font-bold outline-none focus:border-rose-500"></div>
+                                <div class="input-group"><label class="text-xs font-bold text-slate-500 mb-2 ml-1">現金股利 元 / 股</label><input type="number" step="0.0001" v-model.number="dividendForm.cashDividendPerShare" placeholder="例如 4" class="w-full h-[46px] px-4 bg-white border border-slate-300 rounded-xl font-bold outline-none focus:border-rose-500"></div>
+                                <div class="input-group"><label class="text-xs font-bold text-slate-500 mb-2 ml-1">現金發放日</label><input type="date" v-model="dividendForm.cashPaymentDate" class="w-full h-[46px] px-4 bg-white border border-slate-300 rounded-xl font-bold outline-none focus:border-rose-500"></div>
+                                <div class="input-group"><label class="text-xs font-bold text-slate-500 mb-2 ml-1">股票股利 元 / 股</label><input type="number" step="0.0001" v-model.number="dividendForm.stockDividendPerShareYuan" placeholder="例如 1" class="w-full h-[46px] px-4 bg-white border border-slate-300 rounded-xl font-bold outline-none focus:border-rose-500"></div>
+                                <div class="input-group"><label class="text-xs font-bold text-slate-500 mb-2 ml-1">股票發放日</label><input type="date" v-model="dividendForm.stockPaymentDate" class="w-full h-[46px] px-4 bg-white border border-slate-300 rounded-xl font-bold outline-none focus:border-rose-500"></div>
+                                <div class="input-group">
+                                    <label class="text-xs font-bold text-slate-500 mb-2 ml-1 flex items-center justify-between gap-2">
+                                        <span>除權息前收盤價</span>
+                                        <button type="button" @click="fetchDividendPrevClose" :disabled="isDividendPrevCloseLoading" class="px-2.5 py-1 rounded-lg text-[11px] font-black bg-white border border-rose-200 text-rose-600 hover:bg-rose-50 disabled:opacity-50 disabled:cursor-not-allowed transition">
+                                            <i class="fa-solid" :class="isDividendPrevCloseLoading ? 'fa-spinner fa-spin' : 'fa-download'"></i>
+                                            {{ isDividendPrevCloseLoading ? '抓取中' : '抓前收盤價' }}
+                                        </button>
+                                    </label>
+                                    <input type="number" step="0.01" v-model.number="dividendForm.prevClose" placeholder="除權息日前一交易日再填" class="w-full h-[46px] px-4 bg-white border border-slate-300 rounded-xl font-bold outline-none focus:border-rose-500">
+                                    <p class="mt-1 text-[11px] font-bold text-slate-400 leading-relaxed">公告時通常未知；除權息日當天或之後可按「抓前收盤價」，也可手動填入。</p>
+                                </div>
+                                <div class="input-group"><label class="text-xs font-bold text-slate-500 mb-2 ml-1">權利股數（選填覆寫）</label><input type="number" step="1" v-model.number="dividendForm.eligibleQty" placeholder="空白＝依除權息日前持股自算" class="w-full h-[46px] px-4 bg-white border border-slate-300 rounded-xl font-bold outline-none focus:border-rose-500"></div>
+                                <div class="input-group"><label class="text-xs font-bold text-slate-500 mb-2 ml-1">扣繳稅額（選填）</label><input type="number" step="1" v-model.number="dividendForm.taxWithheld" placeholder="0" class="w-full h-[46px] px-4 bg-white border border-slate-300 rounded-xl font-bold outline-none focus:border-rose-500"></div>
+                                <div class="input-group"><label class="text-xs font-bold text-slate-500 mb-2 ml-1">零股折現（選填）</label><input type="number" step="1" v-model.number="dividendForm.fractionalShareCash" placeholder="0" class="w-full h-[46px] px-4 bg-white border border-slate-300 rounded-xl font-bold outline-none focus:border-rose-500"></div>
+                                <div class="input-group md:col-span-2"><label class="text-xs font-bold text-slate-500 mb-2 ml-1">備註</label><input v-model="dividendForm.note" placeholder="例如：手動輸入、公告來源" class="w-full h-[46px] px-4 bg-white border border-slate-300 rounded-xl font-bold outline-none focus:border-rose-500"></div>
+                            </div>
+                            <button @click="saveDividendAction" class="btn w-full mt-5 gap-2 !bg-rose-600 hover:!bg-rose-700 !text-white shadow-lg shadow-rose-200"><i class="fa-solid fa-check"></i> 儲存權息事件</button>
+                            <div class="mt-3 text-xs font-bold text-slate-400 leading-relaxed">規則：除權息日當天買進不列入權利股數；當天賣出仍保留權利。股票股利會在股票發放日增加股數、成本不變。</div>
+                        </div>
+                    </div>
+
+                    <div class="lg:col-span-3 space-y-4">
+                        <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                            <div class="rounded-2xl bg-rose-50 border border-rose-100 p-4"><div class="text-xs font-bold text-rose-500">已入帳股利</div><div class="mt-1 text-xl font-black text-rose-700">{{ formatCurrency(dividendCashSettledNet) }}</div></div>
+                            <div class="rounded-2xl bg-orange-50 border border-orange-100 p-4"><div class="text-xs font-bold text-orange-500">應收現金</div><div class="mt-1 text-xl font-black text-orange-700">{{ formatCurrency(dividendReceivable) }}</div></div>
+                            <div class="rounded-2xl bg-indigo-50 border border-indigo-100 p-4"><div class="text-xs font-bold text-indigo-500">應收股票估值</div><div class="mt-1 text-xl font-black text-indigo-700">{{ formatCurrency(stockDividendReceivableValue) }}</div></div>
+                            <div class="rounded-2xl bg-slate-50 border border-slate-200 p-4"><div class="text-xs font-bold text-slate-500">事件數</div><div class="mt-1 text-xl font-black text-slate-800">{{ portfolioCorporateActions.length }}</div></div>
+                        </div>
+
+                        <div class="rounded-2xl border border-slate-200 overflow-hidden">
+                            <div class="px-5 py-4 bg-slate-50 border-b border-slate-200 flex items-center justify-between"><h4 class="font-black text-slate-700">權息事件列表</h4><span class="text-xs font-bold text-slate-400">{{ currentPortfolio.name }}</span></div>
+                            <div v-if="portfolioCorporateActions.length === 0" class="p-10 text-center text-slate-400 font-bold"><i class="fa-solid fa-circle-info text-3xl mb-3 opacity-40"></i><div>尚無權息事件</div></div>
+                            <div v-else class="divide-y divide-slate-100 max-h-[560px] overflow-y-auto">
+                                <div v-for="action in portfolioCorporateActions" :key="action.id" class="p-5 hover:bg-slate-50 transition">
+                                    <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
+                                        <div class="min-w-0"><div class="flex flex-wrap items-center gap-2"><span class="px-2.5 py-1 rounded-lg text-[11px] font-black border" :class="dividendStatusClass(action)">{{ dividendStatusLabel(action) }}</span><span class="px-2.5 py-1 rounded-lg text-[11px] font-black bg-slate-100 text-slate-700">{{ dividendActionTypeLabel(action) }}</span><div class="font-black text-slate-900">{{ displayNameOnly(action.code, action.name) }} <span class="text-slate-400">({{ action.code }})</span></div></div><div class="mt-2 text-xs font-bold text-slate-500 leading-relaxed">除權息日 {{ action.exDate || '-' }}｜現金發放 {{ action.cashPaymentDate || '-' }}｜股票發放 {{ action.stockPaymentDate || '-' }}</div><div class="mt-1 text-xs font-bold text-slate-400">{{ dividendActionSummary(action) }}</div><div v-if="action.note" class="mt-1 text-xs font-bold text-slate-400 truncate">備註：{{ action.note }}</div></div>
+                                        <div class="md:text-right shrink-0"><div class="font-black text-rose-600" v-if="action.cashDividendPerShare">現金 {{ formatCurrency(action.cashDividendNet) }}</div><div class="font-black text-indigo-600" v-if="action.stockDividendRatio">股票 +{{ formatCurrency(action.stockDividendQty) }} 股</div><div class="mt-2 flex md:justify-end gap-2"><button @click="editDividendAction(action)" class="px-3 py-2 rounded-lg text-xs font-black bg-white border border-slate-200 text-slate-600 hover:bg-slate-50"><i class="fa-solid fa-pen-to-square mr-1"></i>編輯</button><button @click="deleteDividendAction(action.id)" class="px-3 py-2 rounded-lg text-xs font-black bg-white border border-red-200 text-red-500 hover:bg-red-50"><i class="fa-solid fa-trash-can mr-1"></i>刪除</button></div></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -2554,8 +2688,11 @@ createApp({
             transactions: persisted.transactions, newTx: { date: new Date().toISOString().split('T')[0], code: '', name: '', type: 'buy', mode: 'cash', price: null, qty: 1000, category: 'core', dayTradeEligible: false },
             cashBook: persisted.cashBook,
             profitAdjustments: persisted.profitAdjustments,
+            corporateActions: persisted.corporateActions || [],
             cashEntryForm: { date: new Date().toISOString().split('T')[0], type: 'deposit', amount: null, note: '' },
             profitAdjustmentForm: { date: new Date().toISOString().split('T')[0], type: 'withdraw', category: 'living', amount: null, note: '' },
+            showDividendManagerModal: false,
+            dividendForm: { id: null, code: '', name: '', actionType: 'cash_dividend', exDate: '', recordDate: '', cashPaymentDate: '', stockPaymentDate: '', cashDividendPerShare: null, stockDividendPerShareYuan: null, prevClose: null, eligibleQty: null, taxWithheld: 0, fractionalShareCash: 0, note: '' },
             cashViewMode: 'all', // all | cashOnly | tradesOnly
 
 
@@ -2572,7 +2709,7 @@ createApp({
             showSellModal: false, sellTx: { date: '', code: '', name: '', price: 0, qty: 0, maxQty: 0, category: '', mode: 'cash', dayTradeEligible: false },
             showEditBuyModal: false, editBuyTx: { id: null, date: '', code: '', name: '', price: null, qty: 0, category: 'core' },
             showEditTxModal: false, editTx: { id: null, date: '', code: '', name: '', type: 'buy', mode: 'cash', price: null, qty: 0, category: 'core', dayTradeEligible: false },
-            showAddModal: false, searchText: '', isSearching: false,
+            showAddModal: false, searchText: '', isSearching: false, dividendSearchText: '', dividendSuggestions: [], showDividendSuggestions: false, isDividendSearching: false, isDividendPrevCloseLoading: false, dividendSearchTimeout: null,
             settings: persisted.settings,
             showSettings: false, showExportModal: false, backupTab: 'download', exportFileName: '', restoreFileName: '', restoreFileObject: null, restoreBusy: false,
             showInfoModal: false, infoTitle: '', infoMessage: '', showConfirmModal: false, confirmTitle: '', confirmMessage: '', confirmCallback: null,
@@ -2585,7 +2722,7 @@ createApp({
             lastUpdateTimestamp: persisted.lastUpdateTimestamp, lastPriceUpdateError: persisted.lastPriceUpdateError, lastPriceUpdateAttemptTs: persisted.lastPriceUpdateAttemptTs, lastPriceUpdatePartial: persisted.lastPriceUpdatePartial, lastPriceUpdateMissingCount: persisted.lastPriceUpdateMissingCount, priceStaleThresholdMinutes: 180, isLoading: false,
             dateFilterMode: 'thisMonth', filterStart: '', filterEnd: '', historyTypeFilter: 'all',
             contextMenu: { visible: false, x: 0, y: 0, stock: null },
-            rawStockData: ["2330:台積電","2317:鴻海","2454:聯發科","2603:長榮","2609:陽明","2615:萬海","0050:元大台灣50","0056:元大高股息","00878:國泰永續高股息"], baseStockMap: [], nameMap: persisted.nameMap, categories: persisted.categories, newCategoryName: "",
+            rawStockData: ["2330:台積電","2317:鴻海","2454:聯發科","2603:長榮","2609:陽明","2615:萬海","0050:元大台灣50","0056:元大高股息","00878:國泰永續高股息","00991A:主動復華未來50"], baseStockMap: [], nameMap: persisted.nameMap, categories: persisted.categories, newCategoryName: "",
             stockCategories: persisted.stockCategories || {}, categoryMaster: persisted.categoryMaster || (window.StockCategoryService ? window.StockCategoryService.DEFAULT_CATEGORY_MASTER : { sectors: [], industries: [], themes: [] }),
             showCategoryModal: false, categoryEditStock: null, categoryEditForm: { sector: '', industry: '', mainTheme: '', themesText: '' },
             showCategoryDbModal: false, categoryDbImportFileName: '', categoryDbImportFile: null,
@@ -2601,11 +2738,14 @@ createApp({
         this.gdriveClientId = localStorage.getItem(window.StockStorage.KEYS.gdriveClientId) || ''; this.gdriveClientIdInput = this.gdriveClientId;
         this.baseStockMap = this.rawStockData.map(s => { const [code, name] = s.split(':'); return { code, name }; });
         const savedNames = localStorage.getItem(window.StockStorage.KEYS.stockNames) || ''; if (savedNames) { try { this.nameMap = JSON.parse(savedNames) || {}; } catch(_) { this.nameMap = {}; } try { Object.keys(this.nameMap || {}).forEach(k => { let v = String(this.nameMap[k] || '').replace(/\s+/g,' ').trim(); if (!v || /yahoo|奇摩股市|yahoo股市/i.test(v)) { delete this.nameMap[k]; return; } v = v.replace(/(走勢圖|即時行情|技術分析|討論|個股|公司資料|股價)/g,'').trim(); v = v.replace(/\(\s*[0-9A-Za-z]{4,8}(?:\.(?:TW|TWO))?\s*\)/gi,'').trim(); v = v.replace(/\b\d{4,6}[A-Za-z]{0,2}(?:\.(?:TW|TWO))?\b/ig,'').trim(); v = v.replace(/\s+\d{2,3}\s*$/,'').trim();  v = v.replace(/\bTOP\s*\d+\b/ig,'').trim(); v = v.replace(/\bETF\b/ig,'').trim(); v = v.replace(/\s{2,}/g,' ').trim(); if (!v) { delete this.nameMap[k]; return; } this.nameMap[k] = v; }); localStorage.setItem(window.StockStorage.KEYS.stockNames, JSON.stringify(this.nameMap || {})); } catch(_) {} }
+        this.applyStockNameOverrides();
+        localStorage.setItem(window.StockStorage.KEYS.stockNames, JSON.stringify(this.nameMap || {}));
                 const savedTx = localStorage.getItem(window.StockStorage.KEYS.transactions); if (savedTx) this.transactions = JSON.parse(savedTx);
 const savedCash = localStorage.getItem(window.StockStorage.KEYS.cashBook) || ''; if (savedCash) { try { const parsed = JSON.parse(savedCash); this.cashBook = Array.isArray(parsed) ? parsed : []; } catch(_) { this.cashBook = []; } }
         if (!Array.isArray(this.cashBook)) this.cashBook = [];
         const savedProfitAdjustments = localStorage.getItem(window.StockStorage.KEYS.profitAdjustments) || ''; if (savedProfitAdjustments) { try { const parsed = JSON.parse(savedProfitAdjustments); this.profitAdjustments = Array.isArray(parsed) ? parsed : []; } catch(_) { this.profitAdjustments = []; } }
         if (!Array.isArray(this.profitAdjustments)) this.profitAdjustments = [];
+        if (!Array.isArray(this.corporateActions)) this.corporateActions = [];
         // Migrate legacy cash entries (ensure portfolioId / normalize fields)
         try {
             let changed = false;
@@ -3305,7 +3445,10 @@ const savedCash = localStorage.getItem(window.StockStorage.KEYS.cashBook) || '';
             return parts.join('\n');
         },
         gdriveLastActionLabel() { const a = (this.gdriveCloudMeta && this.gdriveCloudMeta.lastAction) ? this.gdriveCloudMeta.lastAction : ''; if (a === 'upload') return '雲端上傳'; if (a === 'restore') return '雲端回復'; if (a === 'delete') return '雲端刪除'; if (a === 'download') return '本機下載'; return '—'; },
-        fullStockMap() { return [...this.baseStockMap, ...this.customStocks]; },
+        fullStockMap() {
+            const all = [...(this.baseStockMap || []), ...(this.customStocks || [])];
+            return all.map(s => ({ ...s, code: String(s.code || '').trim().toUpperCase(), name: this.resolveStockName(s.code, s.name) || s.name }));
+        },
         currentPortfolio() {
             const found = (this.portfolios || []).find(p => p && p.id === this.currentPortfolioId);
             return found || { id: 'main', name: '我的帳戶', kind: 'personal' };
@@ -3322,6 +3465,9 @@ const savedCash = localStorage.getItem(window.StockStorage.KEYS.cashBook) || '';
             const pid = this.currentPortfolioId || 'main';
             return (this.profitAdjustments || []).filter(e => (e && (e.portfolioId || 'main') === pid));
         },
+        portfolioCorporateActions() {
+            return window.StockDividendService ? window.StockDividendService.portfolioActions(this) : [];
+        },
         cashInitialEntry() { return window.StockCashService.cashInitialEntry.call(this); },
         cashInitialCapital() { return window.StockCashService.cashInitialCapital.call(this); },
         cashDepositsTotal() { return window.StockCashService.cashDepositsTotal.call(this); },
@@ -3333,6 +3479,10 @@ const savedCash = localStorage.getItem(window.StockStorage.KEYS.cashBook) || '';
         profitWithdrawalCategorySummary() { return window.StockCashService.profitWithdrawalCategorySummary.call(this); },
         cashNetContribution() { return window.StockCashService.cashNetContribution.call(this); },
         cashTradeNet() { return window.StockCashService.cashTradeNet.call(this); },
+        dividendCashSettledNet() { return window.StockCashService.dividendCashSettledNet.call(this); },
+        dividendReceivable() { return window.StockCashService.dividendReceivable.call(this); },
+        stockDividendReceivableValue() { return window.StockCashService.stockDividendReceivableValue.call(this); },
+        dividendIncomeTotal() { return window.StockCashService.dividendIncomeTotal.call(this); },
         cashBalance() { return window.StockCashService.cashBalance.call(this); },
         signedMarketValue() { return window.StockCashService.signedMarketValue.call(this); },
         netAssetValue() { return window.StockCashService.netAssetValue.call(this); },
@@ -3343,6 +3493,14 @@ const savedCash = localStorage.getItem(window.StockStorage.KEYS.cashBook) || '';
         cashLedgerRowsAll() { return window.StockCashService.cashLedgerRowsAll.call(this); },
         cashLedgerRowsDisplayed() { return window.StockCashService.cashLedgerRowsDisplayed.call(this); },
         sortedTransactions() { return [...this.portfolioTransactions].sort((a, b) => (new Date(b.date) - new Date(a.date)) || (Number(b.id || 0) - Number(a.id || 0))); },
+        dividendHistoryRows() {
+            return (this.portfolioCorporateActions || []).flatMap(a => {
+                const rows = [];
+                if (Number(a.cashDividendPerShare || 0) > 0) rows.push({ ...a, historyKind: 'cashDividend', historyDate: a.cashPaymentDate || a.exDate, historyLabel: '現金股利', historyAmount: Number(a.cashDividendNet || 0) });
+                if (Number(a.stockDividendRatio || 0) > 0) rows.push({ ...a, historyKind: 'stockDividend', historyDate: a.stockPaymentDate || a.exDate, historyLabel: '股票股利', historyAmount: Number(a.stockDividendQty || 0) });
+                return rows;
+            }).sort((a, b) => (new Date(b.historyDate || 0) - new Date(a.historyDate || 0)) || String(a.code).localeCompare(String(b.code)));
+        },
         filteredTransactions() { if (this.dateFilterMode === 'all') return this.sortedTransactions; const start = new Date(this.filterStart).setHours(0,0,0,0); const end = new Date(this.filterEnd).setHours(23,59,59,999); return this.sortedTransactions.filter(tx => { const txDate = new Date(tx.date).getTime(); return txDate >= start && txDate <= end; }); },
         displayedHistoryTransactions() { if (this.historyTypeFilter === 'all') return this.filteredTransactions; return this.filteredTransactions.filter(tx => tx.type === this.historyTypeFilter); },
         filteredStats() { return window.StockTradeService.filteredStats.call(this); },
@@ -3501,12 +3659,14 @@ const savedCash = localStorage.getItem(window.StockStorage.KEYS.cashBook) || '';
         estimatedMarketValue() { return this.holdings.reduce((sum, h) => { const price = this.latestPrices[h.code] || h.currentPrice || h.buyAvgPrice || 0; return sum + Math.abs(price * h.qty); }, 0); },
         totalUnrealizedPnL() { return this.holdings.reduce((sum, h) => sum + h.unrealizedPnL, 0); },
         totalRealizedPnL() { return this.portfolioTransactions.reduce((sum, tx) => sum + ((tx.realizedPnL !== null && tx.realizedPnL !== undefined) ? Number(tx.realizedPnL) : 0), 0); },
+        totalReturnPnL() { return (Number(this.totalRealizedPnL) || 0) + (Number(this.totalUnrealizedPnL) || 0) + (Number(this.dividendIncomeTotal) || 0); },
         selectedStockBuys() { if (!this.selectedStock) return []; return this.sortedTransactions.filter(tx => tx.code === this.selectedStock.code && tx.type === 'buy').map(tx => ({ id: tx.id, date: tx.date, qty: tx.qty, price: tx.price, category: tx.category })); }
     },
     watch: {
         transactions: { deep: true, handler() { this.scheduleAutoSave("交易資料"); } },
         cashBook: { deep: true, handler() { this.scheduleAutoSave("現金資料"); } },
         profitAdjustments: { deep: true, handler() { this.scheduleAutoSave("獲利用途"); } },
+        corporateActions: { deep: true, handler() { this.scheduleAutoSave("權息資料"); } },
         portfolios: { deep: true, handler() { this.scheduleAutoSave("帳本"); } },
         currentPortfolioId() { this.scheduleAutoSave("目前帳本"); },
         nameMap: { deep: true, handler() { this.scheduleAutoSave("股票名稱"); } },
@@ -3523,6 +3683,16 @@ const savedCash = localStorage.getItem(window.StockStorage.KEYS.cashBook) || '';
         showStockDetails() { this.$nextTick(() => this.updateInventoryStickySummaryDocked()); }
     },
     methods: {
+        resolveStockName(code, fallbackName = '') {
+            return window.resolveTwStockName ? window.resolveTwStockName(code, fallbackName, this.nameMap) : String(fallbackName || '').trim();
+        },
+        applyStockNameOverrides() {
+            const overrides = window.TW_STOCK_NAME_OVERRIDES || {};
+            if (!this.nameMap) this.nameMap = {};
+            Object.keys(overrides).forEach(code => {
+                if (code && overrides[code]) this.nameMap[code] = overrides[code];
+            });
+        },
 
         updateInventoryStickySummaryDocked() {
             try {
@@ -3903,6 +4073,7 @@ const savedCash = localStorage.getItem(window.StockStorage.KEYS.cashBook) || '';
                 this.transactions = (this.transactions || []).filter(tx => (tx && (tx.portfolioId || 'main') !== pid));
                 this.cashBook = (this.cashBook || []).filter(e => (e && (e.portfolioId || 'main') !== pid));
                 this.profitAdjustments = (this.profitAdjustments || []).filter(e => (e && (e.portfolioId || 'main') !== pid));
+                this.corporateActions = (this.corporateActions || []).filter(e => (e && (e.portfolioId || 'main') !== pid));
                 this.portfolios = (this.portfolios || []).filter(x => x && x.id !== pid);
                 if (!this.portfolios.some(x => x.id === 'main')) this.portfolios.unshift({ id: 'main', name: '我的帳戶', kind: 'personal', createdAt: new Date().toISOString() });
                 if (this.currentPortfolioId === pid) this.currentPortfolioId = 'main';
@@ -3931,6 +4102,261 @@ const savedCash = localStorage.getItem(window.StockStorage.KEYS.cashBook) || '';
         triggerClearCashBook() { return window.StockCashService.triggerClearCashBook.call(this); },
         prefillCashTopUp() { return window.StockCashService.prefillCashTopUp.call(this); },
         txTypeLabel(tx) { return window.StockCashService.txTypeLabel.call(this, tx); },
+        ledgerBadgeClass(row, dense = false) {
+            if (!row) return dense ? 'bg-slate-100 text-slate-700' : 'bg-slate-50 text-slate-600';
+            if (row.kind === 'dividend') return dense ? 'bg-rose-100 text-rose-700' : 'bg-rose-50 text-rose-600';
+            if (row.kind === 'cash') return row.subType === 'withdraw' ? (dense ? 'bg-rose-100 text-rose-700' : 'bg-rose-50 text-rose-600') : (dense ? 'bg-emerald-100 text-emerald-700' : 'bg-emerald-50 text-emerald-700');
+            return row.amount >= 0 ? (dense ? 'bg-green-100 text-green-700' : 'bg-green-50 text-green-600') : (dense ? 'bg-red-100 text-red-700' : 'bg-red-50 text-red-600');
+        },
+
+        // --- Dividends / Corporate Actions ---
+        openDividendManagerModal(stock = null) {
+            this.resetDividendForm();
+            if (stock && stock.code) {
+                this.applyDividendStock(stock);
+            }
+            this.showDividendManagerModal = true;
+        },
+        closeDividendManagerModal() { this.showDividendManagerModal = false; this.showDividendSuggestions = false; },
+        resetDividendForm() {
+            this.dividendForm = { id: null, code: '', name: '', actionType: 'cash_dividend', exDate: '', recordDate: '', cashPaymentDate: '', stockPaymentDate: '', cashDividendPerShare: null, stockDividendPerShareYuan: null, prevClose: null, eligibleQty: null, taxWithheld: 0, fractionalShareCash: 0, note: '' };
+            this.dividendSearchText = '';
+            this.dividendSuggestions = [];
+            this.showDividendSuggestions = false;
+            this.isDividendSearching = false;
+            if (this.dividendSearchTimeout) clearTimeout(this.dividendSearchTimeout);
+            this.dividendSearchTimeout = null;
+        },
+        editDividendAction(action) {
+            if (!action) return;
+            const a = window.StockDividendService ? window.StockDividendService.normalizeAction(action) : action;
+            this.dividendForm = {
+                id: a.id,
+                code: String(a.code || '').trim().toUpperCase(),
+                name: this.resolveStockName(a.code, a.name || ''),
+                actionType: a.actionType || 'cash_dividend',
+                exDate: a.exDate || '',
+                recordDate: a.recordDate || '',
+                cashPaymentDate: a.cashPaymentDate || '',
+                stockPaymentDate: a.stockPaymentDate || '',
+                cashDividendPerShare: Number(a.cashDividendPerShare || 0) || null,
+                stockDividendPerShareYuan: Number(a.stockDividendPerShareYuan || 0) || null,
+                prevClose: Number(a.prevClose || 0) || null,
+                eligibleQty: Number(a.eligibleQty || 0) || null,
+                taxWithheld: Number(a.taxWithheld || 0) || 0,
+                fractionalShareCash: Number(a.fractionalShareCash || 0) || 0,
+                note: a.note || ''
+            };
+            this.dividendSearchText = a.code ? `${String(a.code || '').trim().toUpperCase()} ${this.resolveStockName(a.code, a.name || this.nameMap?.[a.code] || '')}`.trim() : '';
+            this.dividendSuggestions = [];
+            this.showDividendSuggestions = false;
+            this.showDividendManagerModal = true;
+        },
+        applyDividendStock(stock) {
+            if (!stock || !stock.code) return;
+            const code = String(stock.code || '').trim().toUpperCase();
+            const name = this.resolveStockName(code, stock.name || this.nameMap?.[code] || '');
+            this.dividendForm.code = code;
+            this.dividendForm.name = name;
+            this.dividendSearchText = `${code} ${name}`.trim();
+        },
+        lookupDividendStock() {
+            const raw = String(this.dividendSearchText || '').trim();
+            const term = (raw.split(/\s+/)[0] || raw).toUpperCase();
+            this.dividendForm.code = term;
+            if (!raw) {
+                this.dividendForm.code = '';
+                this.dividendForm.name = '';
+                this.dividendSuggestions = [];
+                this.showDividendSuggestions = false;
+                return;
+            }
+            const localResults = (this.fullStockMap || []).filter(s => {
+                const code = String(s.code || '').toUpperCase();
+                const name = String(s.name || '');
+                return code.startsWith(term) || name.includes(raw) || name.includes(term);
+            });
+            this.dividendSuggestions = localResults.slice(0, 6);
+            this.showDividendSuggestions = true;
+            const exact = localResults.find(s => String(s.code) === term || String(s.name) === raw || String(s.name) === term);
+            if (exact) this.applyDividendStock(exact);
+            if (term.length > 1 && localResults.length < 3) {
+                if (this.dividendSearchTimeout) clearTimeout(this.dividendSearchTimeout);
+                this.dividendSearchTimeout = setTimeout(() => { this.fetchDividendOnlineSuggestions(term); }, 500);
+            }
+        },
+        async fetchDividendOnlineSuggestions(query) {
+            this.isDividendSearching = true;
+            try {
+                const proxyUrl = (location.protocol === 'file:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1')
+                    ? "https://corsproxy.io/?"
+                    : "/.netlify/functions/yahoo?u=";
+                const url = `https://query1.finance.yahoo.com/v1/finance/search?q=${encodeURIComponent(query)}&lang=zh-Hant-TW&region=TW&quotesCount=5&newsCount=0`;
+                const res = await fetch(proxyUrl + encodeURIComponent(url));
+                const data = await res.json();
+                const onlineResults = (data.quotes || [])
+                    .filter(q => q.symbol && (q.symbol.endsWith('.TW') || q.symbol.endsWith('.TWO')))
+                    .map(q => {
+                        const code = String(q.symbol || '').replace(/\.TW(O)?$/, '').toUpperCase();
+                        return {
+                            code,
+                            name: this.resolveStockName(code, q.longname || q.shortname || ''),
+                            isOnline: true
+                        };
+                    });
+                const existingCodes = new Set((this.dividendSuggestions || []).map(s => s.code));
+                onlineResults.forEach(item => {
+                    if (!existingCodes.has(item.code)) this.dividendSuggestions.push(item);
+                });
+                const currentTerm = String(this.dividendSearchText || '').trim().split(/\s+/)[0].toUpperCase();
+                const exactOnline = onlineResults.find(item => item.code === currentTerm);
+                if (exactOnline) this.applyDividendStock(exactOnline);
+                if (this.dividendSuggestions.length > 0) this.showDividendSuggestions = true;
+            } catch (e) {
+            } finally {
+                this.isDividendSearching = false;
+            }
+        },
+        selectDividendSuggestion(stock) {
+            this.applyDividendStock(stock);
+            this.showDividendSuggestions = false;
+        },
+        async fetchDividendPrevClose() {
+            const code = String(this.dividendForm?.code || '').trim().toUpperCase();
+            const exDate = String(this.dividendForm?.exDate || '').trim();
+            if (!code) { this.openInfoModal('資料不完整', '請先選擇或輸入股票代號。'); return; }
+            if (!exDate) { this.openInfoModal('資料不完整', '請先填寫除權息日，才能判斷前一交易日。'); return; }
+
+            const taipeiDateString = (date) => new Date(date.getTime() + 8 * 60 * 60 * 1000).toISOString().slice(0, 10);
+            const todayTaipei = taipeiDateString(new Date());
+            if (exDate > todayTaipei) {
+                this.openInfoModal('尚未可自動帶入', `除權息日 ${exDate} 尚未到，前一交易日收盤價可能還不是最終值。請於除權息日當天或之後再按「抓前收盤價」，或先手動填入。`);
+                return;
+            }
+
+            this.isDividendPrevCloseLoading = true;
+            try {
+                const proxyUrl = (location.protocol === 'file:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1')
+                    ? "https://corsproxy.io/?"
+                    : "/.netlify/functions/yahoo?u=";
+                const exDateStart = new Date(`${exDate}T00:00:00+08:00`);
+                const period1 = Math.floor((exDateStart.getTime() - 45 * 24 * 60 * 60 * 1000) / 1000);
+                const period2 = Math.floor((exDateStart.getTime() + 12 * 60 * 60 * 1000) / 1000);
+                const toTwDate = (ts) => new Date((Number(ts) * 1000) + 8 * 60 * 60 * 1000).toISOString().slice(0, 10);
+                const fetchSymbol = async (suffix) => {
+                    const url = `https://query1.finance.yahoo.com/v8/finance/chart/${code}.${suffix}?period1=${period1}&period2=${period2}&interval=1d&events=history`;
+                    const res = await fetch(proxyUrl + encodeURIComponent(url));
+                    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                    const data = await res.json();
+                    const result = data?.chart?.result?.[0];
+                    const timestamps = result?.timestamp || [];
+                    const closes = result?.indicators?.quote?.[0]?.close || [];
+                    const rows = timestamps.map((ts, i) => ({
+                        ts: Number(ts),
+                        date: toTwDate(ts),
+                        close: Number(closes[i])
+                    })).filter(row => row.date < exDate && Number.isFinite(row.close) && row.close > 0);
+                    rows.sort((a, b) => b.ts - a.ts);
+                    if (!rows.length) throw new Error('NO_PREV_CLOSE');
+                    return { ...rows[0], symbol: `${code}.${suffix}` };
+                };
+
+                let picked = null;
+                try { picked = await fetchSymbol('TW'); } catch (_) {}
+                if (!picked) picked = await fetchSymbol('TWO');
+                const close = Math.round(Number(picked.close) * 100) / 100;
+                this.dividendForm.prevClose = close;
+                this.openInfoModal('已帶入前收盤價', `${code} ${this.dividendForm.name || ''}
+${picked.date} 收盤價：${close}`);
+            } catch (e) {
+                this.openInfoModal('抓取失敗', '目前找不到除權息日前一交易日收盤價。可能是資料來源尚未更新、代號錯誤，或該標的沒有可用歷史日K；請稍後再試或手動填入。');
+            } finally {
+                this.isDividendPrevCloseLoading = false;
+            }
+        },
+        saveDividendAction() {
+            const f = this.dividendForm || {};
+            const code = String(f.code || '').trim().toUpperCase();
+            if (!code) { this.openInfoModal('資料不完整', '請輸入股票代號。'); return; }
+            if (!String(f.exDate || '').trim()) { this.openInfoModal('資料不完整', '請選擇除權息日。'); return; }
+            const cash = Math.max(0, Number(f.cashDividendPerShare) || 0);
+            const stock = Math.max(0, Number(f.stockDividendPerShareYuan) || 0);
+            if (cash <= 0 && stock <= 0) { this.openInfoModal('資料不完整', '請至少輸入現金股利或股票股利。'); return; }
+            const name = this.resolveStockName(code, f.name || this.nameMap?.[code] || '') || code;
+            const actionType = cash > 0 && stock > 0 ? 'cash_stock_dividend' : (stock > 0 ? 'stock_dividend' : 'cash_dividend');
+            const existing = (this.corporateActions || []).find(a => a && a.id === f.id);
+            const payload = window.StockDividendService.normalizeAction({
+                ...(existing || {}),
+                id: f.id || `ca_${Date.now()}_${Math.floor(Math.random() * 100000)}`,
+                portfolioId: this.currentPortfolioId || 'main',
+                code,
+                name,
+                actionType,
+                source: 'manual',
+                status: existing?.status || 'planned',
+                exDate: String(f.exDate || '').trim(),
+                recordDate: String(f.recordDate || '').trim(),
+                cashPaymentDate: String(f.cashPaymentDate || '').trim(),
+                stockPaymentDate: String(f.stockPaymentDate || '').trim(),
+                cashDividendPerShare: cash,
+                stockDividendPerShareYuan: stock,
+                prevClose: Math.max(0, Number(f.prevClose) || 0),
+                eligibleQty: Math.max(0, Math.floor(Number(f.eligibleQty) || 0)),
+                taxWithheld: Math.max(0, Number(f.taxWithheld) || 0),
+                fractionalShareCash: Math.max(0, Number(f.fractionalShareCash) || 0),
+                note: String(f.note || '').trim(),
+                createdAt: existing?.createdAt || new Date().toISOString(),
+                updatedAt: new Date().toISOString()
+            });
+            if (!Array.isArray(this.corporateActions)) this.corporateActions = [];
+            const idx = this.corporateActions.findIndex(a => a && a.id === payload.id);
+            if (idx >= 0) this.corporateActions[idx] = payload;
+            else this.corporateActions.push(payload);
+            this.nameMap[code] = name;
+            this.saveData();
+            this.resetDividendForm();
+            this.openInfoModal('', '權息事件已儲存。');
+        },
+        deleteDividendAction(id) {
+            const raw = String(id || '');
+            if (!raw) return;
+            this.confirmTitle = '刪除權息事件';
+            this.confirmMessage = '確定要刪除此筆除權息 / 股利事件嗎？這會同步影響應收股利、股利現金流與股票股利股數。';
+            this.confirmCallback = () => {
+                this.corporateActions = (this.corporateActions || []).filter(a => String(a && a.id) !== raw);
+                this.saveData();
+            };
+            this.showConfirmModal = true;
+        },
+        dividendActionTypeLabel(action) {
+            const type = String(action?.actionType || '');
+            if (type === 'cash_stock_dividend') return '除權息';
+            if (type === 'stock_dividend') return '股票股利';
+            return '現金股利';
+        },
+        dividendStatusLabel(action) {
+            const status = String(action?.status || 'planned');
+            if (status === 'settled') return '已入帳';
+            if (status === 'partially_settled') return '部分入帳';
+            if (status === 'locked') return '已除權息 / 應收';
+            if (status === 'cancelled') return '已取消';
+            return '預告';
+        },
+        dividendStatusClass(action) {
+            const status = String(action?.status || 'planned');
+            if (status === 'settled') return 'bg-emerald-50 text-emerald-700 border-emerald-200';
+            if (status === 'partially_settled') return 'bg-blue-50 text-blue-700 border-blue-200';
+            if (status === 'locked') return 'bg-orange-50 text-orange-700 border-orange-200';
+            return 'bg-slate-50 text-slate-600 border-slate-200';
+        },
+        dividendActionSummary(action) {
+            if (!action) return '';
+            const parts = [];
+            if (Number(action.cashDividendPerShare || 0) > 0) parts.push(`現金 ${action.cashDividendPerShare} 元/股`);
+            if (Number(action.stockDividendPerShareYuan || 0) > 0) parts.push(`股票 ${action.stockDividendPerShareYuan} 元/股`);
+            if (Number(action.eligibleQty || 0) > 0) parts.push(`權利股數 ${this.formatCurrency(action.eligibleQty)} 股`);
+            return parts.join('｜') || '-';
+        },
         openRealizedDetail(code) { this.realizedDetailCode = code; this.showRealizedDetail = true; },
         closeRealizedDetail() { this.showRealizedDetail = false; this.realizedDetailCode = ''; },
 
@@ -4044,10 +4470,24 @@ const savedCash = localStorage.getItem(window.StockStorage.KEYS.cashBook) || '';
         openYahooIndex() { window.open('https://tw.stock.yahoo.com/future', '_blank', 'noopener'); },
         async fetchGlobalIndices() { return window.StockPriceService.fetchGlobalIndices.call(this); },
         async fetchTaiexNightIndex() { return window.StockPriceService.fetchTaiexNightIndex.call(this); },
-        lookupStock() { const term = this.searchText; if (!term) { this.suggestions = []; this.showSuggestions = false; return; } const localResults = this.fullStockMap.filter(s => s.code.startsWith(term) || s.name.includes(term)); this.suggestions = localResults.slice(0, 6); this.showSuggestions = true; const exact = localResults.find(s => s.code === term || s.name === term); if(exact) { this.newTx.code = exact.code; this.newTx.name = exact.name; } if (term.length > 1 && localResults.length < 3) { if (this.searchTimeout) clearTimeout(this.searchTimeout); this.searchTimeout = setTimeout(() => { this.fetchOnlineSuggestions(term); }, 500); } },
+        lookupStock() {
+            const raw = String(this.searchText || '').trim();
+            const term = (raw.split(/\s+/)[0] || raw).toUpperCase();
+            if (!raw) { this.suggestions = []; this.showSuggestions = false; return; }
+            const localResults = this.fullStockMap.filter(s => {
+                const code = String(s.code || '').toUpperCase();
+                const name = String(s.name || '');
+                return code.startsWith(term) || name.includes(raw) || name.includes(term);
+            });
+            this.suggestions = localResults.slice(0, 6);
+            this.showSuggestions = true;
+            const exact = localResults.find(s => String(s.code || '').toUpperCase() === term || String(s.name || '') === raw || String(s.name || '') === term);
+            if(exact) { this.newTx.code = String(exact.code || '').trim().toUpperCase(); this.newTx.name = this.resolveStockName(exact.code, exact.name); }
+            if (term.length > 1 && localResults.length < 3) { if (this.searchTimeout) clearTimeout(this.searchTimeout); this.searchTimeout = setTimeout(() => { this.fetchOnlineSuggestions(term); }, 500); }
+        },
 
         async fetchOnlineSuggestions(query) { return window.StockPriceService.fetchOnlineSuggestions.call(this, query); },
-        selectSuggestion(stock) { this.searchText = stock.code + " " + stock.name; this.newTx.code = stock.code; this.newTx.name = stock.name; this.showSuggestions = false; },
+        selectSuggestion(stock) { const code = String(stock.code || '').trim().toUpperCase(); const name = this.resolveStockName(code, stock.name); this.searchText = (code + " " + name).trim(); this.newTx.code = code; this.newTx.name = name; this.showSuggestions = false; },
 
         // --- Advanced: cash short check for BUY ---
         _finalizeAddTransaction(txObj, meta, successTitle = '新增成功', successMsg = '交易紀錄已儲存！') {
@@ -4138,8 +4578,8 @@ const savedCash = localStorage.getItem(window.StockStorage.KEYS.cashBook) || '';
         addTransaction() {
             if (!this.newTx.code || !this.newTx.price || !this.newTx.qty) { this.openInfoModal('資料不完整', '請輸入代碼、價格與股數'); return; }
             const type = (this.newTx.type === 'sell') ? 'sell' : 'buy';
-            const code = String(this.newTx.code).trim();
-            const name = String(this.newTx.name || (this.nameMap && this.nameMap[code]) || '').trim();
+            const code = String(this.newTx.code).trim().toUpperCase();
+            const name = this.resolveStockName(code, this.newTx.name || (this.nameMap && this.nameMap[code]) || '');
             const price = Number(this.newTx.price);
             const qty = Number(this.newTx.qty);
             if (!price || !qty || price <= 0 || qty <= 0) { this.openInfoModal('資料錯誤', '請輸入正確價格與股數'); return; }
@@ -4547,7 +4987,7 @@ const savedCash = localStorage.getItem(window.StockStorage.KEYS.cashBook) || '';
 displayNameWithCode(code, fallbackName) {
             const c = String(code || '').trim();
             let n = '';
-            try { n = (this.nameMap && c && this.nameMap[c]) ? String(this.nameMap[c]) : String(fallbackName || ''); } catch(_) { n = String(fallbackName || ''); }
+            try { n = this.resolveStockName(c, fallbackName); } catch(_) { n = String(fallbackName || ''); }
             n = String(n || '').replace(/\s+/g, ' ').trim();
             // remove common noisy suffixes
             n = n.replace(/(走勢圖|即時行情|技術分析|討論|個股|公司資料|股價|ETF\s*報價|ETF\s*資訊)/g, '').trim();
@@ -4573,7 +5013,7 @@ displayNameWithCode(code, fallbackName) {
         displayNameOnly(code, fallbackName) {
             const c = String(code || '').trim();
             let n = '';
-            try { n = (this.nameMap && c && this.nameMap[c]) ? String(this.nameMap[c]) : String(fallbackName || ''); } catch(_) { n = String(fallbackName || ''); }
+            try { n = this.resolveStockName(c, fallbackName); } catch(_) { n = String(fallbackName || ''); }
             n = String(n || '').replace(/\s+/g, ' ').trim();
             n = n.replace(/(走勢圖|即時行情|技術分析|討論|個股|公司資料|股價|ETF\s*報價|ETF\s*資訊)/g, '').trim();
             n = n.replace(/\(\s*[0-9A-Za-z]{4,8}(?:\.(?:TW|TWO))?\s*\)/gi, '').trim();
