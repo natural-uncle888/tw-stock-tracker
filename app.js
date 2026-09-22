@@ -4881,6 +4881,7 @@ ${picked.date} 收盤價：${close}`);
         async _findAllBackupFiles(accessToken) { return window.StockBackupService._findAllBackupFiles.call(this, accessToken); },
         async _findBackupFileId(accessToken) { return window.StockBackupService._findBackupFileId.call(this, accessToken); },
         _buildBackupPayload() { return window.StockBackupService._buildBackupPayload.call(this); },
+        async _removeDuplicateBackupFiles(accessToken, keepFileId, files) { return window.StockBackupService._removeDuplicateBackupFiles.call(this, accessToken, keepFileId, files); },
         async _downloadBackupPayload(accessToken, fileId) { return window.StockBackupService._downloadBackupPayload.call(this, accessToken, fileId); },
         async _deleteDriveFile(accessToken, fileId) { return window.StockBackupService._deleteDriveFile.call(this, accessToken, fileId); },
         async uploadToGDrive() { return window.StockBackupService.uploadToGDrive.call(this); },
