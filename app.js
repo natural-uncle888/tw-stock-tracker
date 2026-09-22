@@ -184,7 +184,7 @@ createApp({
                     </div>
                     <div class="min-w-0">
                         <h1 class="text-3xl font-extrabold text-slate-800 tracking-tight">台股損益管理</h1>
-                        <p class="text-sm text-slate-500 font-bold tracking-wider mt-1">SMART TRACKER v5.1 Pro</p>
+                        <p class="text-sm text-slate-500 font-bold tracking-wider mt-1">SMART TRACKER v5.2 Pro</p>
                     </div>
                 </div>
 
@@ -226,173 +226,100 @@ createApp({
 
         <div class="h-36 md:hidden"></div>
 
-        <div v-show="currentTab === 'dashboard'" class="space-y-6">
-            <div class="bg-gradient-to-br from-slate-900 via-slate-800 to-indigo-900 rounded-[2rem] p-6 md:p-8 text-white shadow-xl relative overflow-hidden">
-                <div class="absolute -top-12 -right-12 w-56 h-56 rounded-full bg-white/10 blur-2xl"></div>
+        <div v-show="currentTab === 'dashboard'" class="space-y-5">
+            <!-- v5.2: 精簡首頁主儀表板 -->
+            <section class="bg-gradient-to-br from-slate-900 via-slate-800 to-indigo-900 rounded-[2rem] p-5 md:p-7 text-white shadow-xl relative overflow-hidden">
+                <div class="absolute -top-16 -right-12 w-56 h-56 rounded-full bg-white/10 blur-2xl"></div>
                 <div class="absolute -bottom-20 -left-16 w-64 h-64 rounded-full bg-indigo-400/10 blur-3xl"></div>
-                <div class="relative z-10 grid grid-cols-1 xl:grid-cols-[1.15fr_.85fr] gap-6 xl:gap-8 items-stretch">
-                    <div class="flex flex-col justify-between">
-                        <div>
-                            <div class="dashboard-portfolio-pill inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/10 border border-white/10 text-xs font-black text-slate-200 mb-4"><i class="fa-solid fa-gauge-high shrink-0"></i><span class="shrink-0">Dashboard 總覽｜</span><span class="portfolio-name-truncate">{{ currentPortfolio.name }}</span></div>
-                            <div class="text-sm font-bold text-slate-300">帳本總資產</div>
-                            <div class="mt-2 text-4xl md:text-5xl font-black tracking-tight">{{ formatCurrency(netAssetValue) }}</div>
+                <div class="relative z-10">
+                    <div class="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-5">
+                        <div class="min-w-0">
+                            <div class="dashboard-portfolio-pill inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/10 border border-white/10 text-xs font-black text-slate-200 mb-3"><i class="fa-solid fa-gauge-high shrink-0"></i><span class="portfolio-name-truncate">{{ currentPortfolio.name }}</span></div>
+                            <div class="text-xs md:text-sm font-bold text-slate-300">帳本總資產</div>
+                            <div class="mt-1 text-4xl md:text-5xl font-black tracking-tight">{{ formatCurrency(netAssetValue) }}</div>
                             <div class="mt-3 flex flex-wrap items-center gap-x-3 gap-y-2 text-sm font-black">
                                 <span :class="cashTotalPnL >= 0 ? 'text-red-200' : 'text-green-200'">總損益 {{ cashTotalPnL >= 0 ? '+' : '' }}{{ formatCurrency(cashTotalPnL) }}</span>
                                 <span class="text-slate-500">•</span>
                                 <span :class="Number(cashRoiPercent) >= 0 ? 'text-red-200' : 'text-green-200'">總報酬率 {{ cashRoiPercent }}%</span>
                             </div>
                         </div>
-                        <div class="mt-5 flex flex-wrap items-center gap-2 text-[11px] font-bold text-slate-300">
-                            <span class="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-3 py-1.5"><i class="fa-solid fa-circle-info text-indigo-200"></i>總資產＝現金＋庫存市值＋應收股利</span>
-                            <span class="inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5" :class="dashboardReconciliationOk ? 'border-emerald-300/20 bg-emerald-400/10 text-emerald-100' : 'border-amber-300/20 bg-amber-400/10 text-amber-100'"><i class="fa-solid" :class="dashboardReconciliationOk ? 'fa-circle-check' : 'fa-triangle-exclamation'"></i>{{ dashboardReconciliationOk ? '帳務校驗正常' : ('帳務差額 ' + formatCurrency(Math.abs(dashboardReconciliationGap))) }}</span>
+                        <div class="flex flex-wrap gap-2 text-[11px] font-black">
+                            <span class="inline-flex items-center gap-1.5 rounded-full border px-3 py-2" :class="dataHealthReport.ok ? 'border-emerald-300/20 bg-emerald-400/10 text-emerald-100' : 'border-amber-300/20 bg-amber-400/10 text-amber-100'"><i class="fa-solid" :class="dataHealthReport.ok ? 'fa-shield-heart' : 'fa-triangle-exclamation'"></i>{{ dataHealthReport.ok ? '資料正常' : (dataHealthReport.total + ' 項資料提醒') }}</span>
+                            <span class="inline-flex items-center gap-1.5 rounded-full border px-3 py-2" :class="dashboardReconciliationOk ? 'border-emerald-300/20 bg-emerald-400/10 text-emerald-100' : 'border-amber-300/20 bg-amber-400/10 text-amber-100'"><i class="fa-solid" :class="dashboardReconciliationOk ? 'fa-circle-check' : 'fa-scale-balanced'"></i>{{ dashboardReconciliationOk ? '帳務已對平' : ('帳務差額 ' + formatCurrency(Math.abs(dashboardReconciliationGap))) }}</span>
                         </div>
                     </div>
-                    <div class="grid grid-cols-2 gap-3">
-                        <div class="rounded-2xl bg-white/10 border border-white/10 p-4"><div class="text-xs font-bold text-slate-300">淨投入本金</div><div class="mt-1 text-xl font-black text-white">{{ formatCurrency(cashNetContribution) }}</div><div class="mt-1 text-[10px] font-bold text-slate-400">期初＋入金－出金</div></div>
-                        <div class="rounded-2xl bg-white/10 border border-white/10 p-4"><div class="text-xs font-bold text-slate-300">現金餘額</div><div class="mt-1 text-xl font-black" :class="cashBalance >= 0 ? 'text-emerald-200' : 'text-rose-200'">{{ cashBalance >= 0 ? '' : '-' }}{{ formatCurrency(Math.abs(cashBalance)) }}</div><div class="mt-1 text-[10px] font-bold text-slate-400">可動用現金</div></div>
-                        <div class="rounded-2xl bg-white/10 border border-white/10 p-4"><div class="text-xs font-bold text-slate-300">庫存市值</div><div class="mt-1 text-xl font-black text-white">{{ formatCurrency(estimatedMarketValue) }}</div><div class="mt-1 text-[10px] font-bold text-slate-400">依最新行情估算</div></div>
-                        <div class="rounded-2xl bg-white/10 border border-white/10 p-4"><div class="text-xs font-bold text-slate-300">應收股利</div><div class="mt-1 text-xl font-black text-orange-100">+{{ formatCurrency(dividendReceivable + stockDividendReceivableValue) }}</div><div class="mt-1 text-[10px] font-bold text-slate-400">現金＋股票股利估值</div></div>
-                    </div>
-                </div>
-            </div>
 
-            <section class="space-y-3">
-                <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-2 px-1">
-                    <div><h2 class="text-lg font-black text-slate-800 flex items-center gap-2"><i class="fa-solid fa-chart-column text-indigo-500"></i>投資核心指標</h2><p class="text-xs font-bold text-slate-400 mt-1">把成本、損益、股息與整體報酬集中在同一區塊。</p></div>
-                    <div class="text-[11px] font-bold text-slate-400">行情更新：{{ lastUpdateTime || '--' }}</div>
-                </div>
-                <div class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-3 md:gap-4">
-                    <div class="card !p-5 col-span-2 md:col-span-1"><div class="flex items-center justify-between"><div class="text-xs text-slate-400 font-bold">目前持倉成本</div><i class="fa-solid fa-coins text-slate-300"></i></div><div class="mt-2 text-2xl font-black text-slate-800">{{ formatCurrency(totalInvestedCost) }}</div><div class="mt-2 text-[11px] font-bold text-slate-400">目前仍持有部位的成本基礎</div></div>
-                    <div class="card !p-5"><div class="flex items-center justify-between"><div class="text-xs text-slate-400 font-bold">未實現損益</div><i class="fa-solid fa-chart-line" :class="totalUnrealizedPnL >= 0 ? 'text-red-400' : 'text-green-500'"></i></div><div class="mt-2 text-2xl font-black" :class="totalUnrealizedPnL >= 0 ? 'text-red-600' : 'text-green-600'">{{ totalUnrealizedPnL >= 0 ? '+' : '' }}{{ formatCurrency(totalUnrealizedPnL) }}</div><div class="mt-2 text-[11px] font-bold text-slate-400">目前庫存帳面損益</div></div>
-                    <div class="card !p-5"><div class="flex items-center justify-between"><div class="text-xs text-slate-400 font-bold">已實現損益</div><i class="fa-solid fa-circle-check" :class="totalRealizedPnL >= 0 ? 'text-red-400' : 'text-green-500'"></i></div><div class="mt-2 text-2xl font-black" :class="totalRealizedPnL >= 0 ? 'text-red-600' : 'text-green-600'">{{ totalRealizedPnL >= 0 ? '+' : '' }}{{ formatCurrency(totalRealizedPnL) }}</div><div class="mt-2 text-[11px] font-bold text-slate-400">所有已完成賣出累計</div></div>
-                    <div class="card !p-5"><div class="flex items-center justify-between"><div class="text-xs text-slate-400 font-bold">今年現金股利</div><i class="fa-solid fa-gift text-rose-400"></i></div><div class="mt-2 text-2xl font-black text-rose-600">+{{ formatCurrency(dashboardCurrentYearCashDividend) }}</div><div class="mt-2 text-[11px] font-bold text-slate-400">依今年除息日，含已入帳與應收</div></div>
-                    <div class="card !p-5 col-span-2 md:col-span-1"><div class="flex items-center justify-between"><div class="text-xs text-slate-400 font-bold">帳本總報酬率</div><i class="fa-solid fa-percent text-indigo-400"></i></div><div class="mt-2 text-2xl font-black" :class="Number(cashRoiPercent) >= 0 ? 'text-red-600' : 'text-green-600'">{{ cashRoiPercent }}%</div><div class="mt-2 text-[11px] font-bold text-slate-400">總損益 ÷ 淨投入本金</div></div>
+                    <div class="mt-5 grid grid-cols-2 lg:grid-cols-4 gap-2.5 md:gap-3">
+                        <button type="button" @click="currentTab='cash'" class="rounded-2xl bg-white/10 border border-white/10 p-3.5 md:p-4 text-left hover:bg-white/15 transition"><div class="text-[11px] font-bold text-slate-300">現金餘額</div><div class="mt-1 text-lg md:text-xl font-black" :class="cashBalance >= 0 ? 'text-emerald-100' : 'text-rose-200'">{{ cashBalance >= 0 ? '' : '-' }}{{ formatCurrency(Math.abs(cashBalance)) }}</div></button>
+                        <button type="button" @click="currentTab='inventory'" class="rounded-2xl bg-white/10 border border-white/10 p-3.5 md:p-4 text-left hover:bg-white/15 transition"><div class="text-[11px] font-bold text-slate-300">持股市值</div><div class="mt-1 text-lg md:text-xl font-black text-white">{{ formatCurrency(estimatedMarketValue) }}</div></button>
+                        <div class="rounded-2xl bg-white/10 border border-white/10 p-3.5 md:p-4"><div class="text-[11px] font-bold text-slate-300">未實現損益</div><div class="mt-1 text-lg md:text-xl font-black" :class="totalUnrealizedPnL >= 0 ? 'text-red-200' : 'text-green-200'">{{ totalUnrealizedPnL >= 0 ? '+' : '' }}{{ formatCurrency(totalUnrealizedPnL) }}</div></div>
+                        <button type="button" @click="currentTab='history'; historyView='realized'" class="rounded-2xl bg-white/10 border border-white/10 p-3.5 md:p-4 text-left hover:bg-white/15 transition"><div class="text-[11px] font-bold text-slate-300">已實現損益</div><div class="mt-1 text-lg md:text-xl font-black" :class="totalRealizedPnL >= 0 ? 'text-red-200' : 'text-green-200'">{{ totalRealizedPnL >= 0 ? '+' : '' }}{{ formatCurrency(totalRealizedPnL) }}</div></button>
+                    </div>
                 </div>
             </section>
 
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                <div class="card !p-5">
-                    <div class="flex items-center justify-between mb-4"><div><div class="text-sm font-black text-slate-800">損益組成</div><div class="text-[11px] font-bold text-slate-400 mt-1">已實現＋未實現＋股利收益</div></div><div class="text-xl font-black" :class="totalReturnPnL >= 0 ? 'text-red-600' : 'text-green-600'">{{ totalReturnPnL >= 0 ? '+' : '' }}{{ formatCurrency(totalReturnPnL) }}</div></div>
-                    <div class="grid grid-cols-3 gap-2">
-                        <div class="rounded-2xl bg-slate-50 border border-slate-200 p-3"><div class="text-[10px] font-bold text-slate-400">已實現</div><div class="mt-1 text-sm font-black" :class="totalRealizedPnL >= 0 ? 'text-red-600' : 'text-green-600'">{{ totalRealizedPnL >= 0 ? '+' : '' }}{{ formatCurrency(totalRealizedPnL) }}</div></div>
-                        <div class="rounded-2xl bg-slate-50 border border-slate-200 p-3"><div class="text-[10px] font-bold text-slate-400">未實現</div><div class="mt-1 text-sm font-black" :class="totalUnrealizedPnL >= 0 ? 'text-red-600' : 'text-green-600'">{{ totalUnrealizedPnL >= 0 ? '+' : '' }}{{ formatCurrency(totalUnrealizedPnL) }}</div></div>
-                        <div class="rounded-2xl bg-rose-50 border border-rose-100 p-3"><div class="text-[10px] font-bold text-rose-400">股利收益</div><div class="mt-1 text-sm font-black text-rose-600">+{{ formatCurrency(dividendIncomeTotal) }}</div></div>
-                    </div>
-                </div>
-                <div class="card !p-5">
-                    <div class="flex items-center justify-between mb-4"><div><div class="text-sm font-black text-slate-800">獲利池</div><div class="text-[11px] font-bold text-slate-400 mt-1">追蹤已實現獲利是否已提領</div></div><div class="text-xl font-black" :class="availableRealizedProfit >= 0 ? 'text-red-600' : 'text-green-600'">{{ availableRealizedProfit >= 0 ? '+' : '' }}{{ formatCurrency(availableRealizedProfit) }}</div></div>
-                    <div class="grid grid-cols-2 gap-2">
-                        <div class="rounded-2xl bg-rose-50 border border-rose-100 p-3"><div class="text-[10px] font-bold text-rose-400">已提領</div><div class="mt-1 text-sm font-black text-rose-600">-{{ formatCurrency(profitWithdrawalsTotal) }}</div></div>
-                        <div class="rounded-2xl bg-emerald-50 border border-emerald-100 p-3"><div class="text-[10px] font-bold text-emerald-500">已補回</div><div class="mt-1 text-sm font-black text-emerald-700">+{{ formatCurrency(profitRestoresTotal) }}</div></div>
-                    </div>
-                </div>
-            </div>
+            <!-- 日常快速摘要：保留每天最常看的項目 -->
+            <section class="grid grid-cols-2 lg:grid-cols-4 gap-3">
+                <div class="card !p-4 md:!p-5"><div class="text-[11px] font-bold text-slate-400">淨投入本金</div><div class="mt-1 text-xl font-black text-slate-800">{{ formatCurrency(cashNetContribution) }}</div><div class="mt-1 text-[10px] font-bold text-slate-400">期初＋入金－出金</div></div>
+                <div class="card !p-4 md:!p-5"><div class="text-[11px] font-bold text-slate-400">目前持倉成本</div><div class="mt-1 text-xl font-black text-slate-800">{{ formatCurrency(totalInvestedCost) }}</div><div class="mt-1 text-[10px] font-bold text-slate-400">目前仍持有部位</div></div>
+                <div class="card !p-4 md:!p-5"><div class="text-[11px] font-bold text-slate-400">今年現金股利</div><div class="mt-1 text-xl font-black text-rose-600">+{{ formatCurrency(dashboardCurrentYearCashDividend) }}</div><div class="mt-1 text-[10px] font-bold text-slate-400">已除息年度累計</div></div>
+                <button type="button" @click="openDividendManagerModal" class="card !p-4 md:!p-5 text-left hover:border-indigo-300 transition"><div class="text-[11px] font-bold text-slate-400">應收股利</div><div class="mt-1 text-xl font-black text-orange-600">+{{ formatCurrency(dividendReceivable + stockDividendReceivableValue) }}</div><div class="mt-1 text-[10px] font-bold text-indigo-500">查看除息與增資 →</div></button>
+            </section>
 
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <div class="card !p-5 border-rose-100 bg-rose-50/40"><div class="text-xs text-rose-500 font-bold mb-1">已入帳現金股利</div><div class="text-2xl font-black text-rose-600">+{{ formatCurrency(dividendCashSettledNet) }}</div><div class="mt-2 text-xs font-bold text-rose-400">投資收益，不計入本金</div></div>
-                <div class="card !p-5 border-orange-100 bg-orange-50/40"><div class="text-xs text-orange-500 font-bold mb-1">應收現金股利</div><div class="text-2xl font-black text-orange-600">+{{ formatCurrency(dividendReceivable) }}</div><div class="mt-2 text-xs font-bold text-orange-400">已除息、尚未付款</div></div>
-                <div class="card !p-5 border-indigo-100 bg-indigo-50/40"><div class="text-xs text-indigo-500 font-bold mb-1">應收股票股利市值</div><div class="text-2xl font-black text-indigo-600">+{{ formatCurrency(stockDividendReceivableValue) }}</div><div class="mt-2 text-xs font-bold text-indigo-400">已除權、尚未撥股估值</div></div>
-                <button type="button" @click="openDividendManagerModal" class="card !p-5 text-left hover:border-rose-300 hover:bg-rose-50 transition"><div class="text-xs text-slate-400 font-bold mb-1"><i class="fa-solid fa-gift text-rose-500 mr-1"></i>除息與增資</div><div class="text-2xl font-black text-slate-800">{{ portfolioCorporateActions.length }}</div><div class="mt-2 text-xs font-bold text-slate-400">股利 / 股票股利 / 現金增資</div></button>
-            </div>
+            <!-- 只有異常時才主動佔用首頁空間 -->
+            <section v-if="!dataHealthReport.ok || !dashboardReconciliationOk" class="space-y-3">
+                <div v-if="!dataHealthReport.ok" class="card !p-0 overflow-hidden border-amber-200">
+                    <div class="px-5 py-4 bg-amber-50 border-b border-amber-100 flex items-center justify-between gap-3"><div><div class="font-black text-amber-800"><i class="fa-solid fa-triangle-exclamation mr-2"></i>資料需要注意</div><div class="mt-1 text-xs font-bold text-amber-700/70">共 {{ dataHealthReport.total }} 項提醒，先顯示最重要的項目。</div></div><div class="text-xs font-black text-amber-700">需處理 {{ dataHealthReport.counts.error || 0 }}｜注意 {{ dataHealthReport.counts.warning || 0 }}</div></div>
+                    <div class="divide-y divide-slate-100">
+                        <div v-for="item in dataHealthAlerts.slice(0, 3)" :key="item.key || (item.title + item.message)" class="px-5 py-3.5 flex items-center justify-between gap-3"><div class="min-w-0"><div class="font-black text-sm text-slate-800 truncate">{{ item.title }}</div><div class="text-xs font-bold text-slate-500 mt-1 line-clamp-2">{{ item.message }}</div></div><button v-if="item.action" type="button" @click="handleDataHealthAction(item)" class="btn btn-secondary !px-3 !py-2 !rounded-xl shrink-0">查看</button></div>
+                    </div>
+                </div>
 
-            <div class="card !p-0 overflow-hidden" :class="dataHealthReport.ok ? 'border-emerald-100' : 'border-amber-200'">
-                <div class="px-5 md:px-6 py-4 border-b flex flex-col md:flex-row md:items-center md:justify-between gap-3" :class="dataHealthReport.ok ? 'bg-emerald-50/60 border-emerald-100' : 'bg-amber-50/70 border-amber-100'">
-                    <div>
-                        <h3 class="text-base font-extrabold text-slate-700 flex items-center gap-2"><i class="fa-solid" :class="dataHealthReport.ok ? 'fa-shield-heart text-emerald-500' : 'fa-triangle-exclamation text-amber-500'"></i> 資料健康檢查</h3>
-                        <p class="text-xs font-bold text-slate-400 mt-1">自動檢查交易、指定批次、庫存、權息與帳務是否出現明顯不一致。</p>
-                    </div>
-                    <div class="flex flex-wrap items-center gap-2 text-xs font-black">
-                        <span class="px-3 py-1.5 rounded-full border" :class="dataHealthReport.ok ? 'bg-white text-emerald-700 border-emerald-200' : 'bg-white text-slate-600 border-slate-200'">{{ dataHealthReport.ok ? '目前正常' : ('共 ' + dataHealthReport.total + ' 項提醒') }}</span>
-                        <span v-if="dataHealthReport.counts.error" class="px-3 py-1.5 rounded-full bg-rose-100 text-rose-700 border border-rose-200">需處理 {{ dataHealthReport.counts.error }}</span>
-                        <span v-if="dataHealthReport.counts.warning" class="px-3 py-1.5 rounded-full bg-amber-100 text-amber-700 border border-amber-200">注意 {{ dataHealthReport.counts.warning }}</span>
-                    </div>
+                <div v-if="!dashboardReconciliationOk" class="card !p-4 md:!p-5 border-amber-200 bg-amber-50/40 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                    <div><div class="font-black text-amber-800"><i class="fa-solid fa-scale-balanced mr-2"></i>帳務尚有差額 {{ dashboardReconciliationGap >= 0 ? '+' : '-' }}{{ formatCurrency(Math.abs(dashboardReconciliationGap)) }}</div><div class="mt-1 text-xs font-bold text-amber-700/70">可展開下方「帳務與資料檢查」查看來源，或使用舊資料校正。</div></div>
+                    <button type="button" @click="openLegacyAdjustmentModal" class="btn !bg-amber-600 hover:!bg-amber-700 !text-white shrink-0"><i class="fa-solid fa-wand-magic-sparkles mr-2"></i>舊資料校正</button>
                 </div>
-                <div v-if="dataHealthReport.ok" class="px-6 py-5 flex items-center gap-3 text-sm font-bold text-emerald-700"><i class="fa-solid fa-circle-check text-xl"></i><div>目前沒有偵測到明顯的負庫存、批次數量、權息日期或帳務校驗異常。</div></div>
-                <div v-else class="divide-y divide-slate-100">
-                    <div v-for="item in dataHealthAlerts" :key="item.key || (item.title + item.message)" class="px-5 md:px-6 py-4 flex flex-col md:flex-row md:items-center gap-3 justify-between">
-                        <div class="flex items-start gap-3 min-w-0">
-                            <div class="w-9 h-9 shrink-0 rounded-xl flex items-center justify-center" :class="item.severity === 'error' ? 'bg-rose-100 text-rose-600' : 'bg-amber-100 text-amber-600'"><i class="fa-solid" :class="item.severity === 'error' ? 'fa-circle-exclamation' : 'fa-triangle-exclamation'"></i></div>
-                            <div class="min-w-0"><div class="flex flex-wrap items-center gap-2"><span class="text-[10px] px-2 py-1 rounded-full font-black bg-slate-100 text-slate-500">{{ item.kind }}</span><div class="font-black text-slate-800">{{ item.title }}</div></div><div class="text-xs font-bold text-slate-500 mt-1 leading-relaxed">{{ item.message }}</div></div>
-                        </div>
-                        <button v-if="item.action" type="button" @click="handleDataHealthAction(item)" class="btn btn-secondary !px-3 !py-2 !rounded-xl shrink-0"><i class="fa-solid fa-arrow-up-right-from-square mr-1"></i>查看</button>
-                    </div>
-                    <div v-if="dataHealthReport.total > dataHealthAlerts.length" class="px-6 py-3 text-center text-xs font-bold text-slate-400">另有 {{ dataHealthReport.total - dataHealthAlerts.length }} 項提醒；修正上方資料後會自動重新檢查。</div>
-                </div>
-            </div>
+            </section>
 
-            <div v-if="!dashboardReconciliationOk" data-reconciliation-diagnostic class="card !p-0 overflow-hidden border-amber-200">
-                <div class="px-5 md:px-6 py-4 bg-amber-50 border-b border-amber-100 flex flex-col md:flex-row md:items-center justify-between gap-3">
-                    <div><h3 class="text-base font-black text-amber-800 flex items-center gap-2"><i class="fa-solid fa-stethoscope"></i>帳務差額診斷</h3><p class="text-xs font-bold text-amber-700/70 mt-1">把「資產法總損益」與「交易損益法」拆開比對，先定位差額集中在哪些個股。</p></div>
-                    <div class="text-right"><div class="text-xs font-bold text-amber-700">目前差額</div><div class="text-2xl font-black text-amber-800">{{ dashboardReconciliationGap >= 0 ? '+' : '-' }}{{ formatCurrency(Math.abs(dashboardReconciliationGap)) }}</div></div>
-                </div>
-                <div class="p-5 md:p-6 space-y-5">
-                    <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
-                        <div class="rounded-2xl bg-slate-50 border border-slate-200 p-4"><div class="text-[10px] font-bold text-slate-400">交易現金淨流</div><div class="mt-1 font-black text-slate-800">{{ reconciliationDiagnostic.tradeCash >= 0 ? '+' : '' }}{{ formatCurrency(reconciliationDiagnostic.tradeCash) }}</div></div>
-                        <div class="rounded-2xl bg-slate-50 border border-slate-200 p-4"><div class="text-[10px] font-bold text-slate-400">目前持股市值</div><div class="mt-1 font-black text-slate-800">{{ formatCurrency(reconciliationDiagnostic.marketValue) }}</div></div>
-                        <div class="rounded-2xl bg-blue-50 border border-blue-100 p-4"><div class="text-[10px] font-bold text-blue-500">已實現＋未實現</div><div class="mt-1 font-black text-blue-700">{{ reconciliationDiagnostic.performanceTradePnL >= 0 ? '+' : '' }}{{ formatCurrency(reconciliationDiagnostic.performanceTradePnL) }}</div></div>
-                        <div class="rounded-2xl bg-rose-50 border border-rose-100 p-4"><div class="text-[10px] font-bold text-rose-500">股利貢獻</div><div class="mt-1 font-black text-rose-700">+{{ formatCurrency(reconciliationDiagnostic.dividends) }}</div></div>
+            <!-- 次要資訊預設收合，首頁保持乾淨 -->
+            <details class="card !p-0 overflow-hidden group">
+                <summary class="cursor-pointer select-none px-5 md:px-6 py-4 flex items-center justify-between gap-4 list-none hover:bg-slate-50 transition">
+                    <div><div class="font-black text-slate-800"><i class="fa-solid fa-chart-simple text-indigo-500 mr-2"></i>投資分析</div><div class="mt-1 text-xs font-bold text-slate-400">損益組成、獲利池、族群曝險與族群績效</div></div><i class="fa-solid fa-chevron-down text-slate-400 transition-transform group-open:rotate-180"></i>
+                </summary>
+                <div class="border-t border-slate-100 p-5 md:p-6 space-y-6">
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                        <div class="rounded-2xl bg-slate-50 border border-slate-200 p-5"><div class="flex items-center justify-between mb-4"><div><div class="text-sm font-black text-slate-800">損益組成</div><div class="text-[11px] font-bold text-slate-400 mt-1">已實現＋未實現＋股利收益</div></div><div class="text-xl font-black" :class="dashboardPerformancePnL >= 0 ? 'text-red-600' : 'text-green-600'">{{ dashboardPerformancePnL >= 0 ? '+' : '' }}{{ formatCurrency(dashboardPerformancePnL) }}</div></div><div class="grid grid-cols-3 gap-2"><div class="rounded-xl bg-white border border-slate-200 p-3"><div class="text-[10px] font-bold text-slate-400">已實現</div><div class="mt-1 font-black text-sm" :class="totalRealizedPnL>=0?'text-red-600':'text-green-600'">{{ totalRealizedPnL>=0?'+':'' }}{{ formatCurrency(totalRealizedPnL) }}</div></div><div class="rounded-xl bg-white border border-slate-200 p-3"><div class="text-[10px] font-bold text-slate-400">未實現</div><div class="mt-1 font-black text-sm" :class="totalUnrealizedPnL>=0?'text-red-600':'text-green-600'">{{ totalUnrealizedPnL>=0?'+':'' }}{{ formatCurrency(totalUnrealizedPnL) }}</div></div><div class="rounded-xl bg-white border border-slate-200 p-3"><div class="text-[10px] font-bold text-slate-400">股利</div><div class="mt-1 font-black text-sm text-rose-600">+{{ formatCurrency(dashboardDividendPnL) }}</div></div></div></div>
+                        <div class="rounded-2xl bg-slate-50 border border-slate-200 p-5"><div class="flex items-center justify-between mb-4"><div><div class="text-sm font-black text-slate-800">獲利池</div><div class="text-[11px] font-bold text-slate-400 mt-1">追蹤已實現獲利與提領</div></div><div class="text-xl font-black" :class="availableRealizedProfit >= 0 ? 'text-red-600' : 'text-green-600'">{{ availableRealizedProfit >= 0 ? '+' : '' }}{{ formatCurrency(availableRealizedProfit) }}</div></div><div class="grid grid-cols-2 gap-3 text-xs"><div class="rounded-xl bg-white border border-slate-200 p-3"><div class="font-bold text-slate-400">累計提領</div><div class="mt-1 font-black text-slate-800">{{ formatCurrency(profitWithdrawalTotal) }}</div></div><div class="rounded-xl bg-white border border-slate-200 p-3"><div class="font-bold text-slate-400">累計補回</div><div class="mt-1 font-black text-slate-800">{{ formatCurrency(profitReturnTotal) }}</div></div></div><button @click="currentTab='cash'" class="mt-3 text-xs font-black text-indigo-600 hover:underline">前往資金流管理 →</button></div>
                     </div>
-                    <div class="rounded-2xl border border-slate-200 overflow-hidden">
-                        <div class="px-4 py-3 bg-slate-50 border-b border-slate-200 flex items-center justify-between"><div class="font-black text-slate-700">可能造成差額的個股</div><div class="text-[11px] font-bold text-slate-400">依差額絕對值排序</div></div>
-                        <div v-if="reconciliationDiagnostic.rows.length === 0" class="p-5 text-sm font-bold text-slate-500">目前無法定位到單一個股，請優先檢查資金流或舊資料格式。</div>
-                        <div v-else class="divide-y divide-slate-100">
-                            <div v-for="row in reconciliationDiagnostic.rows.slice(0, 8)" :key="'diag-'+row.code" class="px-4 py-4 flex flex-col md:flex-row md:items-center gap-3 justify-between">
-                                <div><div class="font-black text-slate-800">{{ row.name }} <span class="text-xs text-slate-400">({{ row.code }})</span></div><div class="text-xs font-bold text-slate-400 mt-1">資產法 {{ row.assetSide >= 0 ? '+' : '' }}{{ formatCurrency(row.assetSide) }} ｜ 損益法 {{ row.performanceSide >= 0 ? '+' : '' }}{{ formatCurrency(row.performanceSide) }}</div></div>
-                                <div class="flex items-center gap-3"><div class="text-right"><div class="text-[10px] font-bold text-slate-400">差額</div><div class="font-black text-amber-700">{{ row.gap >= 0 ? '+' : '-' }}{{ formatCurrency(Math.abs(row.gap)) }}</div></div><button type="button" @click="openStockFromHistory(row, 'dashboard')" class="btn btn-secondary !px-3 !py-2 !rounded-xl">查看個股</button></div>
-                            </div>
-                        </div>
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                        <div class="rounded-2xl border border-slate-200 p-5"><div class="flex items-center justify-between mb-4"><div class="font-black text-slate-700"><i class="fa-solid fa-layer-group text-blue-500 mr-2"></i>族群曝險排行</div><span class="text-[10px] font-bold text-slate-400">依市值</span></div><div v-if="themeExposureRows.length===0" class="text-sm font-bold text-slate-400 text-center py-5">尚無持股族群資料</div><div v-else class="space-y-3"><div v-for="row in themeExposureRows.slice(0,5)" :key="row.theme" class="flex items-center justify-between gap-3"><div class="min-w-0"><div class="font-black text-sm text-slate-700 truncate">{{ row.theme }}</div><div class="text-[10px] font-bold text-slate-400">{{ row.count }} 檔</div></div><div class="text-right"><div class="font-black text-slate-800">{{ row.percent }}%</div><div class="text-[10px] font-bold text-slate-400">{{ formatCurrency(row.marketValue) }}</div></div></div></div></div>
+                        <div class="rounded-2xl border border-slate-200 p-5"><div class="flex items-center justify-between mb-4"><div class="font-black text-slate-700"><i class="fa-solid fa-ranking-star text-rose-500 mr-2"></i>族群損益排行</div><span class="text-[10px] font-bold text-slate-400">已實現＋未實現</span></div><div v-if="themePnLRows.length===0" class="text-sm font-bold text-slate-400 text-center py-5">尚無族群損益資料</div><div v-else class="space-y-3"><div v-for="row in themePnLRows.slice(0,5)" :key="row.theme" class="flex items-center justify-between gap-3"><div class="font-black text-sm text-slate-700">{{ row.theme }}</div><div class="font-black" :class="row.totalPnL>=0?'text-red-600':'text-green-600'">{{ row.totalPnL>=0?'+':'' }}{{ formatCurrency(row.totalPnL) }}</div></div></div></div>
                     </div>
-                    <div class="flex flex-wrap gap-3"><button type="button" @click="openLegacyAdjustmentModal" class="btn !bg-amber-600 hover:!bg-amber-700 !text-white"><i class="fa-solid fa-wand-magic-sparkles mr-2"></i>舊資料校正</button><button v-if="portfolioLegacyAdjustments.length" type="button" @click="clearLegacyAdjustments" class="btn btn-secondary"><i class="fa-solid fa-rotate-left mr-2"></i>清除校正</button><span v-if="portfolioLegacyAdjustments.length" class="self-center text-xs font-black text-emerald-700">已套用 {{ portfolioLegacyAdjustments.length }} 筆，合計 {{ legacyAdjustmentTotal >= 0 ? '+' : '' }}{{ formatCurrency(legacyAdjustmentTotal) }}</span></div>
-                    <div class="text-xs font-bold text-slate-500 leading-relaxed bg-slate-50 border border-slate-200 rounded-xl p-4"><i class="fa-solid fa-circle-info text-blue-500 mr-1"></i>差額通常來自舊版交易的成本口徑、交易總額/已實現損益不一致，或歷史資料被手動修改。舊資料校正只新增一層報表校正，不會修改原始交易、現金或股數。</div>
                 </div>
-            </div>
+            </details>
 
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <div class="card">
-                    <div class="flex items-center justify-between mb-4"><h3 class="text-base font-extrabold text-slate-700 flex items-center gap-2"><i class="fa-solid fa-layer-group text-blue-500"></i> 族群曝險排行</h3><span class="text-[11px] font-black text-slate-400">依主族群 / 市值</span></div>
-                    <div v-if="themeExposureRows.length === 0" class="rounded-2xl border border-dashed border-slate-200 p-8 text-center text-slate-400 font-bold">尚無持股族群資料</div>
-                    <div v-else class="space-y-3">
-                        <div v-for="row in themeExposureRows.slice(0, 6)" :key="row.theme" class="rounded-2xl bg-slate-50 border border-slate-200 p-4">
-                            <div class="flex items-center justify-between gap-3"><div><div class="font-black text-slate-700">{{ row.theme }}</div><div class="text-[11px] font-bold text-slate-400">{{ row.count }} 檔｜{{ row.stocks.join('、') }}</div></div><div class="text-right"><div class="font-black text-slate-800">{{ row.percent }}%</div><div class="text-[11px] font-bold text-slate-400">{{ formatCurrency(row.marketValue) }}</div></div></div>
-                            <div class="mt-3 h-2.5 rounded-full bg-slate-200 overflow-hidden"><div class="h-full bg-blue-500" :style="{ width: row.barWidth + '%' }"></div></div>
-                        </div>
-                        <div v-if="themeRiskAlerts.length" class="rounded-2xl bg-amber-50 border border-amber-200 p-4 text-sm font-bold text-amber-700 space-y-1"><div v-for="msg in themeRiskAlerts" :key="msg"><i class="fa-solid fa-triangle-exclamation mr-2"></i>{{ msg }}</div></div>
-                    </div>
+            <details class="card !p-0 overflow-hidden group">
+                <summary class="cursor-pointer select-none px-5 md:px-6 py-4 flex items-center justify-between gap-4 list-none hover:bg-slate-50 transition">
+                    <div><div class="font-black text-slate-800"><i class="fa-solid fa-wallet text-emerald-500 mr-2"></i>資產與獲利用途</div><div class="mt-1 text-xs font-bold text-slate-400">資產組成、應收股利與獲利提領分類</div></div><i class="fa-solid fa-chevron-down text-slate-400 transition-transform group-open:rotate-180"></i>
+                </summary>
+                <div class="border-t border-slate-100 p-5 md:p-6 grid grid-cols-1 lg:grid-cols-2 gap-5">
+                    <div class="space-y-3"><div class="rounded-2xl bg-slate-50 border border-slate-200 p-4 flex items-center justify-between"><div class="font-black text-slate-700">現金餘額</div><div class="font-black text-slate-800">{{ formatCurrency(cashBalance) }}</div></div><div class="rounded-2xl bg-slate-50 border border-slate-200 p-4 flex items-center justify-between"><div class="font-black text-slate-700">庫存市值</div><div class="font-black text-slate-800">{{ formatCurrency(estimatedMarketValue) }}</div></div><div class="rounded-2xl bg-slate-50 border border-slate-200 p-4 flex items-center justify-between"><div class="font-black text-slate-700">應收股利</div><div class="font-black text-orange-600">{{ formatCurrency(dividendReceivable + stockDividendReceivableValue) }}</div></div></div>
+                    <div><div v-if="profitWithdrawalCategorySummary.length===0" class="rounded-2xl border border-dashed border-slate-200 p-8 text-center text-slate-400 font-bold">尚無獲利提領分類資料</div><div v-else class="space-y-3"><div v-for="item in profitWithdrawalCategorySummary" :key="item.category" class="rounded-2xl bg-slate-50 border border-slate-200 p-4 flex items-center justify-between"><div class="font-black text-slate-700">{{ item.label }}</div><div class="font-black text-rose-600">{{ formatCurrency(item.amount) }}</div></div></div><button @click="currentTab='cash'" class="mt-3 text-xs font-black text-indigo-600 hover:underline">查看完整資金流 →</button></div>
                 </div>
-                <div class="card">
-                    <div class="flex items-center justify-between mb-4"><h3 class="text-base font-extrabold text-slate-700 flex items-center gap-2"><i class="fa-solid fa-ranking-star text-rose-500"></i> 族群損益排行</h3><span class="text-[11px] font-black text-slate-400">已實現 + 未實現</span></div>
-                    <div v-if="themePnLRows.length === 0" class="rounded-2xl border border-dashed border-slate-200 p-8 text-center text-slate-400 font-bold">尚無族群損益資料</div>
-                    <div v-else class="space-y-3">
-                        <div v-for="row in themePnLRows.slice(0, 6)" :key="row.theme" class="rounded-2xl bg-slate-50 border border-slate-200 p-4 flex items-center justify-between gap-3">
-                            <div><div class="font-black text-slate-700">{{ row.theme }}</div><div class="text-[11px] font-bold text-slate-400">未實現 {{ row.unrealizedPnL >= 0 ? '+' : '' }}{{ formatCurrency(row.unrealizedPnL) }}</div></div>
-                            <div class="text-right"><div class="font-black text-xl" :class="row.totalPnL >= 0 ? 'text-red-600' : 'text-green-600'">{{ row.totalPnL >= 0 ? '+' : '' }}{{ formatCurrency(row.totalPnL) }}</div><div class="text-[11px] font-bold text-slate-400">市值占 {{ row.percent }}%</div></div>
-                        </div>
-                    </div>
-                </div>
-            </div>
+            </details>
 
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <div class="card">
-                    <div class="flex items-center justify-between mb-4"><h3 class="text-base font-extrabold text-slate-700 flex items-center gap-2"><i class="fa-solid fa-chart-pie text-indigo-500"></i> 資產組成</h3><button @click="currentTab='cash'" class="text-xs font-black text-indigo-600 hover:underline">查看資金流</button></div>
-                    <div class="space-y-3">
-                        <div class="rounded-2xl bg-slate-50 border border-slate-200 p-4 flex items-center justify-between"><div><div class="text-sm font-black text-slate-700">現金餘額</div><div class="text-xs font-bold text-slate-400">可用現金水位</div></div><div class="font-black text-slate-800">{{ formatCurrency(cashBalance) }}</div></div>
-                        <div class="rounded-2xl bg-slate-50 border border-slate-200 p-4 flex items-center justify-between"><div><div class="text-sm font-black text-slate-700">庫存市值</div><div class="text-xs font-bold text-slate-400">依最新股價估算</div></div><div class="font-black text-slate-800">{{ formatCurrency(estimatedMarketValue) }}</div></div>
-                        <div class="rounded-2xl bg-slate-50 border border-slate-200 p-4 flex items-center justify-between"><div><div class="text-sm font-black text-slate-700">應收股利</div><div class="text-xs font-bold text-slate-400">現金 + 股票股利估值</div></div><div class="font-black text-orange-600">{{ formatCurrency(dividendReceivable + stockDividendReceivableValue) }}</div></div>
-                        <div class="rounded-2xl bg-slate-50 border border-slate-200 p-4 flex items-center justify-between"><div><div class="text-sm font-black text-slate-700">淨投入</div><div class="text-xs font-bold text-slate-400">期初 + 入金 - 出金</div></div><div class="font-black text-slate-800">{{ formatCurrency(cashNetContribution) }}</div></div>
-                    </div>
+            <details class="card !p-0 overflow-hidden group" :open="!dashboardReconciliationOk">
+                <summary class="cursor-pointer select-none px-5 md:px-6 py-4 flex items-center justify-between gap-4 list-none hover:bg-slate-50 transition">
+                    <div><div class="font-black text-slate-800"><i class="fa-solid fa-shield-heart text-emerald-500 mr-2"></i>帳務與資料檢查</div><div class="mt-1 text-xs font-bold" :class="dataHealthReport.ok && dashboardReconciliationOk ? 'text-emerald-600' : 'text-amber-600'">{{ dataHealthReport.ok && dashboardReconciliationOk ? '目前資料健康、帳務已對平' : '有提醒需要查看' }}</div></div><i class="fa-solid fa-chevron-down text-slate-400 transition-transform group-open:rotate-180"></i>
+                </summary>
+                <div class="border-t border-slate-100 p-5 md:p-6 space-y-5">
+                    <div class="rounded-2xl border p-4" :class="dataHealthReport.ok?'border-emerald-200 bg-emerald-50/50':'border-amber-200 bg-amber-50/50'"><div class="flex items-center justify-between gap-3"><div class="font-black" :class="dataHealthReport.ok?'text-emerald-800':'text-amber-800'">資料健康檢查</div><div class="text-xs font-black" :class="dataHealthReport.ok?'text-emerald-700':'text-amber-700'">{{ dataHealthReport.ok?'目前正常':('共 '+dataHealthReport.total+' 項') }}</div></div><div v-if="!dataHealthReport.ok" class="mt-3 divide-y divide-amber-100"><div v-for="item in dataHealthAlerts" :key="item.key || (item.title+item.message)" class="py-3 flex items-center justify-between gap-3"><div><div class="font-black text-sm text-slate-800">{{ item.title }}</div><div class="text-xs font-bold text-slate-500 mt-1">{{ item.message }}</div></div><button v-if="item.action" @click="handleDataHealthAction(item)" class="btn btn-secondary !px-3 !py-2 shrink-0">查看</button></div></div></div>
+
+                    <div v-if="!dashboardReconciliationOk" data-reconciliation-diagnostic class="rounded-2xl border border-amber-200 overflow-hidden"><div class="px-4 py-3 bg-amber-50 flex items-center justify-between"><div class="font-black text-amber-800">帳務差額診斷</div><div class="font-black text-amber-800">{{ dashboardReconciliationGap>=0?'+':'-' }}{{ formatCurrency(Math.abs(dashboardReconciliationGap)) }}</div></div><div class="p-4 space-y-3"><div v-if="reconciliationDiagnostic.rows.length===0" class="text-sm font-bold text-slate-500">目前無法定位到單一個股，請優先檢查資金流或舊資料格式。</div><div v-else class="space-y-2"><div v-for="row in reconciliationDiagnostic.rows.slice(0,8)" :key="'diag-'+row.code" class="rounded-xl bg-slate-50 border border-slate-200 p-3 flex items-center justify-between gap-3"><div><div class="font-black text-sm text-slate-800">{{ row.name }} <span class="text-slate-400">({{ row.code }})</span></div><div class="text-[10px] font-bold text-slate-400">差額 {{ row.gap>=0?'+':'-' }}{{ formatCurrency(Math.abs(row.gap)) }}</div></div><button @click="openStockFromHistory(row,'dashboard')" class="btn btn-secondary !px-3 !py-2">查看</button></div></div><div class="flex flex-wrap gap-3"><button @click="openLegacyAdjustmentModal" class="btn !bg-amber-600 hover:!bg-amber-700 !text-white"><i class="fa-solid fa-wand-magic-sparkles mr-2"></i>舊資料校正</button><button v-if="portfolioLegacyAdjustments.length" @click="clearLegacyAdjustments" class="btn btn-secondary">清除校正</button></div></div></div>
                 </div>
-                <div class="card">
-                    <div class="flex items-center justify-between mb-4"><h3 class="text-base font-extrabold text-slate-700 flex items-center gap-2"><i class="fa-solid fa-tags text-amber-500"></i> 獲利用途分類</h3><button @click="currentTab='cash'" class="text-xs font-black text-amber-600 hover:underline">新增提領/補回</button></div>
-                    <div v-if="profitWithdrawalCategorySummary.length === 0" class="rounded-2xl border border-dashed border-slate-200 p-8 text-center text-slate-400 font-bold">尚無獲利提領分類資料</div>
-                    <div v-else class="space-y-3">
-                        <div v-for="item in profitWithdrawalCategorySummary" :key="item.category" class="rounded-2xl bg-slate-50 border border-slate-200 p-4">
-                            <div class="flex items-center justify-between gap-3"><div class="font-black text-slate-700">{{ item.label }}</div><div class="font-black text-rose-600">{{ formatCurrency(item.amount) }}</div></div>
-                            <div class="mt-2 h-2 rounded-full bg-slate-200 overflow-hidden"><div class="h-full bg-amber-400" :style="{ width: item.percent + '%' }"></div></div>
-                            <div class="mt-1 text-[11px] font-bold text-slate-400 text-right">{{ item.percent }}%</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
+            </details>
+
+            <div class="px-1 text-[11px] font-bold text-slate-400 flex flex-wrap items-center justify-between gap-2"><span>行情更新：{{ lastUpdateTime || '--' }}</span><span>總資產＝現金＋庫存市值＋應收股利</span></div>
         </div>
 
         <div v-show="currentTab === 'inventory'">
