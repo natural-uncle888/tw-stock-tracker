@@ -46,9 +46,12 @@
 
     // Rebuild position quantity only to detect impossible cash/margin oversells.
     const dividendEvents = window.StockDividendService
-      ? window.StockDividendService.portfolioActionsFor(vm, pid)
-          .filter(a => a && a.stockSettled && a.stockPaymentDate && num(a.stockDividendQty) > 0)
-          .map(a => ({ kind: 'dividend', date: a.stockPaymentDate, sortId: 0, code: a.code, qty: num(a.stockDividendQty) }))
+      ? window.StockDividendService.portfolioActionsFor(vm, pid).flatMap(a => {
+          const out = [];
+          if (a && a.stockSettled && a.stockPaymentDate && num(a.stockDividendQty) > 0) out.push({ kind: 'dividend', date: a.stockPaymentDate, sortId: 0, code: a.code, qty: num(a.stockDividendQty) });
+          if (a && a.actionType === 'rights_issue' && a.rightsAllotmentDate && dateValue(a.rightsAllotmentDate) <= Date.now() && num(a.rightsSubscribedQty) > 0) out.push({ kind: 'rights_issue', date: a.rightsAllotmentDate, sortId: 0, code: a.code, qty: num(a.rightsSubscribedQty) });
+          return out;
+        })
       : [];
     const events = [
       ...transactions.map(tx => ({ kind: 'trade', date: tx.date, sortId: num(tx.id), tx })),
@@ -62,7 +65,7 @@
     });
     const qtyState = {};
     events.forEach(event => {
-      if (event.kind === 'dividend') {
+      if (event.kind === 'dividend' || event.kind === 'rights_issue') {
         const code = text(event.code).toUpperCase();
         qtyState[code] = num(qtyState[code]) + num(event.qty);
         return;
@@ -107,6 +110,13 @@
       if (!raw || !window.StockDividendService) return;
       const a = window.StockDividendService.normalizeAction(raw);
       const key = window.StockDividendService.actionShareKey(a);
+      if (a.actionType === 'rights_issue') {
+        if (!a.code || !(num(a.rightsIssuePrice) > 0) || !(num(a.rightsSubscribedQty) > 0)) push('warning', '現增', `${a.code || '現金增資'} 資料不完整`, '現金增資需要股票代號、認購價格與實際認購股數。', { action: 'dividend', code: a.code, key: `rightsbase:${a.id}` });
+        const pay=dateValue(a.rightsPaymentDate), allot=dateValue(a.rightsAllotmentDate);
+        if (!pay || !allot) push('warning','現增',`${a.code || '現金增資'} 日期不完整`,'請補上繳款日與撥股日。',{action:'dividend',code:a.code,key:`rightsdate:${a.id}`});
+        if (pay && allot && allot < pay) push('error','現增',`${a.code} 撥股日早於繳款日`,'日期順序不合理，請到企業行動修正。',{action:'dividend',code:a.code,key:`rightsorder:${a.id}`});
+        return;
+      }
       if (shareKeys.has(key)) {
         push('warning', '股利', `${a.code || '權息'} 可能有重複公告`, '偵測到相同股票與權息條件的重複資料，建議到權息管理確認。', { action: 'dividend', code: a.code, key: `dupdiv:${key}` });
       } else shareKeys.set(key, true);

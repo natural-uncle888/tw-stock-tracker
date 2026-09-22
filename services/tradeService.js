@@ -10,14 +10,16 @@
                     return (Number(a.id || 0) - Number(b.id || 0));
                 });
                 const dividendEffects = window.StockDividendService ? window.StockDividendService.stockDividendPositionEffects(this) : [];
+                const rightsEffects = window.StockDividendService && window.StockDividendService.rightsIssuePositionEffects ? window.StockDividendService.rightsIssuePositionEffects(this) : [];
                 const events = [
                     ...orderedTx.map(tx => ({ kind: 'trade', date: tx.date, sortId: Number(tx.id || 0), tx })),
                     ...dividendEffects.map(effect => ({ kind: 'stock_dividend', date: effect.date, sortId: Number(String(effect.id || '').replace(/\D/g, '').slice(-10)) || 0, effect })),
+                    ...rightsEffects.map(effect => ({ kind: 'rights_issue', date: effect.date, sortId: Number(String(effect.id || '').replace(/\D/g, '').slice(-10)) || 0, effect })),
                 ].sort((a, b) => {
                     const da = new Date(a.date).getTime();
                     const db = new Date(b.date).getTime();
                     if (da !== db) return da - db;
-                    if (a.kind !== b.kind) return a.kind === 'stock_dividend' ? -1 : 1;
+                    if (a.kind !== b.kind) return a.kind === 'trade' ? 1 : (b.kind === 'trade' ? -1 : String(a.kind).localeCompare(String(b.kind)));
                     return (a.sortId || 0) - (b.sortId || 0);
                 });
 
@@ -133,8 +135,22 @@
                     s.name = effect.name || s.name;
                 };
 
+                const applyRightsIssue = (effect) => {
+                    if (!effect || !effect.code) return;
+                    const code = String(effect.code).trim();
+                    const s = ensureState(code, effect);
+                    const qtyEffect = Number(effect.qtyEffect) || 0;
+                    const costEffect = Number(effect.costEffect) || 0;
+                    if (!(qtyEffect > 0)) return;
+                    s.qty += qtyEffect;
+                    s.cost += costEffect;
+                    s.lots.push({ buyTxId: `rights:${effect.id || effect.date}`, actionId: effect.id, date: effect.date, price: Number(effect.price) || 0, unitCost: qtyEffect > 0 ? costEffect / qtyEffect : 0, remainingQty: qtyEffect, sourceType: 'rights_issue' });
+                    s.name = effect.name || s.name;
+                };
+
                 events.forEach(event => {
                     if (event.kind === 'stock_dividend') applyStockDividend(event.effect);
+                    else if (event.kind === 'rights_issue') applyRightsIssue(event.effect);
                     else applyTrade(event.tx);
                 });
 
@@ -217,14 +233,19 @@
                             actionId: a.id,
                         };
                     }) : [];
+                const rightsEvents = window.StockDividendService && window.StockDividendService.portfolioActionsFor ? window.StockDividendService.portfolioActionsFor(this, pid)
+                    .filter(a => a && a.actionType === 'rights_issue' && String(a.code || '').trim() === targetCode && a.rightsAllotmentDate && Number(a.rightsSubscribedQty || 0) > 0 && Number(a.rightsIssuePrice || 0) > 0)
+                    .filter(a => { const t = new Date(`${a.rightsAllotmentDate}T12:00:00`).getTime(); return Number.isFinite(t) && t <= cutoff && t <= Date.now(); })
+                    .map(a => ({ kind: 'rights_issue', date: a.rightsAllotmentDate, sortId: Number(String(a.id || '').replace(/\D/g, '').slice(-10)) || 0, buyTxId: `rights:${a.id}`, qty: Number(a.rightsSubscribedQty || 0), price: Number(a.rightsIssuePrice || 0), actionId: a.id })) : [];
                 const events = [
                     ...txs.map(tx => ({ kind: 'trade', date: tx.date, sortId: Number(tx.id || 0), tx })),
                     ...dividendEvents,
+                    ...rightsEvents,
                 ].sort((a, b) => {
                     const da = new Date(a.date).getTime();
                     const db = new Date(b.date).getTime();
                     if (da !== db) return da - db;
-                    if (a.kind !== b.kind) return a.kind === 'stock_dividend' ? -1 : 1;
+                    if (a.kind !== b.kind) return a.kind === 'trade' ? 1 : (b.kind === 'trade' ? -1 : String(a.kind).localeCompare(String(b.kind)));
                     return Number(a.sortId || 0) - Number(b.sortId || 0);
                 });
 
@@ -268,6 +289,12 @@
                 };
 
                 for (const event of events) {
+                    if (event.kind === 'rights_issue') {
+                        let q = Math.max(0, Number(event.qty) || 0);
+                        if (shortQty > 0) { const cover = Math.min(q, shortQty); shortQty -= cover; q -= cover; }
+                        if (q > 1e-9) lots.push({ buyTxId: event.buyTxId, actionId: event.actionId, date: event.date, price: Number(event.price)||0, unitCost: Number(event.price)||0, originalQty: q, remainingQty: q, mode: 'rights_issue', sourceType: 'rights_issue' });
+                        continue;
+                    }
                     if (event.kind === 'stock_dividend') {
                         let q = Math.max(0, Number(event.qty) || 0);
                         if (shortQty > 0) {
@@ -537,18 +564,31 @@
                         name: a.name,
                         qtyEffect: Number(a.stockDividendQty || 0),
                     })) : [];
+                const rightsEvents2 = window.StockDividendService && window.StockDividendService.portfolioActionsFor ? window.StockDividendService.portfolioActionsFor(this, pid)
+                    .filter(a => a && a.actionType === 'rights_issue' && a.rightsAllotmentDate && Number(a.rightsSubscribedQty || 0) > 0 && Number(a.rightsIssuePrice || 0) > 0)
+                    .map(a => ({ kind: 'rights_issue', date: a.rightsAllotmentDate, sortId: Number(String(a.id || '').replace(/\D/g, '').slice(-10)) || 0, code: a.code, name: a.name, qtyEffect: Number(a.rightsSubscribedQty||0), costEffect: Number(a.rightsSubscribedQty||0)*Number(a.rightsIssuePrice||0), price: Number(a.rightsIssuePrice||0), id: a.id })) : [];
                 const positionEvents = [
                     ...ordered.map(tx => ({ kind: 'trade', date: tx.date, sortId: Number(tx.id || 0), tx })),
                     ...dividendEvents,
+                    ...rightsEvents2,
                 ].sort((a, b) => {
                     const da = new Date(a.date).getTime();
                     const db = new Date(b.date).getTime();
                     if (da !== db) return da - db;
-                    if (a.kind !== b.kind) return a.kind === 'stock_dividend' ? -1 : 1;
+                    if (a.kind !== b.kind) return a.kind === 'trade' ? 1 : (b.kind === 'trade' ? -1 : String(a.kind).localeCompare(String(b.kind)));
                     return (a.sortId || 0) - (b.sortId || 0);
                 });
 
                 for (const event of positionEvents) {
+                    if (event.kind === 'rights_issue') {
+                        const code = event.code;
+                        if (!code) continue;
+                        if (!state[code]) state[code] = { qty: 0, cost: 0, lots: [] };
+                        const q = Number(event.qtyEffect)||0, c = Number(event.costEffect)||0;
+                        state[code].qty += q; state[code].cost += c;
+                        if (q > 0) state[code].lots.push({ buyTxId: `rights:${event.id}`, date: event.date, price: Number(event.price)||0, unitCost: q>0?c/q:0, remainingQty:q, sourceType:'rights_issue' });
+                        continue;
+                    }
                     if (event.kind === 'stock_dividend') {
                         const code = event.code;
                         if (!code) continue;

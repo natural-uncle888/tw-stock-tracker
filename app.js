@@ -146,8 +146,8 @@ createApp({
                     <button @click="openCommodityModal" class="mobile-primary-tool mobile-primary-tool--commodity" title="商品期貨">
                         <i class="fa-solid fa-chart-line"></i><span>商品期貨</span>
                     </button>
-                    <button @click="openDividendManagerModal" class="mobile-primary-tool mobile-primary-tool--dividend" title="權息管理">
-                        <i class="fa-solid fa-gift"></i><span>權息管理</span>
+                    <button @click="openDividendManagerModal" class="mobile-primary-tool mobile-primary-tool--dividend" title="企業行動">
+                        <i class="fa-solid fa-gift"></i><span>企業行動</span>
                     </button>
                     <button @click="exportData" class="mobile-primary-tool mobile-primary-tool--backup" title="備份與還原">
                         <i class="fa-solid fa-cloud-arrow-up"></i><span>備份</span>
@@ -184,7 +184,7 @@ createApp({
                     </div>
                     <div class="min-w-0">
                         <h1 class="text-3xl font-extrabold text-slate-800 tracking-tight">台股損益管理</h1>
-                        <p class="text-sm text-slate-500 font-bold tracking-wider mt-1">SMART TRACKER v4.9 Pro</p>
+                        <p class="text-sm text-slate-500 font-bold tracking-wider mt-1">SMART TRACKER v5.0 Pro</p>
                     </div>
                 </div>
 
@@ -218,7 +218,7 @@ createApp({
                 <button @click="openCategoryDbModal" class="btn btn-secondary toolbar-action toolbar-action--categorydb !h-12 !w-12 !p-0 !rounded-2xl" title="族群資料庫" aria-label="族群資料庫"><i class="fa-solid fa-layer-group"></i></button>
                 <button @click="openCategoryManagerModal" class="btn btn-secondary toolbar-action toolbar-action--categorymgr !h-12 !w-12 !p-0 !rounded-2xl" title="族群管理" aria-label="族群管理"><i class="fa-solid fa-list-check"></i></button>
                 <button @click="openCommodityModal" class="btn btn-secondary toolbar-action toolbar-action--commodity !h-12 !w-12 !p-0 !rounded-2xl" title="商品期貨" aria-label="商品期貨"><i class="fa-solid fa-chart-line"></i></button>
-                <button @click="openDividendManagerModal" class="btn btn-secondary toolbar-action toolbar-action--dividend !h-12 !w-12 !p-0 !rounded-2xl" title="權息管理" aria-label="權息管理"><i class="fa-solid fa-gift"></i></button>
+                <button @click="openDividendManagerModal" class="btn btn-secondary toolbar-action toolbar-action--dividend !h-12 !w-12 !p-0 !rounded-2xl" title="企業行動" aria-label="企業行動"><i class="fa-solid fa-gift"></i></button>
                     <button @click="showHelpModal = true" class="btn btn-secondary toolbar-action toolbar-action--help !h-12 !w-12 !p-0 !rounded-2xl" title="使用說明" aria-label="使用說明"><i class="fa-solid fa-circle-question"></i></button>
                 </div>
             </div>
@@ -292,7 +292,7 @@ createApp({
                 <div class="card !p-5 border-rose-100 bg-rose-50/40"><div class="text-xs text-rose-500 font-bold mb-1">已入帳現金股利</div><div class="text-2xl font-black text-rose-600">+{{ formatCurrency(dividendCashSettledNet) }}</div><div class="mt-2 text-xs font-bold text-rose-400">投資收益，不計入本金</div></div>
                 <div class="card !p-5 border-orange-100 bg-orange-50/40"><div class="text-xs text-orange-500 font-bold mb-1">應收現金股利</div><div class="text-2xl font-black text-orange-600">+{{ formatCurrency(dividendReceivable) }}</div><div class="mt-2 text-xs font-bold text-orange-400">已除息、尚未付款</div></div>
                 <div class="card !p-5 border-indigo-100 bg-indigo-50/40"><div class="text-xs text-indigo-500 font-bold mb-1">應收股票股利市值</div><div class="text-2xl font-black text-indigo-600">+{{ formatCurrency(stockDividendReceivableValue) }}</div><div class="mt-2 text-xs font-bold text-indigo-400">已除權、尚未撥股估值</div></div>
-                <button type="button" @click="openDividendManagerModal" class="card !p-5 text-left hover:border-rose-300 hover:bg-rose-50 transition"><div class="text-xs text-slate-400 font-bold mb-1"><i class="fa-solid fa-gift text-rose-500 mr-1"></i>權息管理</div><div class="text-2xl font-black text-slate-800">{{ portfolioCorporateActions.length }}</div><div class="mt-2 text-xs font-bold text-slate-400">新增 / 編輯共用權息公告</div></button>
+                <button type="button" @click="openDividendManagerModal" class="card !p-5 text-left hover:border-rose-300 hover:bg-rose-50 transition"><div class="text-xs text-slate-400 font-bold mb-1"><i class="fa-solid fa-gift text-rose-500 mr-1"></i>企業行動</div><div class="text-2xl font-black text-slate-800">{{ portfolioCorporateActions.length }}</div><div class="mt-2 text-xs font-bold text-slate-400">股利 / 股票股利 / 現金增資</div></button>
             </div>
 
             <div class="card !p-0 overflow-hidden" :class="dataHealthReport.ok ? 'border-emerald-100' : 'border-amber-200'">
@@ -342,7 +342,8 @@ createApp({
                             </div>
                         </div>
                     </div>
-                    <div class="text-xs font-bold text-slate-500 leading-relaxed bg-slate-50 border border-slate-200 rounded-xl p-4"><i class="fa-solid fa-circle-info text-blue-500 mr-1"></i>差額通常來自舊版交易的成本口徑、交易總額/已實現損益不一致，或歷史資料被手動修改。這個診斷先幫你定位股票，不會自動改動任何帳務資料。</div>
+                    <div class="flex flex-wrap gap-3"><button type="button" @click="openLegacyAdjustmentModal" class="btn !bg-amber-600 hover:!bg-amber-700 !text-white"><i class="fa-solid fa-wand-magic-sparkles mr-2"></i>舊資料校正</button><button v-if="portfolioLegacyAdjustments.length" type="button" @click="clearLegacyAdjustments" class="btn btn-secondary"><i class="fa-solid fa-rotate-left mr-2"></i>清除校正</button><span v-if="portfolioLegacyAdjustments.length" class="self-center text-xs font-black text-emerald-700">已套用 {{ portfolioLegacyAdjustments.length }} 筆，合計 {{ legacyAdjustmentTotal >= 0 ? '+' : '' }}{{ formatCurrency(legacyAdjustmentTotal) }}</span></div>
+                    <div class="text-xs font-bold text-slate-500 leading-relaxed bg-slate-50 border border-slate-200 rounded-xl p-4"><i class="fa-solid fa-circle-info text-blue-500 mr-1"></i>差額通常來自舊版交易的成本口徑、交易總額/已實現損益不一致，或歷史資料被手動修改。舊資料校正只新增一層報表校正，不會修改原始交易、現金或股數。</div>
                 </div>
             </div>
 
@@ -1287,7 +1288,7 @@ createApp({
                     <div class="card !p-5"><div class="flex items-center justify-between"><div class="text-xs text-slate-400 font-bold">未實現損益</div><i class="fa-solid fa-chart-line text-blue-400"></i></div><div class="mt-2 text-xl md:text-2xl font-black" :class="selectedStockPerformance.unrealized >= 0 ? 'text-up' : 'text-down'">{{ selectedStockPerformance.unrealized >= 0 ? '+' : '' }}{{ formatCurrency(selectedStockPerformance.unrealized) }}</div></div>
                     <div class="card !p-5"><div class="flex items-center justify-between"><div class="text-xs text-slate-400 font-bold">已實現損益</div><i class="fa-solid fa-circle-check text-slate-400"></i></div><div class="mt-2 text-xl md:text-2xl font-black" :class="selectedStockPerformance.realized >= 0 ? 'text-up' : 'text-down'">{{ selectedStockPerformance.realized >= 0 ? '+' : '' }}{{ formatCurrency(selectedStockPerformance.realized) }}</div></div>
                     <div class="card !p-5"><div class="flex items-center justify-between"><div class="text-xs text-slate-400 font-bold">權息貢獻</div><i class="fa-solid fa-coins text-amber-400"></i></div><div class="mt-2 text-xl md:text-2xl font-black text-amber-600">+{{ formatCurrency(selectedStockPerformance.dividendContribution) }}</div><div class="mt-2 space-y-1 text-[11px] font-bold text-slate-400"><div>現金：{{ formatCurrency(selectedStockPerformance.dividendCash) }}（已入帳 {{ formatCurrency(selectedStockPerformance.dividendCashSettled) }} / 應收 {{ formatCurrency(selectedStockPerformance.dividendCashReceivable) }}）</div><div v-if="selectedStockPerformance.dividendStockSettledQty || selectedStockPerformance.dividendStockReceivableQty">股票：已撥 {{ formatCurrency(selectedStockPerformance.dividendStockSettledQty) }} 股 / 應收 {{ formatCurrency(selectedStockPerformance.dividendStockReceivableQty) }} 股<span v-if="selectedStockPerformance.dividendStockReceivableValue">・應收估值 {{ formatCurrency(selectedStockPerformance.dividendStockReceivableValue) }}</span></div></div></div>
-                    <div class="card !p-5 border-2" :class="selectedStockPerformance.totalReturn >= 0 ? '!border-red-100' : '!border-emerald-100'"><div class="flex items-center justify-between"><div class="text-xs text-slate-400 font-bold">個股總損益</div><i class="fa-solid fa-sack-dollar" :class="selectedStockPerformance.totalReturn >= 0 ? 'text-red-400' : 'text-emerald-500'"></i></div><div class="mt-2 text-xl md:text-2xl font-black" :class="selectedStockPerformance.totalReturn >= 0 ? 'text-up' : 'text-down'">{{ selectedStockPerformance.totalReturn >= 0 ? '+' : '' }}{{ formatCurrency(selectedStockPerformance.totalReturn) }}</div><div class="mt-1 text-[11px] font-bold text-slate-400">已實現＋未實現＋現金股利＋應收股票股利估值</div></div>
+                    <div class="card !p-5 border-2" :class="selectedStockPerformance.totalReturn >= 0 ? '!border-red-100' : '!border-emerald-100'"><div class="flex items-center justify-between"><div class="text-xs text-slate-400 font-bold">個股總損益</div><i class="fa-solid fa-sack-dollar" :class="selectedStockPerformance.totalReturn >= 0 ? 'text-red-400' : 'text-emerald-500'"></i></div><div class="mt-2 text-xl md:text-2xl font-black" :class="selectedStockPerformance.totalReturn >= 0 ? 'text-up' : 'text-down'">{{ selectedStockPerformance.totalReturn >= 0 ? '+' : '' }}{{ formatCurrency(selectedStockPerformance.totalReturn) }}</div><div class="mt-1 text-[11px] font-bold text-slate-400">已實現＋未實現＋股利<span v-if="selectedStockPerformance.legacyAdjustment">＋舊資料校正 {{ selectedStockPerformance.legacyAdjustment >= 0 ? '+' : '' }}{{ formatCurrency(selectedStockPerformance.legacyAdjustment) }}</span></div></div>
                 </div>
 
                 <div class="card !p-0 overflow-hidden">
@@ -1299,7 +1300,7 @@ createApp({
                     <div v-else class="divide-y divide-slate-100">
                         <div v-for="lot in selectedStockOpenLots" :key="String(lot.buyTxId)" class="px-5 md:px-6 py-5">
                             <div class="flex flex-col lg:flex-row lg:items-center gap-4 justify-between">
-                                <div class="min-w-[180px]"><div class="flex items-center gap-2"><span class="text-sm font-black text-slate-800">{{ lot.date }}</span><span class="text-[10px] px-2 py-1 rounded-full font-black" :class="lot.sourceType === 'dividend' ? 'bg-amber-50 text-amber-700' : 'bg-blue-50 text-blue-700'">{{ lot.sourceType === 'dividend' ? '股票股利' : '買進批次' }}</span></div><div class="text-[11px] font-bold text-slate-400 mt-1">批次 ID：{{ lot.buyTxId }}</div></div>
+                                <div class="min-w-[180px]"><div class="flex items-center gap-2"><span class="text-sm font-black text-slate-800">{{ lot.date }}</span><span class="text-[10px] px-2 py-1 rounded-full font-black" :class="lot.sourceType === 'dividend' ? 'bg-amber-50 text-amber-700' : (lot.sourceType === 'rights_issue' ? 'bg-cyan-50 text-cyan-700' : 'bg-blue-50 text-blue-700')">{{ lot.sourceType === 'dividend' ? '股票股利' : (lot.sourceType === 'rights_issue' ? '現金增資' : '買進批次') }}</span></div><div class="text-[11px] font-bold text-slate-400 mt-1">批次 ID：{{ lot.buyTxId }}</div></div>
                                 <div class="grid grid-cols-2 md:grid-cols-5 gap-3 flex-1">
                                     <div class="bg-slate-50 rounded-xl p-3"><div class="text-[10px] text-slate-400 font-bold">原始股數</div><div class="font-black text-slate-700 mt-1">{{ formatCurrency(lot.originalQty || lot.remainingQty) }}</div></div>
                                     <div class="bg-slate-50 rounded-xl p-3"><div class="text-[10px] text-slate-400 font-bold">剩餘股數</div><div class="font-black text-slate-800 mt-1">{{ formatCurrency(lot.remainingQty) }}</div></div>
@@ -1407,7 +1408,7 @@ createApp({
                 </div>
 
                 <div v-if="dividendHistoryRows.length" class="card !p-0 overflow-hidden mb-6 border-rose-100">
-                    <div class="px-6 py-4 bg-rose-50 border-b border-rose-100 flex items-center justify-between"><h3 class="text-base font-extrabold text-rose-700 flex items-center gap-2"><i class="fa-solid fa-gift"></i> 權息紀錄</h3><button @click="openDividendManagerModal" class="text-xs font-black text-rose-600 hover:underline">管理權息</button></div>
+                    <div class="px-6 py-4 bg-rose-50 border-b border-rose-100 flex items-center justify-between"><h3 class="text-base font-extrabold text-rose-700 flex items-center gap-2"><i class="fa-solid fa-gift"></i> 權息紀錄</h3><button @click="openDividendManagerModal" class="text-xs font-black text-rose-600 hover:underline">企業行動</button></div>
                     <div class="divide-y divide-slate-100">
                         <div v-for="row in dividendHistoryRows.slice(0, 8)" :key="row.id + '-' + row.historyKind" class="px-6 py-4 flex flex-col md:flex-row md:items-center md:justify-between gap-2">
                             <div><div class="font-black text-slate-800">{{ row.historyDate || row.exDate }}｜{{ row.historyLabel }}｜{{ displayNameOnly(row.code, row.name) }} <span class="text-slate-400">({{ row.code }})</span></div><div class="text-xs font-bold text-slate-400 mt-1">{{ dividendActionSummary(row) }}</div></div>
@@ -1795,7 +1796,7 @@ createApp({
                             <div v-for="lot in sellTx.lots" :key="String(lot.buyTxId)" class="bg-white border border-slate-200 rounded-xl p-3">
                                 <div class="flex items-center justify-between gap-3 mb-2">
                                     <div>
-                                        <div class="text-xs font-black text-slate-700">{{ lot.sourceType === 'dividend' ? '股票股利' : lot.date }}</div>
+                                        <div class="text-xs font-black text-slate-700">{{ lot.sourceType === 'dividend' ? '股票股利' : (lot.sourceType === 'rights_issue' ? '現金增資' : lot.date) }}</div>
                                         <div class="text-[11px] font-bold text-slate-400">買進價 {{ formatCurrency(lot.price) }}｜含費成本/股 {{ Number(lot.unitCost || 0).toFixed(3) }}</div>
                                     </div>
                                     <div class="text-right">
@@ -2156,13 +2157,14 @@ createApp({
         <div v-if="showDividendManagerModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex justify-center items-start z-[90] p-4 md:p-8 overflow-y-auto">
             <div class="bg-white rounded-[2rem] w-full max-w-6xl shadow-2xl border border-white/80 overflow-hidden my-6">
                 <div class="px-6 py-5 bg-gradient-to-r from-rose-600 to-orange-500 text-white flex items-center justify-between gap-4">
-                    <div><h3 class="text-2xl font-black flex items-center gap-3"><i class="fa-solid fa-gift"></i> 權息管理</h3><p class="text-sm font-bold text-rose-100 mt-1">權息公告資料跨投資帳本共用；權利股數、應收股利與入帳金額依目前帳本獨立計算。</p></div>
+                    <div><h3 class="text-2xl font-black flex items-center gap-3"><i class="fa-solid fa-building-columns"></i> 企業行動</h3><p class="text-sm font-bold text-rose-100 mt-1">集中管理股利與現金增資；公告條件共用，實際權益與認購股數依目前帳本獨立計算。</p></div>
                     <button @click="closeDividendManagerModal" class="w-11 h-11 rounded-2xl bg-white/15 hover:bg-white/25 transition"><i class="fa-solid fa-xmark text-xl"></i></button>
                 </div>
 
+                <div class="px-6 pt-5"><div class="inline-flex bg-slate-100 p-1 rounded-2xl border border-slate-200"><button type="button" @click="corporateActionMode='dividend'; resetDividendForm()" class="px-5 py-2.5 rounded-xl text-sm font-black transition" :class="corporateActionMode==='dividend' ? 'bg-white text-rose-600 shadow-sm' : 'text-slate-500'"><i class="fa-solid fa-gift mr-2"></i>股利 / 除權息</button><button type="button" @click="corporateActionMode='rights'; resetRightsIssueForm(); dividendSearchText=''" class="px-5 py-2.5 rounded-xl text-sm font-black transition" :class="corporateActionMode==='rights' ? 'bg-white text-cyan-700 shadow-sm' : 'text-slate-500'"><i class="fa-solid fa-coins mr-2"></i>現金增資</button></div></div>
                 <div class="p-6 grid grid-cols-1 lg:grid-cols-5 gap-6">
                     <div class="lg:col-span-2 space-y-4">
-                        <div class="rounded-2xl border border-slate-200 p-5 bg-slate-50/60">
+                        <div v-if="corporateActionMode === 'dividend'" class="rounded-2xl border border-slate-200 p-5 bg-slate-50/60">
                             <div class="flex items-center justify-between mb-4"><h4 class="font-black text-slate-800">{{ dividendForm.id ? '編輯共用權息公告' : '新增共用權息公告' }}</h4><button type="button" @click="resetDividendForm" class="text-xs font-black text-slate-500 hover:text-slate-800">清空</button></div>
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div class="input-group relative">
@@ -2208,6 +2210,21 @@ createApp({
                             <button @click="saveDividendAction" class="btn w-full mt-5 gap-2 !bg-rose-600 hover:!bg-rose-700 !text-white shadow-lg shadow-rose-200"><i class="fa-solid fa-check"></i> 儲存權息公告</button>
                             <div class="mt-3 text-xs font-bold text-slate-400 leading-relaxed">規則：公告資料會跨帳本共用；本帳本權利股數若留空，會依本帳本除權息日前持股自算。除權息日當天買進不列入，當天賣出仍保留權利。</div>
                         </div>
+                        <div v-if="corporateActionMode === 'rights'" class="rounded-2xl border border-cyan-200 p-5 bg-cyan-50/40">
+                            <div class="flex items-center justify-between mb-4"><div><h4 class="font-black text-slate-800">{{ rightsIssueForm.id ? '編輯現金增資' : '新增現金增資' }}</h4><p class="text-[11px] font-bold text-slate-400 mt-1">繳款日扣除現金；撥股日後增加庫存並建立獨立現增批次。</p></div><button type="button" @click="resetRightsIssueForm" class="text-xs font-black text-slate-500">清空</button></div>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div class="input-group"><label class="text-xs font-bold text-slate-500 mb-2 ml-1">股票代號</label><input v-model="rightsIssueForm.code" @input="rightsIssueForm.code=String(rightsIssueForm.code||'').toUpperCase()" placeholder="2330" class="w-full h-[46px] px-4 bg-white border border-slate-300 rounded-xl font-bold outline-none focus:border-cyan-500"></div>
+                                <div class="input-group"><label class="text-xs font-bold text-slate-500 mb-2 ml-1">股票名稱</label><input v-model="rightsIssueForm.name" placeholder="台積電" class="w-full h-[46px] px-4 bg-white border border-slate-300 rounded-xl font-bold outline-none focus:border-cyan-500"></div>
+                                <div class="input-group"><label class="text-xs font-bold text-slate-500 mb-2 ml-1">認購價格 元 / 股</label><input type="number" step="0.01" v-model.number="rightsIssueForm.rightsIssuePrice" class="w-full h-[46px] px-4 bg-white border border-slate-300 rounded-xl font-bold outline-none focus:border-cyan-500"></div>
+                                <div class="input-group"><label class="text-xs font-bold text-slate-500 mb-2 ml-1">可認股數（選填）</label><input type="number" step="1" v-model.number="rightsIssueForm.rightsEligibleQty" placeholder="例如 500" class="w-full h-[46px] px-4 bg-white border border-slate-300 rounded-xl font-bold outline-none focus:border-cyan-500"></div>
+                                <div class="input-group"><label class="text-xs font-bold text-slate-500 mb-2 ml-1">實際認購股數</label><input type="number" step="1" v-model.number="rightsIssueForm.rightsSubscribedQty" placeholder="例如 300" class="w-full h-[46px] px-4 bg-white border border-slate-300 rounded-xl font-bold outline-none focus:border-cyan-500"></div>
+                                <div class="input-group"><label class="text-xs font-bold text-slate-500 mb-2 ml-1">認購總額</label><div class="h-[46px] px-4 bg-white border border-slate-200 rounded-xl font-black text-cyan-700 flex items-center">{{ formatCurrency((Number(rightsIssueForm.rightsIssuePrice)||0) * (Number(rightsIssueForm.rightsSubscribedQty)||0)) }}</div></div>
+                                <div class="input-group"><label class="text-xs font-bold text-slate-500 mb-2 ml-1">繳款日</label><input type="date" v-model="rightsIssueForm.rightsPaymentDate" class="w-full h-[46px] px-4 bg-white border border-slate-300 rounded-xl font-bold outline-none focus:border-cyan-500"></div>
+                                <div class="input-group"><label class="text-xs font-bold text-slate-500 mb-2 ml-1">撥股日</label><input type="date" v-model="rightsIssueForm.rightsAllotmentDate" class="w-full h-[46px] px-4 bg-white border border-slate-300 rounded-xl font-bold outline-none focus:border-cyan-500"></div>
+                                <div class="input-group md:col-span-2"><label class="text-xs font-bold text-slate-500 mb-2 ml-1">備註</label><input v-model="rightsIssueForm.note" placeholder="例如：2026 現金增資認購" class="w-full h-[46px] px-4 bg-white border border-slate-300 rounded-xl font-bold outline-none focus:border-cyan-500"></div>
+                            </div>
+                            <button @click="saveRightsIssueAction" class="btn w-full mt-5 gap-2 !bg-cyan-600 hover:!bg-cyan-700 !text-white shadow-lg shadow-cyan-200"><i class="fa-solid fa-check"></i> 儲存現金增資</button>
+                        </div>
                     </div>
 
                     <div class="lg:col-span-3 space-y-4">
@@ -2219,13 +2236,13 @@ createApp({
                         </div>
 
                         <div class="rounded-2xl border border-slate-200 overflow-hidden">
-                            <div class="px-5 py-4 bg-slate-50 border-b border-slate-200 flex items-center justify-between"><h4 class="font-black text-slate-700">權息公告列表</h4><span class="text-xs font-bold text-slate-400">{{ currentPortfolio.name }}｜權益獨立計算</span></div>
-                            <div v-if="portfolioCorporateActions.length === 0" class="p-10 text-center text-slate-400 font-bold"><i class="fa-solid fa-circle-info text-3xl mb-3 opacity-40"></i><div>尚無權息公告</div></div>
+                            <div class="px-5 py-4 bg-slate-50 border-b border-slate-200 flex items-center justify-between"><h4 class="font-black text-slate-700">企業行動列表</h4><span class="text-xs font-bold text-slate-400">{{ currentPortfolio.name }}｜權益獨立計算</span></div>
+                            <div v-if="portfolioCorporateActions.length === 0" class="p-10 text-center text-slate-400 font-bold"><i class="fa-solid fa-circle-info text-3xl mb-3 opacity-40"></i><div>尚無企業行動</div></div>
                             <div v-else class="divide-y divide-slate-100 max-h-[560px] overflow-y-auto">
                                 <div v-for="action in portfolioCorporateActions" :key="action.id" class="p-5 hover:bg-slate-50 transition">
                                     <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
-                                        <div class="min-w-0"><div class="flex flex-wrap items-center gap-2"><span class="px-2.5 py-1 rounded-lg text-[11px] font-black border" :class="dividendStatusClass(action)">{{ dividendStatusLabel(action) }}</span><span class="px-2.5 py-1 rounded-lg text-[11px] font-black bg-slate-100 text-slate-700">{{ dividendActionTypeLabel(action) }}</span><div class="font-black text-slate-900">{{ displayNameOnly(action.code, action.name) }} <span class="text-slate-400">({{ action.code }})</span></div></div><div class="mt-2 text-xs font-bold text-slate-500 leading-relaxed">除權息日 {{ action.exDate || '-' }}｜現金發放 {{ action.cashPaymentDate || '-' }}｜股票發放 {{ action.stockPaymentDate || '-' }}</div><div class="mt-1 text-xs font-bold text-slate-400">{{ dividendActionSummary(action) }}</div><div v-if="action.note" class="mt-1 text-xs font-bold text-slate-400 truncate">備註：{{ action.note }}</div></div>
-                                        <div class="md:text-right shrink-0"><div class="font-black text-rose-600" v-if="action.cashDividendPerShare">現金 {{ formatCurrency(action.cashDividendNet) }}</div><div class="font-black text-indigo-600" v-if="action.stockDividendRatio">股票 +{{ formatCurrency(action.stockDividendQty) }} 股</div><div class="mt-2 flex md:justify-end gap-2"><button @click="editDividendAction(action)" class="px-3 py-2 rounded-lg text-xs font-black bg-white border border-slate-200 text-slate-600 hover:bg-slate-50"><i class="fa-solid fa-pen-to-square mr-1"></i>編輯</button><button @click="deleteDividendAction(action.id)" class="px-3 py-2 rounded-lg text-xs font-black bg-white border border-red-200 text-red-500 hover:bg-red-50"><i class="fa-solid fa-trash-can mr-1"></i>刪除</button></div></div>
+                                        <div class="min-w-0"><div class="flex flex-wrap items-center gap-2"><span class="px-2.5 py-1 rounded-lg text-[11px] font-black border" :class="dividendStatusClass(action)">{{ dividendStatusLabel(action) }}</span><span class="px-2.5 py-1 rounded-lg text-[11px] font-black bg-slate-100 text-slate-700">{{ dividendActionTypeLabel(action) }}</span><div class="font-black text-slate-900">{{ displayNameOnly(action.code, action.name) }} <span class="text-slate-400">({{ action.code }})</span></div></div><div v-if="action.actionType !== 'rights_issue'" class="mt-2 text-xs font-bold text-slate-500 leading-relaxed">除權息日 {{ action.exDate || '-' }}｜現金發放 {{ action.cashPaymentDate || '-' }}｜股票發放 {{ action.stockPaymentDate || '-' }}</div><div v-else class="mt-2 text-xs font-bold text-cyan-700 leading-relaxed">認購價 {{ formatCurrency(action.rightsIssuePrice) }} / 股｜繳款 {{ action.rightsPaymentDate || '-' }}｜撥股 {{ action.rightsAllotmentDate || '-' }}</div><div v-if="action.actionType !== 'rights_issue'" class="mt-1 text-xs font-bold text-slate-400">{{ dividendActionSummary(action) }}</div><div v-else class="mt-1 text-xs font-bold text-slate-400">可認 {{ formatCurrency(action.rightsEligibleQty) }} 股｜實際認購 {{ formatCurrency(action.rightsSubscribedQty) }} 股｜總額 {{ formatCurrency((Number(action.rightsSubscribedQty)||0)*(Number(action.rightsIssuePrice)||0)) }}</div><div v-if="action.note" class="mt-1 text-xs font-bold text-slate-400 truncate">備註：{{ action.note }}</div></div>
+                                        <div class="md:text-right shrink-0"><div class="font-black text-rose-600" v-if="action.cashDividendPerShare">現金 {{ formatCurrency(action.cashDividendNet) }}</div><div class="font-black text-indigo-600" v-if="action.stockDividendRatio">股票 +{{ formatCurrency(action.stockDividendQty) }} 股</div><div class="font-black text-cyan-700" v-if="action.actionType === 'rights_issue'">現增 +{{ formatCurrency(action.rightsSubscribedQty) }} 股</div><div class="mt-2 flex md:justify-end gap-2"><button @click="editDividendAction(action)" class="px-3 py-2 rounded-lg text-xs font-black bg-white border border-slate-200 text-slate-600 hover:bg-slate-50"><i class="fa-solid fa-pen-to-square mr-1"></i>編輯</button><button @click="deleteDividendAction(action.id)" class="px-3 py-2 rounded-lg text-xs font-black bg-white border border-red-200 text-red-500 hover:bg-red-50"><i class="fa-solid fa-trash-can mr-1"></i>刪除</button></div></div>
                                     </div>
                                 </div>
                             </div>
@@ -2234,6 +2251,8 @@ createApp({
                 </div>
             </div>
         </div>
+
+        <div v-if="showLegacyAdjustmentModal" class="fixed inset-0 bg-slate-900/70 backdrop-blur-sm flex justify-center items-center z-[105] p-4" @click.self="closeLegacyAdjustmentModal"><div class="bg-white w-full max-w-3xl rounded-[2rem] shadow-2xl overflow-hidden"><div class="p-6 bg-gradient-to-r from-amber-600 to-orange-500 text-white flex justify-between gap-4"><div><h3 class="text-xl font-black"><i class="fa-solid fa-scale-balanced mr-2"></i>舊資料帳務校正</h3><p class="text-xs font-bold text-amber-100 mt-1">只建立報表校正層，不修改任何早期買賣、現金或庫存紀錄。</p></div><button @click="closeLegacyAdjustmentModal" class="w-10 h-10 rounded-xl bg-white/15"><i class="fa-solid fa-xmark"></i></button></div><div class="p-6 space-y-4"><div class="grid grid-cols-2 gap-3"><div class="rounded-2xl bg-amber-50 border border-amber-200 p-4"><div class="text-xs font-bold text-amber-600">目前未校正差額</div><div class="text-2xl font-black text-amber-800">{{ dashboardReconciliationGap >= 0 ? '+' : '-' }}{{ formatCurrency(Math.abs(dashboardReconciliationGap)) }}</div></div><div class="rounded-2xl bg-emerald-50 border border-emerald-200 p-4"><div class="text-xs font-bold text-emerald-600">已存在校正</div><div class="text-2xl font-black text-emerald-800">{{ legacyAdjustmentTotal >= 0 ? '+' : '' }}{{ formatCurrency(legacyAdjustmentTotal) }}</div></div></div><div class="rounded-2xl border border-slate-200 overflow-hidden"><div class="px-4 py-3 bg-slate-50 font-black text-slate-700">準備建立的個股校正</div><div v-if="reconciliationDiagnostic.rows.length===0" class="p-5 text-sm font-bold text-emerald-700">目前沒有需要校正的個股。</div><div v-else class="divide-y divide-slate-100 max-h-[360px] overflow-y-auto"><div v-for="row in reconciliationDiagnostic.rows" :key="'legacy-'+row.code" class="px-4 py-3 flex items-center justify-between"><div><div class="font-black text-slate-800">{{ row.name }} <span class="text-slate-400">({{ row.code }})</span></div><div class="text-[11px] font-bold text-slate-400">建立後此檔歷史差額會歸零</div></div><div class="font-black" :class="row.gap>=0?'text-red-600':'text-green-600'">{{ row.gap>=0?'+':'' }}{{ formatCurrency(row.gap) }}</div></div></div></div><div class="rounded-xl bg-slate-50 border border-slate-200 p-4 text-xs font-bold text-slate-500 leading-relaxed"><i class="fa-solid fa-shield-halved text-blue-500 mr-1"></i>這個功能適合處理升級前舊版本造成的成本口徑差異。校正可以隨時清除，原始交易永遠保留。</div><div class="flex gap-3"><button @click="closeLegacyAdjustmentModal" class="btn btn-secondary flex-1">取消</button><button @click="applyLegacyReconciliation" :disabled="reconciliationDiagnostic.rows.length===0" class="btn flex-1 !bg-amber-600 hover:!bg-amber-700 !text-white disabled:opacity-50"><i class="fa-solid fa-check mr-2"></i>建立校正</button></div></div></div></div>
 
         <div v-if="showConfirmModal" class="fixed inset-0 bg-slate-900/70 backdrop-blur-sm flex justify-center items-center z-[100] p-6 transition-all duration-300"><div class="bg-white rounded-[2rem] p-8 w-full max-w-sm shadow-2xl transform scale-100 flex flex-col items-center text-center relative border-2 border-red-50"><div class="w-20 h-20 bg-red-50 rounded-full flex items-center justify-center text-red-500 text-4xl mb-5 shadow-inner"><i class="fa-solid fa-triangle-exclamation"></i></div><h3 class="text-2xl font-black text-slate-800 mb-3">{{ confirmTitle }}</h3><p class="text-slate-500 font-bold mb-8 leading-relaxed">{{ confirmMessage }}</p><div class="flex gap-4 w-full"><button @click="showConfirmModal = false" class="h-[54px] flex-1 rounded-xl font-bold text-slate-500 bg-white border-2 border-slate-200 hover:bg-slate-50 hover:border-slate-400 transition-all duration-200 active:scale-95">取消</button><button @click="confirmAction" class="h-[54px] flex-1 rounded-xl font-bold text-white bg-gradient-to-r from-rose-500 to-red-600 shadow-xl shadow-rose-300 hover:shadow-2xl hover:shadow-rose-400 hover:-translate-y-1 transition-all duration-300 active:scale-95">確認執行</button></div></div></div>
 
@@ -2978,10 +2997,14 @@ createApp({
             transactions: persisted.transactions, newTx: { date: new Date().toISOString().split('T')[0], code: '', name: '', type: 'buy', mode: 'cash', price: null, qty: 1000, category: 'core', dayTradeEligible: false },
             cashBook: persisted.cashBook,
             profitAdjustments: persisted.profitAdjustments,
+            legacyAdjustments: persisted.legacyAdjustments || [],
             corporateActions: persisted.corporateActions || [],
             cashEntryForm: { date: new Date().toISOString().split('T')[0], type: 'deposit', amount: null, note: '' },
             profitAdjustmentForm: { date: new Date().toISOString().split('T')[0], type: 'withdraw', category: 'living', amount: null, note: '' },
             showDividendManagerModal: false,
+            corporateActionMode: 'dividend',
+            rightsIssueForm: { id: null, code: '', name: '', rightsIssuePrice: null, rightsEligibleQty: null, rightsSubscribedQty: null, rightsPaymentDate: '', rightsAllotmentDate: '', note: '' },
+            showLegacyAdjustmentModal: false,
             dividendForm: { id: null, code: '', name: '', actionType: 'cash_dividend', exDate: '', recordDate: '', cashPaymentDate: '', stockPaymentDate: '', cashDividendPerShare: null, stockDividendPerShareYuan: null, prevClose: null, eligibleQty: null, taxWithheld: 0, fractionalShareCash: 0, note: '' },
             cashViewMode: 'all', // all | cashOnly | tradesOnly
 
@@ -3766,6 +3789,17 @@ const savedCash = localStorage.getItem(window.StockStorage.KEYS.cashBook) || '';
             const pid = this.currentPortfolioId || 'main';
             return (this.profitAdjustments || []).filter(e => (e && (e.portfolioId || 'main') === pid));
         },
+        portfolioLegacyAdjustments() {
+            const pid = this.currentPortfolioId || 'main';
+            return (this.legacyAdjustments || []).filter(e => e && (e.portfolioId || 'main') === pid);
+        },
+        legacyAdjustmentTotal() { return (this.portfolioLegacyAdjustments || []).reduce((s,e)=>s+(Number(e.amount)||0),0); },
+        legacyAdjustmentByCode() {
+            const out = {};
+            (this.portfolioLegacyAdjustments || []).forEach(e => { const c=String(e.code||'').trim().toUpperCase(); if(c) out[c]=(out[c]||0)+(Number(e.amount)||0); });
+            return out;
+        },
+        rightsIssueCashOutflow() { return window.StockCashService.rightsIssueCashOutflow ? window.StockCashService.rightsIssueCashOutflow.call(this) : 0; },
         portfolioCorporateActions() {
             return window.StockDividendService ? window.StockDividendService.portfolioActions(this) : [];
         },
@@ -3975,7 +4009,7 @@ const savedCash = localStorage.getItem(window.StockStorage.KEYS.cashBook) || '';
         estimatedMarketValue() { return this.holdings.reduce((sum, h) => { const price = this.latestPrices[h.code] || h.currentPrice || h.buyAvgPrice || 0; return sum + Math.abs(price * h.qty); }, 0); },
         totalUnrealizedPnL() { return this.holdings.reduce((sum, h) => sum + h.unrealizedPnL, 0); },
         totalRealizedPnL() { return this.portfolioTransactions.reduce((sum, tx) => sum + ((tx.realizedPnL !== null && tx.realizedPnL !== undefined) ? Number(tx.realizedPnL) : 0), 0); },
-        totalReturnPnL() { return (Number(this.totalRealizedPnL) || 0) + (Number(this.totalUnrealizedPnL) || 0) + (Number(this.dividendIncomeTotal) || 0); },
+        totalReturnPnL() { return (Number(this.totalRealizedPnL) || 0) + (Number(this.totalUnrealizedPnL) || 0) + (Number(this.dividendIncomeTotal) || 0) + (Number(this.legacyAdjustmentTotal) || 0); },
         allStockRows() {
             const map = new Map();
             const touch = (code, name = '') => {
@@ -3993,7 +4027,7 @@ const savedCash = localStorage.getItem(window.StockStorage.KEYS.cashBook) || '';
             });
             (this.portfolioCorporateActions || []).forEach(a => {
                 const row = touch(a.code, a.name); if (!row) return;
-                const d = a.exDate || a.cashPaymentDate || a.stockPaymentDate; if (d) row.dates.push(d);
+                const d = a.exDate || a.cashPaymentDate || a.stockPaymentDate || a.rightsAllotmentDate || a.rightsPaymentDate; if (d) row.dates.push(d);
                 row.dividendCount += 1;
             });
             (this.holdings || []).forEach(h => touch(h.code, h.name));
@@ -4004,10 +4038,11 @@ const savedCash = localStorage.getItem(window.StockStorage.KEYS.cashBook) || '';
                 const unrealized = Number(h?.unrealizedPnL) || 0;
                 const div = window.StockDividendService ? window.StockDividendService.dividendSummaryByCode(this, row.code) : { totalContribution: 0 };
                 const dividendContribution = Number(div?.totalContribution) || 0;
+                const legacyAdjustment = Number(this.legacyAdjustmentByCode?.[row.code] || 0);
                 const dates = row.dates.filter(Boolean).sort();
                 const qty = Number(h?.qty) || 0;
                 const name = row.name || this.resolveStockName(row.code, '') || row.code;
-                return { ...row, name, qty, status: Math.abs(qty) > 1e-6 ? 'holding' : 'closed', realized, unrealized, dividendContribution, totalReturn: realized + unrealized + dividendContribution, firstDate: dates[0] || '', lastDate: dates[dates.length-1] || '' };
+                return { ...row, name, qty, status: Math.abs(qty) > 1e-6 ? 'holding' : 'closed', realized, unrealized, dividendContribution, legacyAdjustment, totalReturn: realized + unrealized + dividendContribution + legacyAdjustment, firstDate: dates[0] || '', lastDate: dates[dates.length-1] || '' };
             }).sort((a,b) => (a.status === b.status ? 0 : (a.status === 'holding' ? -1 : 1)) || (new Date(b.lastDate||0)-new Date(a.lastDate||0)) || a.code.localeCompare(b.code));
         },
         allStockRowsFiltered() {
@@ -4016,9 +4051,9 @@ const savedCash = localStorage.getItem(window.StockStorage.KEYS.cashBook) || '';
             return (this.allStockRows || []).filter(r => String(r.code).toLowerCase().includes(q) || String(r.name).toLowerCase().includes(q));
         },
         reconciliationDiagnostic() {
-            const tradeCash = Number(this.cashTradeNet) || 0;
+            const tradeCash = (Number(this.cashTradeNet) || 0) - (Number(this.rightsIssueCashOutflow) || 0);
             const marketValue = Number(this.signedMarketValue) || 0;
-            const performanceTradePnL = (Number(this.totalRealizedPnL)||0) + (Number(this.totalUnrealizedPnL)||0);
+            const performanceTradePnL = (Number(this.totalRealizedPnL)||0) + (Number(this.totalUnrealizedPnL)||0) + (Number(this.legacyAdjustmentTotal)||0);
             const dividends = Number(this.dividendIncomeTotal) || 0;
             const codes = new Set();
             (this.portfolioTransactions || []).forEach(tx => { if (tx?.code) codes.add(String(tx.code)); });
@@ -4026,16 +4061,18 @@ const savedCash = localStorage.getItem(window.StockStorage.KEYS.cashBook) || '';
             const rows = Array.from(codes).map(code => {
                 const txs = (this.portfolioTransactions || []).filter(tx => String(tx.code) === code);
                 const h = (this.holdings || []).find(x => String(x.code) === code);
-                const stockTradeCash = txs.reduce((s,tx) => { const a=Number(tx.totalAmount)||0; return s + (tx.type === 'sell' ? a : -a); }, 0);
+                const rightsCost = (this.portfolioCorporateActions || []).filter(a => a && a.actionType === 'rights_issue' && String(a.code)===code && a.rightsPaymentDate && String(a.rightsPaymentDate) <= new Date().toISOString().slice(0,10)).reduce((sum,a)=>sum+(Number(a.rightsSubscribedQty)||0)*(Number(a.rightsIssuePrice)||0),0);
+                const stockTradeCash = txs.reduce((s,tx) => { const a=Number(tx.totalAmount)||0; return s + (tx.type === 'sell' ? a : -a); }, 0) - rightsCost;
                 const price = Number(this.latestPrices?.[code] || h?.currentPrice || h?.buyAvgPrice || 0);
                 const stockMarket = price * (Number(h?.qty)||0);
                 const assetSide = stockTradeCash + stockMarket;
                 const realized = txs.reduce((s,tx)=>s+(tx.realizedPnL != null ? (Number(tx.realizedPnL)||0) : 0),0);
                 const unrealized = Number(h?.unrealizedPnL)||0;
-                const performanceSide = realized + unrealized;
+                const correction = Number(this.legacyAdjustmentByCode?.[code] || 0);
+                const performanceSide = realized + unrealized + correction;
                 const gap = assetSide - performanceSide;
                 const name = this.displayNameOnly(code, h?.name || txs[txs.length-1]?.name || this.resolveStockName(code,'')) || code;
-                return { code, name, assetSide, performanceSide, gap };
+                return { code, name, assetSide, performanceSide, correction, gap };
             }).filter(r => Math.abs(r.gap) > 2).sort((a,b)=>Math.abs(b.gap)-Math.abs(a.gap));
             return { tradeCash, marketValue, assetTradePnL: tradeCash + marketValue, performanceTradePnL, dividends, gap: Number(this.dashboardReconciliationGap)||0, rows };
         },
@@ -4066,7 +4103,8 @@ const savedCash = localStorage.getItem(window.StockStorage.KEYS.cashBook) || '';
             const dividendCash = Number(div?.totalCash) || 0;
             const dividendStockReceivableValue = Number(div?.receivableStockValue) || 0;
             const dividendContribution = Number(div?.totalContribution ?? dividendCash + dividendStockReceivableValue) || 0;
-            const totalReturn = realized + unrealized + dividendContribution;
+            const legacyAdjustment = Number(this.legacyAdjustmentByCode?.[code] || 0);
+            const totalReturn = realized + unrealized + dividendContribution + legacyAdjustment;
             const totalReturnRoi = currentCost > 0 ? (totalReturn / currentCost * 100) : 0;
             return {
                 qty, currentCost, avgCost, currentPrice, marketValue, realized, unrealized,
@@ -4076,7 +4114,7 @@ const savedCash = localStorage.getItem(window.StockStorage.KEYS.cashBook) || '';
                 dividendStockSettledQty: Number(div?.settledStockQty) || 0,
                 dividendStockReceivableQty: Number(div?.receivableStockQty) || 0,
                 dividendStockReceivableValue,
-                dividendContribution,
+                dividendContribution, legacyAdjustment,
                 totalReturn, totalReturnRoi
             };
         },
@@ -4104,13 +4142,20 @@ const savedCash = localStorage.getItem(window.StockStorage.KEYS.cashBook) || '';
                 const allocations = Array.isArray(tx.lotAllocations) ? tx.lotAllocations : [];
                 const isLegacy = allocations.length === 0 && !tx.dayTradeEligible;
                 const enriched = allocations.map(a => {
-                    const buy = buys.get(String(a?.buyTxId));
+                    const buyTxId = String(a?.buyTxId || '');
+                    const buy = buys.get(buyTxId);
                     const q = Math.max(0, Number(a?.qty) || 0);
+                    let buyDate = buy?.date || '', buyPrice = Number(buy?.price) || 0, unitCost = 0;
                     const buyQty = Math.max(0, Number(buy?.qty) || 0);
                     const buyTotal = Number(buy?.totalAmount) || ((Number(buy?.price) || 0) * buyQty);
-                    const unitCost = buyQty > 0 ? buyTotal / buyQty : 0;
+                    if (buyQty > 0) unitCost = buyTotal / buyQty;
+                    if (!buy && buyTxId.startsWith('rights:')) {
+                        const actionId = buyTxId.slice('rights:'.length);
+                        const ra = (this.portfolioCorporateActions || []).find(x => String(x?.id) === actionId);
+                        if (ra) { buyDate = ra.rightsAllotmentDate || ra.rightsPaymentDate || ''; buyPrice = Number(ra.rightsIssuePrice)||0; unitCost = buyPrice; }
+                    } else if (!buy && buyTxId.startsWith('dividend:')) { buyPrice = 0; unitCost = 0; }
                     const allocatedNet = qty > 0 ? netAmount * (q / qty) : 0;
-                    return { buyTxId: a?.buyTxId, qty: q, buyDate: buy?.date || '', buyPrice: Number(buy?.price) || 0, unitCost, realizedPnL: allocatedNet - q * unitCost };
+                    return { buyTxId, qty: q, buyDate, buyPrice, unitCost, realizedPnL: allocatedNet - q * unitCost };
                 });
                 const mode = tx.lotSelectionMode || (tx.dayTradeEligible ? 'daytrade' : 'manual');
                 const modeLabel = mode === 'lowest' ? '最低價優先' : mode === 'fifo' ? '最早買進優先' : mode === 'daytrade' ? '當沖配對' : '手動指定批次';
@@ -4130,6 +4175,7 @@ const savedCash = localStorage.getItem(window.StockStorage.KEYS.cashBook) || '';
             for (const a of actions) {
                 if (Number(a.cashDividendPerShare || 0) > 0 && Number(a.cashDividendNet || 0) !== 0) rows.push({ key:`div-cash-${a.id}`, date:a.cashPaymentDate||a.exDate, sortId:Number(String(a.id||'').replace(/\D/g,'').slice(-10))||0, title:'現金股利', note:`每股 ${this.formatPrice2(a.cashDividendPerShare)} 元`, amountText:`+${this.formatCurrency(Number(a.cashDividendNet)||0)}`, subText:a.cashSettled?'已入帳':'應收', badgeClass:'bg-amber-50 text-amber-600', icon:'fa-solid fa-coins', amountClass:'text-amber-600' });
                 if (Number(a.stockDividendQty || 0) > 0) rows.push({ key:`div-stock-${a.id}`, date:a.stockPaymentDate||a.exDate, sortId:Number(String(a.id||'').replace(/\D/g,'').slice(-10))||0, title:'股票股利', note:'配股', amountText:`+${this.formatCurrency(Number(a.stockDividendQty)||0)} 股`, subText:a.stockSettled?'已入庫':'應收', badgeClass:'bg-orange-50 text-orange-600', icon:'fa-solid fa-layer-group', amountClass:'text-orange-600' });
+                if (a.actionType === 'rights_issue' && Number(a.rightsSubscribedQty||0)>0) rows.push({ key:`rights-${a.id}`, date:a.rightsAllotmentDate||a.rightsPaymentDate, sortId:Number(String(a.id||'').replace(/\D/g,'').slice(-10))||0, title:'現金增資', note:`認購價 ${this.formatPrice2(a.rightsIssuePrice)} 元`, amountText:`+${this.formatCurrency(Number(a.rightsSubscribedQty)||0)} 股`, subText:`繳款 ${this.formatCurrency((Number(a.rightsSubscribedQty)||0)*(Number(a.rightsIssuePrice)||0))}`, badgeClass:'bg-cyan-50 text-cyan-700', icon:'fa-solid fa-coins', amountClass:'text-cyan-700' });
             }
             return rows.sort((a,b) => (new Date(b.date||0)-new Date(a.date||0)) || ((b.sortId||0)-(a.sortId||0)));
         }
@@ -4138,7 +4184,8 @@ const savedCash = localStorage.getItem(window.StockStorage.KEYS.cashBook) || '';
         transactions: { deep: true, handler() { this.scheduleAutoSave("交易資料"); } },
         cashBook: { deep: true, handler() { this.scheduleAutoSave("現金資料"); } },
         profitAdjustments: { deep: true, handler() { this.scheduleAutoSave("獲利用途"); } },
-        corporateActions: { deep: true, handler() { this.scheduleAutoSave("權息資料"); } },
+        corporateActions: { deep: true, handler() { this.scheduleAutoSave("企業行動"); } },
+        legacyAdjustments: { deep: true, handler() { this.scheduleAutoSave("舊資料校正"); } },
         portfolios: { deep: true, handler() { this.scheduleAutoSave("帳本"); } },
         currentPortfolioId() { this.scheduleAutoSave("目前帳本"); },
         nameMap: { deep: true, handler() { this.scheduleAutoSave("股票名稱"); } },
@@ -4524,12 +4571,18 @@ const savedCash = localStorage.getItem(window.StockStorage.KEYS.cashBook) || '';
                     if (!e.portfolioId) { e.portfolioId = 'main'; changed = true; }
                 });
             }
+            if (Array.isArray(this.legacyAdjustments)) {
+                this.legacyAdjustments.forEach(e => {
+                    if (!e || typeof e !== 'object') return;
+                    if (!e.portfolioId) { e.portfolioId = 'main'; changed = true; }
+                });
+            }
 
             // Persist if needed
             try {
                 localStorage.setItem(window.StockStorage.KEYS.portfolios, JSON.stringify(this.portfolios));
                 localStorage.setItem(window.StockStorage.KEYS.currentPortfolioId, this.currentPortfolioId);
-                if (changed) { localStorage.setItem(window.StockStorage.KEYS.transactions, JSON.stringify(this.transactions)); localStorage.setItem(window.StockStorage.KEYS.profitAdjustments, JSON.stringify(this.profitAdjustments || [])); }
+                if (changed) { localStorage.setItem(window.StockStorage.KEYS.transactions, JSON.stringify(this.transactions)); localStorage.setItem(window.StockStorage.KEYS.profitAdjustments, JSON.stringify(this.profitAdjustments || [])); localStorage.setItem(window.StockStorage.KEYS.legacyAdjustments, JSON.stringify(this.legacyAdjustments || [])); }
             } catch (_) {}
         },
         openPortfolioModal() { this.newPortfolioName = ''; this.showPortfolioModal = true; },
@@ -4574,6 +4627,7 @@ const savedCash = localStorage.getItem(window.StockStorage.KEYS.cashBook) || '';
                 this.transactions = (this.transactions || []).filter(tx => (tx && (tx.portfolioId || 'main') !== pid));
                 this.cashBook = (this.cashBook || []).filter(e => (e && (e.portfolioId || 'main') !== pid));
                 this.profitAdjustments = (this.profitAdjustments || []).filter(e => (e && (e.portfolioId || 'main') !== pid));
+                this.legacyAdjustments = (this.legacyAdjustments || []).filter(e => (e && (e.portfolioId || 'main') !== pid));
                 this.corporateActions = window.StockDividendService && typeof window.StockDividendService.removePortfolioOverrides === 'function'
                     ? window.StockDividendService.removePortfolioOverrides(this.corporateActions || [], pid)
                     : (this.corporateActions || []).filter(e => (e && (e.portfolioId || 'main') !== pid));
@@ -4607,20 +4661,58 @@ const savedCash = localStorage.getItem(window.StockStorage.KEYS.cashBook) || '';
         txTypeLabel(tx) { return window.StockCashService.txTypeLabel.call(this, tx); },
         ledgerBadgeClass(row, dense = false) {
             if (!row) return dense ? 'bg-slate-100 text-slate-700' : 'bg-slate-50 text-slate-600';
+            if (row.kind === 'rights_issue') return dense ? 'bg-cyan-100 text-cyan-700' : 'bg-cyan-50 text-cyan-700';
             if (row.kind === 'dividend') return dense ? 'bg-rose-100 text-rose-700' : 'bg-rose-50 text-rose-600';
             if (row.kind === 'cash') return row.subType === 'withdraw' ? (dense ? 'bg-rose-100 text-rose-700' : 'bg-rose-50 text-rose-600') : (dense ? 'bg-emerald-100 text-emerald-700' : 'bg-emerald-50 text-emerald-700');
             return row.amount >= 0 ? (dense ? 'bg-green-100 text-green-700' : 'bg-green-50 text-green-600') : (dense ? 'bg-red-100 text-red-700' : 'bg-red-50 text-red-600');
         },
 
         // --- Dividends / Corporate Actions ---
+        openLegacyAdjustmentModal() { this.showLegacyAdjustmentModal = true; },
+        closeLegacyAdjustmentModal() { this.showLegacyAdjustmentModal = false; },
+        applyLegacyReconciliation() {
+            const rows = (this.reconciliationDiagnostic?.rows || []).filter(r => Math.abs(Number(r.gap)||0) > 2);
+            if (!rows.length) { this.openInfoModal('不需要校正', '目前沒有需要建立的個股歷史差額。'); return; }
+            const pid = this.currentPortfolioId || 'main';
+            const now = new Date().toISOString();
+            if (!Array.isArray(this.legacyAdjustments)) this.legacyAdjustments = [];
+            rows.forEach(r => {
+                const code=String(r.code||'').trim().toUpperCase(); if(!code) return;
+                this.legacyAdjustments = this.legacyAdjustments.filter(e => !(e && (e.portfolioId||'main')===pid && String(e.code||'').trim().toUpperCase()===code));
+                const existingAmount = Number(this.legacyAdjustmentByCode?.[code] || 0);
+                this.legacyAdjustments.push({ id:`legacy_${Date.now()}_${code}`, portfolioId:pid, code, name:r.name||code, amount:existingAmount + (Number(r.gap)||0), createdAt:now, note:'舊版歷史資料帳務差額校正（不修改原始交易）' });
+            });
+            this.saveData(); this.showLegacyAdjustmentModal=false; this.openInfoModal('校正完成', `已建立 ${rows.length} 檔個股的歷史差額校正。原始交易資料完全保留。`);
+        },
+        clearLegacyAdjustments() {
+            const pid=this.currentPortfolioId||'main';
+            this.confirmTitle='清除舊資料校正'; this.confirmMessage='只會移除本帳本的校正紀錄，不會刪除任何原始交易。確定繼續嗎？';
+            this.confirmCallback=()=>{ this.legacyAdjustments=(this.legacyAdjustments||[]).filter(e=>(e&& (e.portfolioId||'main'))!==pid); this.saveData(); }; this.showConfirmModal=true;
+        },
         openDividendManagerModal(stock = null) {
+            this.corporateActionMode = 'dividend';
             this.resetDividendForm();
+            this.resetRightsIssueForm();
             if (stock && stock.code) {
                 this.applyDividendStock(stock);
             }
             this.showDividendManagerModal = true;
         },
         closeDividendManagerModal() { this.showDividendManagerModal = false; this.showDividendSuggestions = false; },
+        resetRightsIssueForm() { this.rightsIssueForm = { id:null, code:'', name:'', rightsIssuePrice:null, rightsEligibleQty:null, rightsSubscribedQty:null, rightsPaymentDate:'', rightsAllotmentDate:'', note:'' }; },
+        editRightsIssueAction(action) {
+            const a = window.StockDividendService.normalizeAction(action); this.corporateActionMode='rights';
+            this.rightsIssueForm = { id:a.id, code:a.code||'', name:this.resolveStockName(a.code,a.name||''), rightsIssuePrice:Number(a.rightsIssuePrice)||null, rightsEligibleQty:Number(a.rightsEligibleQty)||null, rightsSubscribedQty:Number(a.rightsSubscribedQty)||null, rightsPaymentDate:a.rightsPaymentDate||'', rightsAllotmentDate:a.rightsAllotmentDate||'', note:a.note||'' };
+            this.dividendSearchText = `${a.code||''} ${this.rightsIssueForm.name||''}`.trim(); this.showDividendManagerModal=true;
+        },
+        applyRightsStock(stock) { if(!stock||!stock.code)return; const code=String(stock.code).trim().toUpperCase(); const name=this.resolveStockName(code,stock.name||this.nameMap?.[code]||''); this.rightsIssueForm.code=code; this.rightsIssueForm.name=name; this.dividendSearchText=`${code} ${name}`.trim(); },
+        saveRightsIssueAction() {
+            const f=this.rightsIssueForm||{}, code=String(f.code||'').trim().toUpperCase(), price=Math.max(0,Number(f.rightsIssuePrice)||0), qty=Math.max(0,Math.floor(Number(f.rightsSubscribedQty)||0));
+            if(!code){this.openInfoModal('資料不完整','請輸入股票代號。');return;} if(!(price>0)){this.openInfoModal('資料不完整','請輸入認購價格。');return;} if(!(qty>0)){this.openInfoModal('資料不完整','請輸入實際認購股數。');return;} if(!f.rightsPaymentDate){this.openInfoModal('資料不完整','請選擇繳款日。');return;} if(!f.rightsAllotmentDate){this.openInfoModal('資料不完整','請選擇撥股日。');return;} if(f.rightsAllotmentDate < f.rightsPaymentDate){this.openInfoModal('日期不合理','撥股日不可早於繳款日。');return;}
+            const existing=(this.corporateActions||[]).find(a=>a&&a.id===f.id), name=this.resolveStockName(code,f.name||this.nameMap?.[code]||'')||code;
+            const payload=window.StockDividendService.normalizeAction({...(existing||{}), id:f.id||`ca_${Date.now()}_${Math.floor(Math.random()*100000)}`, shared:true, scope:'shared', portfolioId:window.StockDividendService.SHARED_PORTFOLIO_ID||'shared', sharedKey:existing?.sharedKey, code,name,actionType:'rights_issue',source:'manual',status:'planned', exDate:'', cashDividendPerShare:0,stockDividendPerShareYuan:0, rightsIssuePrice:price,rightsPaymentDate:String(f.rightsPaymentDate||''),rightsAllotmentDate:String(f.rightsAllotmentDate||''),rightsEligibleQty:Math.max(0,Math.floor(Number(f.rightsEligibleQty)||0)),rightsSubscribedQty:qty,note:String(f.note||'').trim(),createdAt:existing?.createdAt||new Date().toISOString(),updatedAt:new Date().toISOString()});
+            this.corporateActions=window.StockDividendService.upsertSharedAction(this.corporateActions||[],payload,this.currentPortfolioId||'main'); this.nameMap[code]=name; if (typeof this.recomputeAllTradesAndValidate === 'function') this.recomputeAllTradesAndValidate(); this.saveData(); this.resetRightsIssueForm(); this.openInfoModal('','現金增資紀錄已儲存。繳款日會反映現金支出，撥股日後會形成獨立現增批次。');
+        },
         resetDividendForm() {
             this.dividendForm = { id: null, code: '', name: '', actionType: 'cash_dividend', exDate: '', recordDate: '', cashPaymentDate: '', stockPaymentDate: '', cashDividendPerShare: null, stockDividendPerShareYuan: null, prevClose: null, eligibleQty: null, taxWithheld: 0, fractionalShareCash: 0, note: '' };
             this.dividendSearchText = '';
@@ -4632,6 +4724,7 @@ const savedCash = localStorage.getItem(window.StockStorage.KEYS.cashBook) || '';
         },
         editDividendAction(action) {
             if (!action) return;
+            if (String(action.actionType||'') === 'rights_issue') { this.editRightsIssueAction(action); return; }
             const a = window.StockDividendService ? window.StockDividendService.normalizeAction(action) : action;
             this.dividendForm = {
                 id: a.id,
@@ -4825,23 +4918,28 @@ ${picked.date} 收盤價：${close}`);
         deleteDividendAction(id) {
             const raw = String(id || '');
             if (!raw) return;
-            this.confirmTitle = '刪除權息公告';
-            this.confirmMessage = '確定要刪除此筆共用權息公告嗎？這會從所有投資帳本移除此公告，並同步影響各帳本的應收股利、股利現金流與股票股利股數。';
+            const target = (this.corporateActions || []).find(a => String(a?.id) === raw);
+            const isRights = String(target?.actionType || '') === 'rights_issue';
+            this.confirmTitle = isRights ? '刪除現金增資' : '刪除權息公告';
+            this.confirmMessage = isRights ? '確定刪除此筆現金增資嗎？已反映的現金支出與現增批次也會一起移除。' : '確定要刪除此筆共用權息公告嗎？這會從所有投資帳本移除此公告，並同步影響各帳本的應收股利、股利現金流與股票股利股數。';
             this.confirmCallback = () => {
                 this.corporateActions = (this.corporateActions || []).filter(a => String(a && a.id) !== raw);
+                if (typeof this.recomputeAllTradesAndValidate === 'function') this.recomputeAllTradesAndValidate();
                 this.saveData();
             };
             this.showConfirmModal = true;
         },
         dividendActionTypeLabel(action) {
             const type = String(action?.actionType || '');
+            if (type === 'rights_issue') return '現金增資';
             if (type === 'cash_stock_dividend') return '除權息';
             if (type === 'stock_dividend') return '股票股利';
             return '現金股利';
         },
         dividendStatusLabel(action) {
             const status = String(action?.status || 'planned');
-            if (status === 'settled') return '已入帳';
+            if (status === 'settled') return action?.actionType === 'rights_issue' ? '已撥股' : '已入帳';
+            if (status === 'paid') return '已繳款';
             if (status === 'partially_settled') return '部分入帳';
             if (status === 'locked') return '已除權息 / 應收';
             if (status === 'cancelled') return '已取消';
@@ -4850,6 +4948,7 @@ ${picked.date} 收盤價：${close}`);
         dividendStatusClass(action) {
             const status = String(action?.status || 'planned');
             if (status === 'settled') return 'bg-emerald-50 text-emerald-700 border-emerald-200';
+            if (status === 'paid') return 'bg-cyan-50 text-cyan-700 border-cyan-200';
             if (status === 'partially_settled') return 'bg-blue-50 text-blue-700 border-blue-200';
             if (status === 'locked') return 'bg-orange-50 text-orange-700 border-orange-200';
             return 'bg-slate-50 text-slate-600 border-slate-200';

@@ -1,7 +1,7 @@
 (function(window) {
   'use strict';
 
-  const ACTION_TYPES = ['cash_dividend', 'stock_dividend', 'cash_stock_dividend'];
+  const ACTION_TYPES = ['cash_dividend', 'stock_dividend', 'cash_stock_dividend', 'rights_issue'];
   const SHARED_PORTFOLIO_ID = 'shared';
 
   function todayISO() {
@@ -46,6 +46,8 @@
       lockedAt: text(o.lockedAt),
       taxWithheld: Math.max(0, num(o.taxWithheld, 0)),
       fractionalShareCash: Math.max(0, num(o.fractionalShareCash, 0)),
+      rightsEligibleQty: Math.max(0, Math.floor(num(o.rightsEligibleQty, 0))),
+      rightsSubscribedQty: Math.max(0, Math.floor(num(o.rightsSubscribedQty, 0))),
       note: text(o.note),
       updatedAt: text(o.updatedAt)
     };
@@ -53,7 +55,7 @@
 
   function hasOverrideData(value) {
     const o = normalizeOverride(value);
-    return o.eligibleQty > 0 || !!o.lockedAt || o.taxWithheld > 0 || o.fractionalShareCash > 0 || !!o.note;
+    return o.eligibleQty > 0 || !!o.lockedAt || o.taxWithheld > 0 || o.fractionalShareCash > 0 || o.rightsEligibleQty > 0 || o.rightsSubscribedQty > 0 || !!o.note;
   }
 
   function mergeOverride(base, addition) {
@@ -64,6 +66,8 @@
       lockedAt: b.lockedAt || a.lockedAt,
       taxWithheld: b.taxWithheld > 0 ? b.taxWithheld : a.taxWithheld,
       fractionalShareCash: b.fractionalShareCash > 0 ? b.fractionalShareCash : a.fractionalShareCash,
+      rightsEligibleQty: b.rightsEligibleQty > 0 ? b.rightsEligibleQty : a.rightsEligibleQty,
+      rightsSubscribedQty: b.rightsSubscribedQty > 0 ? b.rightsSubscribedQty : a.rightsSubscribedQty,
       note: b.note || a.note,
       updatedAt: b.updatedAt || a.updatedAt
     };
@@ -114,6 +118,11 @@
       cashDividendPerShare,
       stockDividendPerShareYuan,
       stockDividendRatio,
+      rightsIssuePrice: Math.max(0, num(a.rightsIssuePrice, 0)),
+      rightsPaymentDate: text(a.rightsPaymentDate),
+      rightsAllotmentDate: text(a.rightsAllotmentDate),
+      rightsEligibleQty: Math.max(0, Math.floor(num(a.rightsEligibleQty, 0))),
+      rightsSubscribedQty: Math.max(0, Math.floor(num(a.rightsSubscribedQty, 0))),
       prevClose: Math.max(0, num(a.prevClose, 0)),
       exReferencePrice: Math.max(0, num(a.exReferencePrice, 0)),
       eligibleQty: Math.max(0, Math.floor(num(a.eligibleQty, 0))),
@@ -131,13 +140,17 @@
     const a = normalizeAction(action);
     if (a.sharedKey) return a.sharedKey;
     return [
+      a.actionType,
       a.code,
       a.exDate,
       a.recordDate,
       a.cashPaymentDate,
       a.stockPaymentDate,
+      a.rightsPaymentDate,
+      a.rightsAllotmentDate,
       String(a.cashDividendPerShare),
       String(a.stockDividendPerShareYuan),
+      String(a.rightsIssuePrice || 0),
       String(a.prevClose || 0)
     ].join('|');
   }
@@ -156,11 +169,11 @@
 
   function mergeCommonFields(base, rawAction) {
     const a = normalizeAction(rawAction);
-    const fields = ['code', 'name', 'actionType', 'source', 'status', 'announceDate', 'exDate', 'recordDate', 'cashPaymentDate', 'stockPaymentDate', 'note'];
+    const fields = ['code', 'name', 'actionType', 'source', 'status', 'announceDate', 'exDate', 'recordDate', 'cashPaymentDate', 'stockPaymentDate', 'rightsPaymentDate', 'rightsAllotmentDate', 'note'];
     fields.forEach(field => {
       if (a[field] && (!base[field] || field === 'status')) base[field] = a[field];
     });
-    ['cashDividendPerShare', 'stockDividendPerShareYuan', 'stockDividendRatio', 'prevClose', 'exReferencePrice'].forEach(field => {
+    ['cashDividendPerShare', 'stockDividendPerShareYuan', 'stockDividendRatio', 'rightsIssuePrice', 'prevClose', 'exReferencePrice'].forEach(field => {
       if (Number(a[field] || 0) > 0) base[field] = a[field];
     });
     if (!base.createdAt || (a.createdAt && a.createdAt < base.createdAt)) base.createdAt = a.createdAt;
@@ -270,6 +283,8 @@
       lockedAt: payload && payload.lockedAt,
       taxWithheld: payload && payload.taxWithheld,
       fractionalShareCash: payload && payload.fractionalShareCash,
+      rightsEligibleQty: payload && payload.rightsEligibleQty,
+      rightsSubscribedQty: payload && payload.rightsSubscribedQty,
       note: payload && payload.portfolioNote
     });
 
@@ -290,6 +305,8 @@
       lockedAt: override.lockedAt,
       taxWithheld: override.taxWithheld,
       fractionalShareCash: override.fractionalShareCash,
+      rightsEligibleQty: override.rightsEligibleQty,
+      rightsSubscribedQty: override.rightsSubscribedQty,
       portfolioNote: override.note,
       globalNote: a.note,
       note: override.note || a.note,
@@ -353,6 +370,13 @@
       if (payDate == null || payDate >= cutoff) return;
       qty += calculateStockDividendQty(action, transactions, corporateActions).qty;
     });
+    actionsForPortfolio(corporateActions, pid).forEach(action => {
+      if (ignoreActionId && text(action.id) === ignoreActionId) return;
+      if (action.code !== code || action.actionType !== 'rights_issue' || !action.rightsAllotmentDate) return;
+      const allotDate = toDateValue(action.rightsAllotmentDate);
+      if (allotDate == null || allotDate >= cutoff) return;
+      qty += Math.max(0, Math.floor(Number(action.rightsSubscribedQty) || 0));
+    });
     return qty;
   }
 
@@ -394,6 +418,12 @@
 
   function enrichAction(action, transactions, corporateActions, baseDate = todayISO()) {
     const a = normalizeAction(action);
+    if (a.actionType === 'rights_issue') {
+      const rightsPaid = !!(a.rightsPaymentDate && isOnOrBefore(a.rightsPaymentDate, baseDate));
+      const rightsSettled = !!(a.rightsAllotmentDate && isOnOrBefore(a.rightsAllotmentDate, baseDate));
+      const status = rightsSettled ? 'settled' : (rightsPaid ? 'paid' : 'planned');
+      return Object.assign({}, a, { status, rightsPaid, rightsSettled, rightsTotalAmount: Number(a.rightsSubscribedQty || 0) * Number(a.rightsIssuePrice || 0) });
+    }
     const cash = calculateCashDividend(a, transactions, corporateActions);
     const stock = calculateStockDividendQty(a, transactions, corporateActions);
     const exReferencePrice = a.exReferencePrice || calculateExReferencePrice(a) || 0;
@@ -418,12 +448,33 @@
     });
   }
 
+
+  function rightsIssuePositionEffects(vm) {
+    return portfolioActions(vm)
+      .filter(a => a.actionType === 'rights_issue' && a.rightsAllotmentDate && isOnOrBefore(a.rightsAllotmentDate) && Number(a.rightsSubscribedQty || 0) > 0 && Number(a.rightsIssuePrice || 0) > 0)
+      .map(a => ({ kind: 'rights_issue', id: a.id, portfolioId: a.portfolioId, code: a.code, name: a.name, date: a.rightsAllotmentDate, qtyEffect: Number(a.rightsSubscribedQty || 0), costEffect: Number(a.rightsSubscribedQty || 0) * Number(a.rightsIssuePrice || 0), price: Number(a.rightsIssuePrice || 0), note: `現金增資 ${a.rightsSubscribedQty} 股 × ${a.rightsIssuePrice} 元` }));
+  }
+
+  function rightsIssueCashOutflow(vm) {
+    return portfolioActions(vm).reduce((sum, a) => {
+      if (a.actionType !== 'rights_issue' || !a.rightsPaymentDate || !isOnOrBefore(a.rightsPaymentDate)) return sum;
+      return sum + Number(a.rightsSubscribedQty || 0) * Number(a.rightsIssuePrice || 0);
+    }, 0);
+  }
+
+  function rightsIssueCashLedgerRows(vm) {
+    return portfolioActions(vm).filter(a => a.actionType === 'rights_issue' && a.rightsPaymentDate && isOnOrBefore(a.rightsPaymentDate) && Number(a.rightsSubscribedQty || 0) > 0).map(a => {
+      const amount = Number(a.rightsSubscribedQty || 0) * Number(a.rightsIssuePrice || 0);
+      return { kind: 'rights_issue', id: `rights_${a.id}_${a.portfolioId}`, rawId: a.id, date: a.rightsPaymentDate, subType: 'rightsIssue', label: '現增', txType: '現金增資', title: `${vm.displayNameOnly ? vm.displayNameOnly(a.code, a.name) : (a.name || a.code)} (${a.code})`, note: `認購 ${a.rightsSubscribedQty} 股 × ${a.rightsIssuePrice} 元`, amount: -amount, inAmount: 0, outAmount: amount, canDelete: false, sortId: Number(String(a.id).replace(/\D/g, '').slice(-10)) || 0 };
+    });
+  }
+
   function portfolioActionsFor(vm, portfolioId) {
     const pid = text(portfolioId || (vm && vm.currentPortfolioId)) || 'main';
     return actionsForPortfolio((vm && vm.corporateActions) || [], pid)
       .map(a => enrichAction(a, (vm && vm.transactions) || [], (vm && vm.corporateActions) || []))
       .sort((a, b) => {
-        const da = toDateValue(a.exDate || a.cashPaymentDate || a.stockPaymentDate) || 0;
+        const da = toDateValue(a.exDate || a.cashPaymentDate || a.stockPaymentDate || a.rightsPaymentDate || a.rightsAllotmentDate) || 0;
         const db = toDateValue(b.exDate || b.cashPaymentDate || b.stockPaymentDate) || 0;
         if (da !== db) return db - da;
         return String(a.code).localeCompare(String(b.code));
@@ -543,6 +594,9 @@
     cashReceivable,
     stockReceivableValue,
     stockDividendPositionEffects,
+    rightsIssuePositionEffects,
+    rightsIssueCashOutflow,
+    rightsIssueCashLedgerRows,
     cashLedgerRows,
     dividendSummaryByCode,
   };

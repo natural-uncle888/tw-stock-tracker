@@ -35,6 +35,8 @@
     
             cashNetContribution() { return (this.cashInitialCapital || 0) + (this.cashDepositsTotal || 0) - (this.cashWithdrawalsTotal || 0); },
     
+            rightsIssueCashOutflow() { return window.StockDividendService && window.StockDividendService.rightsIssueCashOutflow ? window.StockDividendService.rightsIssueCashOutflow(this) : 0; },
+
             cashTradeNet() {
                 let net = 0;
                 (this.portfolioTransactions || []).forEach(tx => {
@@ -54,7 +56,7 @@
 
             dividendIncomeTotal() { return (Number(this.dividendCashSettledNet) || 0) + (Number(this.dividendReceivable) || 0) + (Number(this.stockDividendReceivableValue) || 0); },
 
-            cashBalance() { return (this.cashNetContribution || 0) + (this.cashTradeNet || 0) + (this.dividendCashSettledNet || 0); },
+            cashBalance() { return (this.cashNetContribution || 0) + (this.cashTradeNet || 0) + (this.dividendCashSettledNet || 0) - (this.rightsIssueCashOutflow || 0); },
     
             signedMarketValue() {
                 return (this.holdings || []).reduce((sum, h) => {
@@ -107,6 +109,7 @@
                 // Dividends (investment income, not deposits)
                 if (window.StockDividendService) {
                     window.StockDividendService.cashLedgerRows(this).forEach(row => rows.push(row));
+                    if (window.StockDividendService.rightsIssueCashLedgerRows) window.StockDividendService.rightsIssueCashLedgerRows(this).forEach(row => rows.push(row));
                 }
 
                 // Trades
