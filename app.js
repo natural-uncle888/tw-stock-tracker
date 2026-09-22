@@ -185,7 +185,7 @@ createApp({
                     </div>
                     <div class="min-w-0">
                         <h1 class="text-3xl font-extrabold text-slate-800 tracking-tight">台股損益管理</h1>
-                        <p class="text-sm text-slate-500 font-bold tracking-wider mt-1">SMART TRACKER v5.3 Pro</p>
+                        <p class="text-sm text-slate-500 font-bold tracking-wider mt-1">SMART TRACKER v5.4 Pro</p>
                     </div>
                 </div>
 
@@ -2857,7 +2857,7 @@ createApp({
         </div>
 
 
-        <!-- v5.3: K棒／技術判讀 -->
+        <!-- v5.4: 互動式 K線／技術判讀 -->
         <div v-if="showTechnicalAnalysisModal" class="fixed inset-0 z-[110] bg-slate-950/65 backdrop-blur-sm flex items-center justify-center p-3 md:p-6" @click.self="closeTechnicalAnalysis">
             <div class="bg-white rounded-[2rem] w-full max-w-6xl shadow-2xl overflow-hidden flex flex-col" style="max-height:calc(100vh - 32px)">
                 <div class="px-5 md:px-7 py-5 border-b border-slate-200 bg-gradient-to-r from-indigo-950 via-slate-900 to-slate-800 text-white flex items-start justify-between gap-4 shrink-0">
@@ -2890,6 +2890,58 @@ createApp({
                             </div>
                         </div>
 
+                        <div class="card !p-0 overflow-hidden">
+                            <div class="px-5 py-4 bg-slate-50 border-b border-slate-200 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
+                                <div><div class="font-black text-slate-800">互動式日 K 技術線圖</div><div class="text-xs font-bold text-slate-400 mt-1">最近約 100 個交易日・點選任一根 K 棒可查看開高低收、量能、均線與型態。</div></div>
+                                <div class="flex flex-wrap gap-x-4 gap-y-2 text-[11px] font-black">
+                                    <span class="text-amber-500">— MA5</span><span class="text-sky-600">— MA10</span><span class="text-fuchsia-600">— 月線 MA20</span><span class="text-violet-700">— 季線 MA60</span><span class="text-slate-400">● 型態訊號</span>
+                                </div>
+                            </div>
+                            <div v-if="technicalSelectedCandle" class="px-5 py-4 border-b border-slate-100 bg-white">
+                                <div class="flex flex-wrap items-center gap-x-5 gap-y-2 text-xs md:text-sm">
+                                    <span class="font-black text-slate-800">{{ technicalSelectedCandle.date }}</span>
+                                    <span class="font-bold text-slate-500">開 <b class="text-slate-800">{{ Number(technicalSelectedCandle.open).toFixed(2) }}</b></span>
+                                    <span class="font-bold text-slate-500">高 <b class="text-red-600">{{ Number(technicalSelectedCandle.high).toFixed(2) }}</b></span>
+                                    <span class="font-bold text-slate-500">低 <b class="text-emerald-700">{{ Number(technicalSelectedCandle.low).toFixed(2) }}</b></span>
+                                    <span class="font-bold text-slate-500">收 <b class="text-slate-900">{{ Number(technicalSelectedCandle.close).toFixed(2) }}</b></span>
+                                    <span class="font-black" :class="Number(technicalSelectedCandle.changePct)>=0?'text-red-600':'text-emerald-700'">{{ Number(technicalSelectedCandle.changePct)>=0?'+':'' }}{{ technicalSelectedCandle.changePct ?? '-' }}%</span>
+                                    <span class="font-bold text-slate-500">量 <b class="text-slate-800">{{ technicalVolumeText(technicalSelectedCandle.volume) }}</b></span>
+                                </div>
+                                <div class="flex flex-wrap gap-2 mt-3">
+                                    <span class="px-2.5 py-1 rounded-lg text-xs font-black" :class="technicalBiasClass(technicalSelectedCandle.bias)">{{ technicalSelectedCandle.pattern }}</span>
+                                    <span v-for="ma in technicalSelectedMaRows()" :key="ma.key" class="px-2.5 py-1 rounded-lg bg-slate-50 border border-slate-200 text-xs font-bold text-slate-600">{{ ma.label }} {{ ma.value ? Number(ma.value).toFixed(2) : '-' }}・{{ ma.value ? (technicalSelectedCandle.close >= ma.value ? '站上' : '跌破') : '資料不足' }}</span>
+                                </div>
+                            </div>
+                            <div class="overflow-x-auto bg-white">
+                                <svg v-if="technicalResult.chart && technicalResult.chart.rows && technicalResult.chart.rows.length" viewBox="0 0 1100 560" class="block w-full min-w-[900px] h-auto select-none" role="img" aria-label="K線技術圖">
+                                    <rect x="0" y="0" width="1100" height="560" fill="white"></rect>
+                                    <g v-for="tick in technicalPriceTicks()" :key="'p'+tick.label">
+                                        <line x1="58" x2="1040" :y1="tick.y" :y2="tick.y" stroke="#e2e8f0" stroke-width="1"></line>
+                                        <text x="1048" :y="tick.y+4" font-size="11" fill="#94a3b8">{{ tick.label }}</text>
+                                    </g>
+                                    <line x1="58" x2="1040" y1="374" y2="374" stroke="#cbd5e1" stroke-width="1"></line>
+                                    <line v-if="technicalResult.support" x1="58" x2="1040" :y1="technicalChartYPrice(technicalResult.support)" :y2="technicalChartYPrice(technicalResult.support)" stroke="#059669" stroke-dasharray="6 6" stroke-width="1.2" opacity="0.65"></line>
+                                    <line v-if="technicalResult.resistance" x1="58" x2="1040" :y1="technicalChartYPrice(technicalResult.resistance)" :y2="technicalChartYPrice(technicalResult.resistance)" stroke="#e11d48" stroke-dasharray="6 6" stroke-width="1.2" opacity="0.65"></line>
+                                    <polyline :points="technicalMaPoints('ma5')" fill="none" stroke="#f59e0b" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"></polyline>
+                                    <polyline :points="technicalMaPoints('ma10')" fill="none" stroke="#0284c7" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"></polyline>
+                                    <polyline :points="technicalMaPoints('ma20')" fill="none" stroke="#c026d3" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"></polyline>
+                                    <polyline :points="technicalMaPoints('ma60')" fill="none" stroke="#6d28d9" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round"></polyline>
+                                    <g v-for="(k,i) in technicalResult.chart.rows" :key="k.date" @click="technicalSelectCandle(k)" @mouseenter="technicalSelectCandle(k)" class="cursor-pointer">
+                                        <line v-if="technicalSelectedCandle && technicalSelectedCandle.date===k.date" :x1="technicalChartX(i)" :x2="technicalChartX(i)" y1="22" y2="526" stroke="#64748b" stroke-dasharray="4 4" stroke-width="1" opacity="0.6"></line>
+                                        <line :x1="technicalChartX(i)" :x2="technicalChartX(i)" :y1="technicalChartYPrice(k.high)" :y2="technicalChartYPrice(k.low)" :stroke="k.close>=k.open ? '#dc2626' : '#059669'" stroke-width="1.25"></line>
+                                        <rect :x="technicalChartX(i)-technicalCandleWidth()/2" :y="Math.min(technicalChartYPrice(k.open),technicalChartYPrice(k.close))" :width="technicalCandleWidth()" :height="Math.max(2,Math.abs(technicalChartYPrice(k.open)-technicalChartYPrice(k.close)))" :fill="k.close>=k.open ? '#dc2626' : '#059669'" rx="0.7"></rect>
+                                        <circle v-if="k.importantPattern" :cx="technicalChartX(i)" :cy="Math.max(18,technicalChartYPrice(k.high)-9)" r="3.6" fill="#475569"><title>{{ k.date }} {{ k.pattern }}</title></circle>
+                                        <rect :x="technicalChartX(i)-technicalChartHitWidth()/2" y="18" :width="technicalChartHitWidth()" height="510" fill="transparent"></rect>
+                                        <rect :x="technicalChartX(i)-technicalCandleWidth()/2" :y="technicalChartYVolume(k.volume)" :width="technicalCandleWidth()" :height="Math.max(1,510-technicalChartYVolume(k.volume))" :fill="k.close>=k.open ? '#fca5a5' : '#6ee7b7'" opacity="0.85"></rect>
+                                    </g>
+                                    <polyline :points="technicalVolumeMaPoints()" fill="none" stroke="#64748b" stroke-width="1.5" stroke-dasharray="4 3"></polyline>
+                                    <g v-for="tick in technicalDateTicks()" :key="'d'+tick.label"><text :x="tick.x" y="544" text-anchor="middle" font-size="11" fill="#94a3b8">{{ tick.label }}</text></g>
+                                    <text x="16" y="34" font-size="11" fill="#94a3b8">價格</text><text x="16" y="404" font-size="11" fill="#94a3b8">成交量</text>
+                                </svg>
+                            </div>
+                            <div class="px-5 py-3 bg-slate-50 border-t border-slate-200 text-[11px] font-bold text-slate-400">手機可左右滑動圖表；紅 K 代表收盤高於或等於開盤、綠 K 代表收盤低於開盤。灰色圓點代表偵測到較具名稱的 K 棒型態，點選即可查看細節。</div>
+                        </div>
+
                         <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
                             <div class="card !p-5">
                                 <div class="flex items-center justify-between gap-3"><div><div class="text-xs font-black text-slate-400">最新 K 棒型態</div><div class="text-xl font-black text-slate-800 mt-1">{{ technicalResult.pattern.name }}</div></div><span class="px-3 py-1.5 rounded-full text-xs font-black" :class="technicalBiasClass(technicalResult.pattern.bias)">{{ technicalBiasText(technicalResult.pattern.bias) }}</span></div>
@@ -2913,10 +2965,6 @@ createApp({
 
                         <div v-if="technicalResult.caution && technicalResult.caution.length" class="rounded-2xl bg-amber-50 border border-amber-200 p-5"><div class="font-black text-amber-800"><i class="fa-solid fa-triangle-exclamation mr-2"></i>目前值得注意</div><div class="mt-2 flex flex-wrap gap-2"><span v-for="x in technicalResult.caution" :key="x" class="px-3 py-1.5 rounded-full bg-white border border-amber-200 text-xs font-black text-amber-700">{{ x }}</span></div></div>
 
-                        <div class="card !p-0 overflow-hidden">
-                            <div class="px-5 py-4 bg-slate-50 border-b border-slate-200"><div class="font-black text-slate-800">最近 10 根 K 棒</div><div class="text-xs font-bold text-slate-400 mt-1">方便確認型態不是只看單日，而是放在前後走勢中觀察。</div></div>
-                            <div class="overflow-x-auto"><table class="w-full text-sm"><thead><tr class="text-left text-xs text-slate-400 border-b"><th class="p-3">日期</th><th class="p-3">型態</th><th class="p-3 text-right">開</th><th class="p-3 text-right">高</th><th class="p-3 text-right">低</th><th class="p-3 text-right">收</th><th class="p-3 text-right">量</th></tr></thead><tbody><tr v-for="k in technicalResult.recent" :key="k.date" class="border-b border-slate-100 last:border-0"><td class="p-3 font-bold text-slate-600 whitespace-nowrap">{{ k.date }}</td><td class="p-3"><span class="px-2 py-1 rounded-lg text-xs font-black" :class="technicalBiasClass(k.bias)">{{ k.pattern }}</span></td><td class="p-3 text-right font-bold">{{ Number(k.open).toFixed(2) }}</td><td class="p-3 text-right font-bold text-red-500">{{ Number(k.high).toFixed(2) }}</td><td class="p-3 text-right font-bold text-emerald-600">{{ Number(k.low).toFixed(2) }}</td><td class="p-3 text-right font-black">{{ Number(k.close).toFixed(2) }}</td><td class="p-3 text-right font-bold text-slate-500">{{ technicalVolumeText(k.volume) }}</td></tr></tbody></table></div>
-                        </div>
                     </template>
                 </div>
             </div>
@@ -2959,7 +3007,7 @@ createApp({
             showCommodityModal: false,
             showTechnicalAnalysisModal: false,
             technicalForm: { code: '', name: '' },
-            technicalLoading: false, technicalError: '', technicalResult: null,
+            technicalLoading: false, technicalError: '', technicalResult: null, technicalSelectedCandle: null,
             showInventoryMarketPanel: false,
             showHoldingRadarDetails: false,
             inventoryStickySummaryDocked: false,
@@ -4991,10 +5039,11 @@ ${picked.date} 收盤價：${close}`);
             this.technicalForm = { code, name };
             this.technicalError = '';
             this.technicalResult = null;
+            this.technicalSelectedCandle = null;
             this.showTechnicalAnalysisModal = true;
             if (code) this.$nextTick(() => this.runTechnicalAnalysis());
         },
-        closeTechnicalAnalysis() { this.showTechnicalAnalysisModal = false; this.technicalError = ''; },
+        closeTechnicalAnalysis() { this.showTechnicalAnalysisModal = false; this.technicalError = ''; this.technicalSelectedCandle = null; },
         async runTechnicalAnalysis() {
             const code = String(this.technicalForm?.code || '').trim().toUpperCase();
             if (!code) { this.technicalError = '請輸入台股股票代號'; return; }
@@ -5005,6 +5054,8 @@ ${picked.date} 收盤價：${close}`);
                 const knownName = this.resolveStockName(code, this.nameMap?.[code] || this.technicalForm?.name || result.name || '');
                 this.technicalForm.code = code; this.technicalForm.name = knownName || result.name || code;
                 this.technicalResult = { ...result, name: knownName || result.name || code };
+                const chartRows = this.technicalResult?.chart?.rows || [];
+                this.technicalSelectedCandle = chartRows.length ? chartRows[chartRows.length - 1] : null;
             } catch (e) {
                 this.technicalError = e?.message || '無法取得歷史行情，請稍後再試。';
             } finally { this.technicalLoading = false; }
@@ -5013,6 +5064,17 @@ ${picked.date} 收盤價：${close}`);
         technicalBiasText(bias) { return bias === 'bullish' ? '偏多' : (bias === 'bearish' ? '偏空' : '中性'); },
         technicalBiasClass(bias) { return bias === 'bullish' ? 'text-red-600 bg-red-50' : (bias === 'bearish' ? 'text-emerald-700 bg-emerald-50' : 'text-slate-600 bg-slate-100'); },
         technicalVolumeText(v) { const x=Number(v||0); if (!Number.isFinite(x)) return '-'; if (x >= 100000000) return (x/100000000).toFixed(2)+'億'; if (x >= 10000) return (x/10000).toFixed(1)+'萬'; return Math.round(x).toLocaleString('zh-TW'); },
+        technicalSelectedMaRows() { const k=this.technicalSelectedCandle||{}; return [{key:'ma5',label:'MA5',value:k.ma5},{key:'ma10',label:'MA10',value:k.ma10},{key:'ma20',label:'月線 MA20',value:k.ma20},{key:'ma60',label:'季線 MA60',value:k.ma60}]; },
+        technicalSelectCandle(k) { if (k) this.technicalSelectedCandle = k; },
+        technicalChartX(i) { const rows=this.technicalResult?.chart?.rows||[]; const n=Math.max(1,rows.length-1); return 62 + (Number(i)||0) * (972/n); },
+        technicalCandleWidth() { const n=this.technicalResult?.chart?.rows?.length||1; return Math.max(3.2,Math.min(8.5,760/n)); },
+        technicalChartHitWidth() { const n=this.technicalResult?.chart?.rows?.length||1; return Math.max(7,Math.min(16,972/n)); },
+        technicalChartYPrice(v) { const sc=this.technicalResult?.chart?.scale||{}; const lo=Number(sc.priceMin), hi=Number(sc.priceMax), x=Number(v); if(!Number.isFinite(x)||!Number.isFinite(lo)||!Number.isFinite(hi)||hi===lo) return 190; return 350-((x-lo)/(hi-lo))*315; },
+        technicalChartYVolume(v) { const max=Number(this.technicalResult?.chart?.scale?.maxVolume)||1; const x=Math.max(0,Number(v)||0); return 510-Math.min(1,x/max)*108; },
+        technicalMaPoints(key) { const rows=this.technicalResult?.chart?.rows||[]; return rows.map((r,i)=>Number.isFinite(Number(r[key]))?`${this.technicalChartX(i)},${this.technicalChartYPrice(r[key])}`:'').filter(Boolean).join(' '); },
+        technicalVolumeMaPoints() { const rows=this.technicalResult?.chart?.rows||[]; return rows.map((r,i)=>Number.isFinite(Number(r.volAvg20))?`${this.technicalChartX(i)},${this.technicalChartYVolume(r.volAvg20)}`:'').filter(Boolean).join(' '); },
+        technicalPriceTicks() { const sc=this.technicalResult?.chart?.scale||{}; const lo=Number(sc.priceMin),hi=Number(sc.priceMax); if(!Number.isFinite(lo)||!Number.isFinite(hi)) return []; return Array.from({length:5},(_,i)=>{const v=hi-(hi-lo)*(i/4); return {label:v.toFixed(v>=100?1:2),y:this.technicalChartYPrice(v)};}); },
+        technicalDateTicks() { const rows=this.technicalResult?.chart?.rows||[]; if(!rows.length) return []; const count=Math.min(6,rows.length); const idxs=[]; for(let i=0;i<count;i++) idxs.push(Math.round((rows.length-1)*(i/Math.max(1,count-1)))); return [...new Set(idxs)].map(i=>({x:this.technicalChartX(i),label:String(rows[i]?.date||'').slice(5)})); },
 
         openStockDetails(stock, returnTab = 'inventory') { if (!stock || !stock.code) return; this.stockDetailsReturnTab = returnTab || 'inventory'; this.selectedStock = { code: stock.code, name: stock.name || this.resolveStockName(stock.code, '') || stock.code }; this.showStockDetails = true; this.currentTab = 'inventory'; window.scrollTo({ top: 0, behavior: 'smooth' }); },
         openStockFromHistory(stock, returnTab = 'history') { this.openStockDetails(stock, returnTab); },

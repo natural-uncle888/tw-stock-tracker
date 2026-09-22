@@ -61,14 +61,34 @@
     return { name: m.bullish ? '紅 K' : (m.bearish ? '黑 K' : '平盤 K'), bias: m.bullish ? 'bullish' : (m.bearish ? 'bearish' : 'neutral'), description:'單根 K 棒訊號有限，需搭配均線、量能與前後位置一起判讀。' };
   }
 
-  function detectRecentPatterns(rows, count=8) {
+  function buildChartData(rows, count=100) {
     const start = Math.max(0, rows.length-count);
     const out = [];
     for (let i=start;i<rows.length;i++) {
       const p = detectLatestPattern(rows.slice(0,i+1));
-      out.push({ ...rows[i], pattern: p.name, bias: p.bias });
+      const prev = i > 0 ? rows[i-1] : null;
+      const ma5 = smaAt(rows,5,i), ma10 = smaAt(rows,10,i), ma20 = smaAt(rows,20,i), ma60 = smaAt(rows,60,i);
+      const vol20 = avg(rows.slice(Math.max(0,i-19), i+1).map(r=>r.volume));
+      out.push({
+        ...rows[i],
+        ma5: round2(ma5), ma10: round2(ma10), ma20: round2(ma20), ma60: round2(ma60),
+        changePct: round2(prev ? pct(rows[i].close, prev.close) : null),
+        volAvg20: round2(vol20),
+        pattern: p.name, bias: p.bias,
+        importantPattern: !['紅 K','黑 K','平盤 K'].includes(p.name)
+      });
     }
-    return out.reverse();
+    const prices=[];
+    out.forEach(r=>{
+      prices.push(r.low,r.high);
+      ['ma5','ma10','ma20','ma60'].forEach(k=>{ if(Number.isFinite(r[k])) prices.push(r[k]); });
+    });
+    let priceMin=Math.min(...prices), priceMax=Math.max(...prices);
+    if (!Number.isFinite(priceMin) || !Number.isFinite(priceMax)) { priceMin=0; priceMax=1; }
+    const pad=Math.max((priceMax-priceMin)*0.07, priceMax*0.008, 0.5);
+    priceMin=Math.max(0, priceMin-pad); priceMax+=pad;
+    const maxVolume=Math.max(1,...out.map(r=>Number(r.volume)||0),...out.map(r=>Number(r.volAvg20)||0));
+    return { rows:out, scale:{priceMin:round2(priceMin),priceMax:round2(priceMax),maxVolume} };
   }
 
   function supportResistance(rows, current) {
@@ -128,7 +148,7 @@
       score, stance, tone, latest:last, dayChange:round2(dayChange), pattern:pat, positions,
       volume:{today:last.volume, avg5:vol5, avg20:vol20, ratio20:round2(volRatio), text:volumeText},
       trendText:trendParts.join('；') || '趨勢資料不足', support:round2(sr.support), resistance:round2(sr.resistance),
-      caution, recent:detectRecentPatterns(rows,10)
+      caution, chart:buildChartData(rows,100)
     };
   }
 
