@@ -1609,7 +1609,7 @@ createApp({
                                 </div>
                                 <div class="flex items-center gap-2">
                                     <input type="number" min="0" :max="lot.remainingQty" v-model.number="lot.selectedQty" @input="sellTx.lotStrategy = 'manual'" class="flex-1 h-10 px-3 rounded-lg border border-slate-300 font-bold text-slate-700 outline-none focus:border-blue-500" placeholder="本次賣出股數">
-                                    <button type="button" @click="selectWholeSellLot(lot)" class="h-10 px-3 rounded-lg bg-blue-50 text-blue-600 text-xs font-black hover:bg-blue-100">整批</button>
+                                    <button type="button" @click="selectWholeSellLot(lot)" class="h-10 px-3 rounded-lg bg-blue-50 text-blue-600 text-xs font-black hover:bg-blue-100">股</button>
                                 </div>
                             </div>
                         </div>
