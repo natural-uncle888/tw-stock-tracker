@@ -3,7 +3,7 @@
 
   let __gdriveTokenClient = null;
   let __gdriveTokenClientCid = null;
-  const __GDRIVE_SCOPE = 'https://www.googleapis.com/auth/drive.appdata';
+  const __GDRIVE_SCOPE = 'https://www.googleapis.com/auth/drive.appdata openid email';
   const BACKUP_FILE_NAME = 'tw_stock_backup.json';
   const DEVICE_ID_KEY_FALLBACK = 'tw_stock_gdrive_device_id_v1';
 
@@ -267,18 +267,24 @@
     },
 
     getGDriveEffectiveClientId() {
-      const custom = (this.gdriveClientId || '').trim();
-      return custom || __getDefaultGDriveClientId();
+      // Cross-device sync must use the same OAuth application on every device.
+      // When this deployment has a built-in Client ID, always prefer it and ignore
+      // any old per-device custom override. A custom Client ID is only a fallback
+      // for self-hosted copies that do not define a built-in Client ID.
+      const builtIn = __getDefaultGDriveClientId();
+      if (builtIn) return builtIn;
+      return (this.gdriveClientId || '').trim();
     },
 
     getGDriveClientIdSource() {
-      return (this.gdriveClientId || '').trim() ? 'custom' : (__getDefaultGDriveClientId() ? 'default' : 'none');
+      if (__getDefaultGDriveClientId()) return 'default';
+      return (this.gdriveClientId || '').trim() ? 'custom' : 'none';
     },
 
     saveGDriveClientId() {
       const cid = (this.gdriveClientIdInput || '').trim();
       if (!cid) {
-        this.openInfoModal('提示', '不填也可以使用網站內建的預設 Client ID；只有想改用自己的 Google Cloud 專案時才需要輸入。');
+        this.openInfoModal('提示', '目前網站已內建固定的 Google Client ID，跨裝置會自動使用同一組設定。');
         return;
       }
       localStorage.setItem(window.StockStorage.KEYS.gdriveClientId, cid);
@@ -286,7 +292,11 @@
       this.gdriveClientIdInput = cid;
       __gdriveTokenClient = null;
       __gdriveTokenClientCid = null;
-      this.openInfoModal('已儲存', '自訂 Google OAuth Client ID 已儲存。跨裝置備份時，每台裝置都必須使用同一組 Client ID。');
+      if (__getDefaultGDriveClientId()) {
+        this.openInfoModal('已儲存', '已保留這組自訂 Client ID 作為備用；目前此網站為了確保手機、平板與桌機共用同一份雲端備份，會固定使用網站內建 Client ID。');
+      } else {
+        this.openInfoModal('已儲存', '自訂 Google OAuth Client ID 已儲存。');
+      }
     },
 
     clearGDriveClientId() {
@@ -328,8 +338,10 @@
           else reject(new Error(resp?.error_description || resp?.error || '授權失敗'));
         };
         try {
-          // 不強制每次都 consent，避免反覆觸發 Google 的再次驗證流程。
-          __gdriveTokenClient.requestAccessToken();
+          // 跨裝置備份最常見的誤判來源之一是瀏覽器自動沿用另一個
+          // 已登入的 Google 帳號。每次雲端操作都讓使用者明確選擇帳號，
+          // 確保手機 / 平板 / 桌機真的進到同一個 Drive AppDataFolder。
+          __gdriveTokenClient.requestAccessToken({ prompt: 'select_account' });
         } catch (e) {
           if (finished) return;
           finished = true;
@@ -337,6 +349,18 @@
           reject(new Error('無法啟動授權流程。請允許彈出視窗（Popup）後再試一次。'));
         }
       });
+      // 記錄實際授權帳號，方便跨裝置確認是否登入同一個 Google 帳號。
+      try {
+        const res = await fetch('https://openidconnect.googleapis.com/v1/userinfo', {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        if (res.ok) {
+          const profile = await res.json();
+          if (profile && profile.email) {
+            this._writeCloudMeta({ googleAccountEmail: String(profile.email), googleAccountCheckedAt: new Date().toISOString() });
+          }
+        }
+      } catch (_) {}
       return token;
     },
 
@@ -379,6 +403,20 @@
 
     _buildBackupPayload() {
       return this._decorateBackupPayload(window.StockStorage.buildBackupPayload(this));
+    },
+
+    async _removeDuplicateBackupFiles(accessToken, keepFileId, files) {
+      const candidates = safeArray(files).filter(f => f && f.id && f.id !== keepFileId);
+      let removed = 0;
+      for (const file of candidates) {
+        try {
+          await window.StockBackupService._deleteDriveFile.call(this, accessToken, file.id);
+          removed += 1;
+        } catch (_) {
+          // A duplicate cleanup failure must not make a successful backup fail.
+        }
+      }
+      return removed;
     },
 
     async _downloadBackupPayload(accessToken, fileId) {
@@ -462,13 +500,24 @@
         const nowIso = new Date().toISOString();
         const modifiedTime = (uploadInfo && uploadInfo.modifiedTime) ? uploadInfo.modifiedTime : nowIso;
         const finalFileId = (uploadInfo && uploadInfo.id) ? uploadInfo.id : (fileId || '');
+
+        // Enforce one canonical backup file in this Google account/app space.
+        // Older versions or simultaneous first uploads can leave duplicate files;
+        // keeping only the file just updated prevents different devices from
+        // selecting different copies later.
+        let removedDuplicates = 0;
+        if (finalFileId) {
+          const duplicateCandidates = fileInfo && Array.isArray(fileInfo.files) ? fileInfo.files : [];
+          removedDuplicates = await this._removeDuplicateBackupFiles(accessToken, finalFileId, duplicateCandidates);
+        }
+
         this._writeCloudMeta({
           lastCloudUploadAt: nowIso,
           lastAction: 'upload',
           cloudFileExists: true,
           cloudFileId: finalFileId,
           cloudFileModifiedTime: modifiedTime,
-          cloudDuplicateCount: recreatedCloudFile ? 1 : (fileInfo ? (fileInfo.duplicateCount || 1) : 1),
+          cloudDuplicateCount: 1,
           cloudBackupExportedAt: summary.exportedAt || payload.exportedAt || nowIso,
           cloudBackupDeviceName: summary.deviceName || this._getDeviceName(),
           cloudBackupDeviceId: summary.deviceId || this._getDeviceId(),
@@ -480,11 +529,11 @@
           lastCloudErrorAt: '',
           lastCloudErrorMessage: ''
         });
-        const msgInfo = Object.assign({}, fileInfo || {}, { id: finalFileId, modifiedTime, duplicateCount: recreatedCloudFile ? 1 : (fileInfo ? (fileInfo.duplicateCount || 1) : 1) });
+        const msgInfo = Object.assign({}, fileInfo || {}, { id: finalFileId, modifiedTime, duplicateCount: 1 });
         const prefix = recreatedCloudFile
           ? '原 Google Drive 備份檔已不存在，系統已自動重新建立新備份。'
           : '已將目前這台裝置的資料備份到 Google 雲端。';
-        const msg = buildSummaryMessage(prefix, msgInfo, summary);
+        const msg = buildSummaryMessage(prefix + (removedDuplicates ? `\n並已自動清理 ${removedDuplicates} 個舊的重複備份。` : ''), msgInfo, summary);
         this.openInfoModal('上傳成功', msg);
       } catch (e) {
         this._writeCloudMeta({ lastCloudErrorAt: new Date().toISOString(), lastCloudErrorMessage: e?.message || String(e || '上傳失敗') });

@@ -80,3 +80,10 @@ window.STOCK_TRACKER_GOOGLE_CLIENT_ID = 'xxxxxxxxxxxx-xxxxxxxxxxxxxxxxxxxxxxxxxx
 - 本機備份與 Google 雲端備份合併為單一「備份與還原」入口，可在本機 / 雲端間切換。
 - 桌面版移除獨立 Google 雲端備份按鈕，統一從「備份」進入。
 - PWA 快取版本更新，避免部署後仍載入舊版工具列。
+
+
+## 2026-09-22 跨裝置雲端備份修正
+- Google Drive 雲端備份固定優先使用網站內建 OAuth Client ID，避免不同裝置各自使用 localStorage 中的自訂 Client ID 而落到不同 AppDataFolder。
+- 每次雲端操作會明確要求選擇 Google 帳號，並在備份狀態顯示實際授權帳號。
+- 上傳後自動清理同一 AppDataFolder 內的舊同名重複備份，只保留一份主備份。
+- 手機、平板、桌機均透過固定檔名 `tw_stock_backup.json` 查找最新主備份，不依賴本機保存的 fileId。
