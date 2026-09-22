@@ -184,7 +184,7 @@ createApp({
                     </div>
                     <div class="min-w-0">
                         <h1 class="text-3xl font-extrabold text-slate-800 tracking-tight">台股損益管理</h1>
-                        <p class="text-sm text-slate-500 font-bold tracking-wider mt-1">SMART TRACKER v4.8 Pro</p>
+                        <p class="text-sm text-slate-500 font-bold tracking-wider mt-1">SMART TRACKER v4.9 Pro</p>
                     </div>
                 </div>
 
@@ -317,6 +317,32 @@ createApp({
                         <button v-if="item.action" type="button" @click="handleDataHealthAction(item)" class="btn btn-secondary !px-3 !py-2 !rounded-xl shrink-0"><i class="fa-solid fa-arrow-up-right-from-square mr-1"></i>查看</button>
                     </div>
                     <div v-if="dataHealthReport.total > dataHealthAlerts.length" class="px-6 py-3 text-center text-xs font-bold text-slate-400">另有 {{ dataHealthReport.total - dataHealthAlerts.length }} 項提醒；修正上方資料後會自動重新檢查。</div>
+                </div>
+            </div>
+
+            <div v-if="!dashboardReconciliationOk" data-reconciliation-diagnostic class="card !p-0 overflow-hidden border-amber-200">
+                <div class="px-5 md:px-6 py-4 bg-amber-50 border-b border-amber-100 flex flex-col md:flex-row md:items-center justify-between gap-3">
+                    <div><h3 class="text-base font-black text-amber-800 flex items-center gap-2"><i class="fa-solid fa-stethoscope"></i>帳務差額診斷</h3><p class="text-xs font-bold text-amber-700/70 mt-1">把「資產法總損益」與「交易損益法」拆開比對，先定位差額集中在哪些個股。</p></div>
+                    <div class="text-right"><div class="text-xs font-bold text-amber-700">目前差額</div><div class="text-2xl font-black text-amber-800">{{ dashboardReconciliationGap >= 0 ? '+' : '-' }}{{ formatCurrency(Math.abs(dashboardReconciliationGap)) }}</div></div>
+                </div>
+                <div class="p-5 md:p-6 space-y-5">
+                    <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
+                        <div class="rounded-2xl bg-slate-50 border border-slate-200 p-4"><div class="text-[10px] font-bold text-slate-400">交易現金淨流</div><div class="mt-1 font-black text-slate-800">{{ reconciliationDiagnostic.tradeCash >= 0 ? '+' : '' }}{{ formatCurrency(reconciliationDiagnostic.tradeCash) }}</div></div>
+                        <div class="rounded-2xl bg-slate-50 border border-slate-200 p-4"><div class="text-[10px] font-bold text-slate-400">目前持股市值</div><div class="mt-1 font-black text-slate-800">{{ formatCurrency(reconciliationDiagnostic.marketValue) }}</div></div>
+                        <div class="rounded-2xl bg-blue-50 border border-blue-100 p-4"><div class="text-[10px] font-bold text-blue-500">已實現＋未實現</div><div class="mt-1 font-black text-blue-700">{{ reconciliationDiagnostic.performanceTradePnL >= 0 ? '+' : '' }}{{ formatCurrency(reconciliationDiagnostic.performanceTradePnL) }}</div></div>
+                        <div class="rounded-2xl bg-rose-50 border border-rose-100 p-4"><div class="text-[10px] font-bold text-rose-500">股利貢獻</div><div class="mt-1 font-black text-rose-700">+{{ formatCurrency(reconciliationDiagnostic.dividends) }}</div></div>
+                    </div>
+                    <div class="rounded-2xl border border-slate-200 overflow-hidden">
+                        <div class="px-4 py-3 bg-slate-50 border-b border-slate-200 flex items-center justify-between"><div class="font-black text-slate-700">可能造成差額的個股</div><div class="text-[11px] font-bold text-slate-400">依差額絕對值排序</div></div>
+                        <div v-if="reconciliationDiagnostic.rows.length === 0" class="p-5 text-sm font-bold text-slate-500">目前無法定位到單一個股，請優先檢查資金流或舊資料格式。</div>
+                        <div v-else class="divide-y divide-slate-100">
+                            <div v-for="row in reconciliationDiagnostic.rows.slice(0, 8)" :key="'diag-'+row.code" class="px-4 py-4 flex flex-col md:flex-row md:items-center gap-3 justify-between">
+                                <div><div class="font-black text-slate-800">{{ row.name }} <span class="text-xs text-slate-400">({{ row.code }})</span></div><div class="text-xs font-bold text-slate-400 mt-1">資產法 {{ row.assetSide >= 0 ? '+' : '' }}{{ formatCurrency(row.assetSide) }} ｜ 損益法 {{ row.performanceSide >= 0 ? '+' : '' }}{{ formatCurrency(row.performanceSide) }}</div></div>
+                                <div class="flex items-center gap-3"><div class="text-right"><div class="text-[10px] font-bold text-slate-400">差額</div><div class="font-black text-amber-700">{{ row.gap >= 0 ? '+' : '-' }}{{ formatCurrency(Math.abs(row.gap)) }}</div></div><button type="button" @click="openStockFromHistory(row, 'dashboard')" class="btn btn-secondary !px-3 !py-2 !rounded-xl">查看個股</button></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="text-xs font-bold text-slate-500 leading-relaxed bg-slate-50 border border-slate-200 rounded-xl p-4"><i class="fa-solid fa-circle-info text-blue-500 mr-1"></i>差額通常來自舊版交易的成本口徑、交易總額/已實現損益不一致，或歷史資料被手動修改。這個診斷先幫你定位股票，不會自動改動任何帳務資料。</div>
                 </div>
             </div>
 
@@ -1334,10 +1360,13 @@ createApp({
             
             <div class="sub-tab-container">
                 <div @click="historyMode = 'list'" :class="['sub-tab-item', historyMode === 'list' ? 'active' : '']">
-                    <i class="fa-solid fa-list-ul mr-2"></i> 交易流水帳 <span class="ml-2 text-[11px] font-black px-2 py-0.5 rounded-full" :class="dateFilterMode==='thisMonth' ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-600'">{{ ({'thisMonth':'當月','lastMonth':'上個月','today':'今日','yesterday':'昨日','week':'近一週','month':'近一月','all':'全部'}[dateFilterMode] || '區間') }}</span>
+                    <i class="fa-solid fa-list-ul mr-2"></i> 交易流水帳 <span class="hidden sm:inline-flex ml-2 text-[11px] font-black px-2 py-0.5 rounded-full" :class="dateFilterMode==='thisMonth' ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-600'">{{ ({'thisMonth':'當月','lastMonth':'上個月','today':'今日','yesterday':'昨日','week':'近一週','month':'近一月','all':'全部'}[dateFilterMode] || '區間') }}</span>
                 </div>
                 <div @click="historyMode = 'analysis'" :class="['sub-tab-item', historyMode === 'analysis' ? 'active' : '']">
-                    <i class="fa-solid fa-chart-pie mr-2"></i> 已實現損益 <span class="ml-2 text-[11px] font-black px-2 py-0.5 rounded-full" :class="dateFilterMode==='thisMonth' ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-600'">{{ ({'thisMonth':'當月','lastMonth':'上個月','today':'今日','yesterday':'昨日','week':'近一週','month':'近一月','all':'全部'}[dateFilterMode] || '區間') }}</span>
+                    <i class="fa-solid fa-chart-pie mr-2"></i> 已實現損益 <span class="hidden sm:inline-flex ml-2 text-[11px] font-black px-2 py-0.5 rounded-full" :class="dateFilterMode==='thisMonth' ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-600'">{{ ({'thisMonth':'當月','lastMonth':'上個月','today':'今日','yesterday':'昨日','week':'近一週','month':'近一月','all':'全部'}[dateFilterMode] || '區間') }}</span>
+                </div>
+                <div @click="historyMode = 'stocks'" :class="['sub-tab-item', historyMode === 'stocks' ? 'active' : '']">
+                    <i class="fa-solid fa-building-columns mr-2"></i> 所有個股 <span class="hidden sm:inline-flex ml-2 text-[11px] font-black px-2 py-0.5 rounded-full bg-slate-100 text-slate-600">{{ allStockRows.length }}</span>
                 </div>
             </div>
 
@@ -1905,6 +1934,37 @@ createApp({
         </div>
 
 
+
+            <div v-if="historyMode === 'stocks'" class="space-y-6">
+                <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200"><div class="text-xs text-slate-400 font-bold mb-1">交易過個股</div><div class="text-2xl font-black text-slate-800">{{ allStockRows.length }}</div><div class="text-xs text-slate-400 font-bold mt-1">包含持倉、清倉與有權息紀錄</div></div>
+                    <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200"><div class="text-xs text-slate-400 font-bold mb-1">目前持倉</div><div class="text-2xl font-black text-blue-600">{{ allStockRows.filter(r => r.status === 'holding').length }}</div><div class="text-xs text-slate-400 font-bold mt-1">仍有庫存的股票</div></div>
+                    <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200"><div class="text-xs text-slate-400 font-bold mb-1">已清倉</div><div class="text-2xl font-black text-slate-600">{{ allStockRows.filter(r => r.status === 'closed').length }}</div><div class="text-xs text-slate-400 font-bold mt-1">仍可進入完整損益中心</div></div>
+                    <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200"><div class="text-xs text-slate-400 font-bold mb-1">累計總報酬</div><div class="text-2xl font-black" :class="allStockRows.reduce((s,r)=>s+r.totalReturn,0) >= 0 ? 'text-up' : 'text-down'">{{ allStockRows.reduce((s,r)=>s+r.totalReturn,0) >= 0 ? '+' : '' }}{{ formatCurrency(allStockRows.reduce((s,r)=>s+r.totalReturn,0)) }}</div><div class="text-xs text-slate-400 font-bold mt-1">已實現＋未實現＋權息</div></div>
+                </div>
+
+                <div class="card !p-4 md:!p-5">
+                    <div class="flex flex-col md:flex-row md:items-center gap-3 justify-between">
+                        <div><h3 class="text-lg font-black text-slate-800 flex items-center gap-2"><i class="fa-solid fa-layer-group text-indigo-500"></i>所有個股</h3><p class="text-xs font-bold text-slate-400 mt-1">不論目前是否持有，都可以直接進入同一套「個股完整損益中心」。</p></div>
+                        <div class="relative w-full md:w-80"><i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"></i><input v-model.trim="allStocksSearch" type="search" placeholder="搜尋股票代號或名稱" class="w-full h-12 pl-11 pr-4 rounded-xl border-2 border-slate-200 bg-white font-bold text-slate-700 outline-none focus:border-blue-400"></div>
+                    </div>
+                </div>
+
+                <div v-if="allStockRowsFiltered.length === 0" class="text-center py-20 bg-white rounded-3xl border-2 border-dashed border-slate-300 text-slate-400"><i class="fa-solid fa-magnifying-glass text-4xl mb-3 opacity-40"></i><div class="font-bold">找不到符合條件的股票</div></div>
+                <div v-else class="grid grid-cols-1 xl:grid-cols-2 gap-4">
+                    <button v-for="row in allStockRowsFiltered" :key="row.code" type="button" @click="openStockFromHistory(row)" class="text-left bg-white rounded-2xl border-2 border-slate-100 hover:border-blue-300 hover:shadow-md transition p-5">
+                        <div class="flex items-start justify-between gap-3">
+                            <div class="min-w-0"><div class="flex flex-wrap items-center gap-2"><span class="text-xl font-black text-slate-800">{{ row.name }}</span><span class="text-xs font-black text-slate-400">{{ row.code }}</span><span class="text-[10px] px-2 py-1 rounded-full font-black" :class="row.status === 'holding' ? 'bg-blue-50 text-blue-700' : 'bg-slate-100 text-slate-600'">{{ row.status === 'holding' ? ('持有 ' + formatCurrency(row.qty) + ' 股') : '已清倉' }}</span></div><div class="text-xs font-bold text-slate-400 mt-2">{{ row.firstDate || '—' }} ～ {{ row.lastDate || '—' }}・買 {{ row.buyCount }} 筆 / 賣 {{ row.sellCount }} 筆<span v-if="row.dividendCount">・權息 {{ row.dividendCount }} 筆</span></div></div>
+                            <i class="fa-solid fa-chevron-right text-slate-300 mt-1"></i>
+                        </div>
+                        <div class="mt-4 grid grid-cols-3 gap-2">
+                            <div class="rounded-xl bg-slate-50 border border-slate-100 p-3"><div class="text-[10px] font-bold text-slate-400">已實現</div><div class="mt-1 text-sm font-black" :class="row.realized >= 0 ? 'text-up' : 'text-down'">{{ row.realized >= 0 ? '+' : '' }}{{ formatCurrency(row.realized) }}</div></div>
+                            <div class="rounded-xl bg-slate-50 border border-slate-100 p-3"><div class="text-[10px] font-bold text-slate-400">未實現</div><div class="mt-1 text-sm font-black" :class="row.unrealized >= 0 ? 'text-up' : 'text-down'">{{ row.unrealized >= 0 ? '+' : '' }}{{ formatCurrency(row.unrealized) }}</div></div>
+                            <div class="rounded-xl bg-slate-50 border border-slate-100 p-3"><div class="text-[10px] font-bold text-slate-400">個股總損益</div><div class="mt-1 text-sm font-black" :class="row.totalReturn >= 0 ? 'text-up' : 'text-down'">{{ row.totalReturn >= 0 ? '+' : '' }}{{ formatCurrency(row.totalReturn) }}</div></div>
+                        </div>
+                    </button>
+                </div>
+            </div>
 
         <div v-show="currentTab === 'cash'" class="page-readable">
             <div class="space-y-6">
@@ -2959,7 +3019,9 @@ createApp({
             showCategoryManagerModal: false, categoryManagerTab: 'themes', categoryManagerNewName: '',
             
             // --- NEW: History Analysis State ---
-            historyMode: 'list', // 'list' | 'analysis'
+            historyMode: 'list', // 'list' | 'analysis' | 'stocks'
+            allStocksSearch: '',
+            stockDetailsReturnTab: 'inventory',
             showRealizedDetail: false, realizedDetailCode: '',
             saveStatus: window.StockSaveStatus.initialState()
         }
@@ -3914,6 +3976,69 @@ const savedCash = localStorage.getItem(window.StockStorage.KEYS.cashBook) || '';
         totalUnrealizedPnL() { return this.holdings.reduce((sum, h) => sum + h.unrealizedPnL, 0); },
         totalRealizedPnL() { return this.portfolioTransactions.reduce((sum, tx) => sum + ((tx.realizedPnL !== null && tx.realizedPnL !== undefined) ? Number(tx.realizedPnL) : 0), 0); },
         totalReturnPnL() { return (Number(this.totalRealizedPnL) || 0) + (Number(this.totalUnrealizedPnL) || 0) + (Number(this.dividendIncomeTotal) || 0); },
+        allStockRows() {
+            const map = new Map();
+            const touch = (code, name = '') => {
+                const c = String(code || '').trim().toUpperCase();
+                if (!c) return null;
+                if (!map.has(c)) map.set(c, { code: c, name: '', dates: [], buyCount: 0, sellCount: 0, dividendCount: 0 });
+                const row = map.get(c);
+                if (!row.name && name) row.name = this.displayNameOnly(c, name);
+                return row;
+            };
+            (this.portfolioTransactions || []).forEach(tx => {
+                const row = touch(tx.code, tx.name); if (!row) return;
+                if (tx.date) row.dates.push(tx.date);
+                if (tx.type === 'buy') row.buyCount += 1; else if (tx.type === 'sell') row.sellCount += 1;
+            });
+            (this.portfolioCorporateActions || []).forEach(a => {
+                const row = touch(a.code, a.name); if (!row) return;
+                const d = a.exDate || a.cashPaymentDate || a.stockPaymentDate; if (d) row.dates.push(d);
+                row.dividendCount += 1;
+            });
+            (this.holdings || []).forEach(h => touch(h.code, h.name));
+            return Array.from(map.values()).map(row => {
+                const h = (this.holdings || []).find(x => String(x.code) === row.code);
+                const txs = (this.portfolioTransactions || []).filter(tx => String(tx.code) === row.code);
+                const realized = txs.reduce((s,tx) => s + (tx.realizedPnL != null ? (Number(tx.realizedPnL)||0) : 0), 0);
+                const unrealized = Number(h?.unrealizedPnL) || 0;
+                const div = window.StockDividendService ? window.StockDividendService.dividendSummaryByCode(this, row.code) : { totalContribution: 0 };
+                const dividendContribution = Number(div?.totalContribution) || 0;
+                const dates = row.dates.filter(Boolean).sort();
+                const qty = Number(h?.qty) || 0;
+                const name = row.name || this.resolveStockName(row.code, '') || row.code;
+                return { ...row, name, qty, status: Math.abs(qty) > 1e-6 ? 'holding' : 'closed', realized, unrealized, dividendContribution, totalReturn: realized + unrealized + dividendContribution, firstDate: dates[0] || '', lastDate: dates[dates.length-1] || '' };
+            }).sort((a,b) => (a.status === b.status ? 0 : (a.status === 'holding' ? -1 : 1)) || (new Date(b.lastDate||0)-new Date(a.lastDate||0)) || a.code.localeCompare(b.code));
+        },
+        allStockRowsFiltered() {
+            const q = String(this.allStocksSearch || '').trim().toLowerCase();
+            if (!q) return this.allStockRows;
+            return (this.allStockRows || []).filter(r => String(r.code).toLowerCase().includes(q) || String(r.name).toLowerCase().includes(q));
+        },
+        reconciliationDiagnostic() {
+            const tradeCash = Number(this.cashTradeNet) || 0;
+            const marketValue = Number(this.signedMarketValue) || 0;
+            const performanceTradePnL = (Number(this.totalRealizedPnL)||0) + (Number(this.totalUnrealizedPnL)||0);
+            const dividends = Number(this.dividendIncomeTotal) || 0;
+            const codes = new Set();
+            (this.portfolioTransactions || []).forEach(tx => { if (tx?.code) codes.add(String(tx.code)); });
+            (this.holdings || []).forEach(h => { if (h?.code) codes.add(String(h.code)); });
+            const rows = Array.from(codes).map(code => {
+                const txs = (this.portfolioTransactions || []).filter(tx => String(tx.code) === code);
+                const h = (this.holdings || []).find(x => String(x.code) === code);
+                const stockTradeCash = txs.reduce((s,tx) => { const a=Number(tx.totalAmount)||0; return s + (tx.type === 'sell' ? a : -a); }, 0);
+                const price = Number(this.latestPrices?.[code] || h?.currentPrice || h?.buyAvgPrice || 0);
+                const stockMarket = price * (Number(h?.qty)||0);
+                const assetSide = stockTradeCash + stockMarket;
+                const realized = txs.reduce((s,tx)=>s+(tx.realizedPnL != null ? (Number(tx.realizedPnL)||0) : 0),0);
+                const unrealized = Number(h?.unrealizedPnL)||0;
+                const performanceSide = realized + unrealized;
+                const gap = assetSide - performanceSide;
+                const name = this.displayNameOnly(code, h?.name || txs[txs.length-1]?.name || this.resolveStockName(code,'')) || code;
+                return { code, name, assetSide, performanceSide, gap };
+            }).filter(r => Math.abs(r.gap) > 2).sort((a,b)=>Math.abs(b.gap)-Math.abs(a.gap));
+            return { tradeCash, marketValue, assetTradePnL: tradeCash + marketValue, performanceTradePnL, dividends, gap: Number(this.dashboardReconciliationGap)||0, rows };
+        },
         selectedStockBuys() {
             if (!this.selectedStock) return [];
             return this.sortedTransactions.filter(tx => tx.code === this.selectedStock.code && tx.type === 'buy').map(tx => ({
@@ -4045,6 +4170,12 @@ const savedCash = localStorage.getItem(window.StockStorage.KEYS.cashBook) || '';
             if (!item) return;
             if (item.action === 'dividend') {
                 this.openDividendManagerModal();
+                return;
+            }
+            if (item.key === 'reconciliation') {
+                this.currentTab = 'dashboard';
+                this.showStockDetails = false;
+                this.$nextTick(() => { const el = document.querySelector('[data-reconciliation-diagnostic]'); if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' }); });
                 return;
             }
             if (item.action === 'cash') {
@@ -4735,8 +4866,9 @@ ${picked.date} 收盤價：${close}`);
         closeRealizedDetail() { this.showRealizedDetail = false; this.realizedDetailCode = ''; },
 
         // --- Existing Methods (Exactly Preserved) ---
-        openStockDetails(stock) { if (!stock || !stock.code) return; this.selectedStock = { code: stock.code, name: stock.name }; this.showStockDetails = true; this.currentTab = 'inventory'; window.scrollTo({ top: 0, behavior: 'smooth' }); },
-        closeStockDetails() { this.showStockDetails = false; this.selectedStock = null; },
+        openStockDetails(stock, returnTab = 'inventory') { if (!stock || !stock.code) return; this.stockDetailsReturnTab = returnTab || 'inventory'; this.selectedStock = { code: stock.code, name: stock.name || this.resolveStockName(stock.code, '') || stock.code }; this.showStockDetails = true; this.currentTab = 'inventory'; window.scrollTo({ top: 0, behavior: 'smooth' }); },
+        openStockFromHistory(stock, returnTab = 'history') { this.openStockDetails(stock, returnTab); },
+        closeStockDetails() { const back = this.stockDetailsReturnTab || 'inventory'; this.showStockDetails = false; this.selectedStock = null; this.currentTab = back; this.stockDetailsReturnTab = 'inventory'; },
         openEditBuyModal(row) { if (!row || !row.id) { this.openInfoModal('無法編輯', '找不到這筆買入紀錄的識別碼'); return; } const tx = this.transactions.find(t => t.id === row.id); if (!tx) { this.openInfoModal('無法編輯', '找不到對應的交易紀錄'); return; } if (tx.type !== 'buy') { this.openInfoModal('無法編輯', '目前僅支援編輯「買入」紀錄'); return; } this.editBuyTx = { id: tx.id, date: tx.date, code: tx.code, name: (this.nameMap && this.nameMap[tx.code]) ? this.nameMap[tx.code] : tx.name, price: tx.price, qty: tx.qty, category: tx.category || 'core' }; this.showEditBuyModal = true; },
         closeEditBuyModal() { this.showEditBuyModal = false; this.editBuyTx = { id: null, date: '', code: '', name: '', price: null, qty: 0, category: 'core' }; },
         calcBrokerFee(subTotal) { return window.StockTradeService.calcBrokerFee.call(this, subTotal); },
