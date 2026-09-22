@@ -142,16 +142,36 @@ createApp({
                     </button>
                 </div>
 
-                <div class="flex gap-2 overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-                    <button @click="showSecurityModal = true" class="mobile-tool-action mobile-tool-action--security" title="安全性設定"><i class="fa-solid fa-shield-halved"></i></button>
-                    <button @click="showSettings = true" class="mobile-tool-action mobile-tool-action--fee" title="費率設定"><i class="fa-solid fa-percent"></i></button>
-                    <button @click="exportData" class="mobile-tool-action mobile-tool-action--backup" title="備份（下載／還原）"><i class="fa-solid fa-file-arrow-down"></i></button>
-                    <button @click="openCategoryDbModal" class="mobile-tool-action mobile-tool-action--categorydb" title="族群資料庫"><i class="fa-solid fa-layer-group"></i></button>
-                    <button @click="openCategoryManagerModal" class="mobile-tool-action mobile-tool-action--categorymgr" title="族群管理"><i class="fa-solid fa-list-check"></i></button>
-                    <button @click="showGDriveModal = true" class="mobile-tool-action mobile-tool-action--gdrive" title="Google 雲端備份"><i class="fa-solid fa-cloud-arrow-up"></i></button>
-                    <button @click="openCommodityModal" class="mobile-tool-action mobile-tool-action--commodity" title="商品期貨"><i class="fa-solid fa-chart-line"></i></button>
-                    <button @click="openDividendManagerModal" class="mobile-tool-action mobile-tool-action--dividend" title="權息管理"><i class="fa-solid fa-gift"></i></button>
-                    <button @click="showHelpModal = true" class="mobile-tool-action mobile-tool-action--help" title="說明"><i class="fa-solid fa-circle-question"></i></button>
+                <div class="grid grid-cols-4 gap-2">
+                    <button @click="openCommodityModal" class="mobile-primary-tool mobile-primary-tool--commodity" title="商品期貨">
+                        <i class="fa-solid fa-chart-line"></i><span>商品期貨</span>
+                    </button>
+                    <button @click="openDividendManagerModal" class="mobile-primary-tool mobile-primary-tool--dividend" title="權息管理">
+                        <i class="fa-solid fa-gift"></i><span>權息管理</span>
+                    </button>
+                    <button @click="exportData" class="mobile-primary-tool mobile-primary-tool--backup" title="備份與還原">
+                        <i class="fa-solid fa-cloud-arrow-up"></i><span>備份</span>
+                    </button>
+                    <button @click="showMobileMoreTools = true" class="mobile-primary-tool mobile-primary-tool--more" title="更多工具">
+                        <i class="fa-solid fa-ellipsis"></i><span>更多</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div v-if="showMobileMoreTools" class="fixed inset-0 z-[95] md:hidden bg-slate-900/45 backdrop-blur-sm flex items-end" @click.self="showMobileMoreTools=false">
+            <div class="w-full bg-white rounded-t-[2rem] shadow-2xl p-5 pb-[calc(env(safe-area-inset-bottom)+20px)] animate-slide-up">
+                <div class="w-12 h-1.5 rounded-full bg-slate-200 mx-auto mb-4"></div>
+                <div class="flex items-center justify-between mb-4">
+                    <div><div class="text-lg font-black text-slate-800">更多工具</div><div class="text-xs font-bold text-slate-400 mt-1">較少使用的設定集中在這裡</div></div>
+                    <button @click="showMobileMoreTools=false" class="w-10 h-10 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center"><i class="fa-solid fa-xmark"></i></button>
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <button @click="showMobileMoreTools=false; showSecurityModal=true" class="mobile-more-tool"><span class="mobile-more-tool__icon mobile-more-tool__icon--security"><i class="fa-solid fa-shield-halved"></i></span><span><strong>安全性設定</strong><small>登入與安全相關設定</small></span></button>
+                    <button @click="showMobileMoreTools=false; showSettings=true" class="mobile-more-tool"><span class="mobile-more-tool__icon mobile-more-tool__icon--fee"><i class="fa-solid fa-percent"></i></span><span><strong>費率設定</strong><small>手續費與證交稅</small></span></button>
+                    <button @click="showMobileMoreTools=false; openCategoryDbModal()" class="mobile-more-tool"><span class="mobile-more-tool__icon mobile-more-tool__icon--categorydb"><i class="fa-solid fa-layer-group"></i></span><span><strong>族群資料庫</strong><small>匯入與匯出分類</small></span></button>
+                    <button @click="showMobileMoreTools=false; openCategoryManagerModal()" class="mobile-more-tool"><span class="mobile-more-tool__icon mobile-more-tool__icon--categorymgr"><i class="fa-solid fa-list-check"></i></span><span><strong>族群管理</strong><small>管理產業與題材</small></span></button>
+                    <button @click="showMobileMoreTools=false; showHelpModal=true" class="mobile-more-tool col-span-2"><span class="mobile-more-tool__icon mobile-more-tool__icon--help"><i class="fa-solid fa-circle-question"></i></span><span><strong>使用說明</strong><small>查看操作方式與備份說明</small></span></button>
                 </div>
             </div>
         </div>
@@ -197,7 +217,6 @@ createApp({
                 <button @click="exportData" class="btn btn-secondary toolbar-action toolbar-action--backup !h-12 !w-12 !p-0 !rounded-2xl" title="備份" aria-label="備份"><i class="fa-solid fa-file-arrow-down"></i></button>
                 <button @click="openCategoryDbModal" class="btn btn-secondary toolbar-action toolbar-action--categorydb !h-12 !w-12 !p-0 !rounded-2xl" title="族群資料庫" aria-label="族群資料庫"><i class="fa-solid fa-layer-group"></i></button>
                 <button @click="openCategoryManagerModal" class="btn btn-secondary toolbar-action toolbar-action--categorymgr !h-12 !w-12 !p-0 !rounded-2xl" title="族群管理" aria-label="族群管理"><i class="fa-solid fa-list-check"></i></button>
-                <button @click="showGDriveModal = true" class="btn btn-secondary toolbar-action toolbar-action--gdrive !h-12 !w-12 !p-0 !rounded-2xl" title="Google 雲端備份" aria-label="Google 雲端備份"><i class="fa-solid fa-cloud-arrow-up"></i></button>
                 <button @click="openCommodityModal" class="btn btn-secondary toolbar-action toolbar-action--commodity !h-12 !w-12 !p-0 !rounded-2xl" title="商品期貨" aria-label="商品期貨"><i class="fa-solid fa-chart-line"></i></button>
                 <button @click="openDividendManagerModal" class="btn btn-secondary toolbar-action toolbar-action--dividend !h-12 !w-12 !p-0 !rounded-2xl" title="權息管理" aria-label="權息管理"><i class="fa-solid fa-gift"></i></button>
                     <button @click="showHelpModal = true" class="btn btn-secondary toolbar-action toolbar-action--help !h-12 !w-12 !p-0 !rounded-2xl" title="使用說明" aria-label="使用說明"><i class="fa-solid fa-circle-question"></i></button>
@@ -2634,10 +2653,30 @@ createApp({
         <div v-if="showExportModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex justify-center items-center z-[70] p-4 transition-opacity">
             <div class="bg-white rounded-[1.75rem] w-full max-w-md shadow-2xl relative animate-slide-up md:animate-none max-h-[85vh] overflow-y-auto">
                 <div class="p-5 md:p-7">
-                    <div class="flex items-start justify-between gap-4 mb-4"><div class="flex items-center gap-3"><div class="w-10 h-10 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center shadow-sm"><i class="fa-solid fa-cloud-arrow-down"></i></div><div><div class="text-lg font-black text-slate-800 leading-tight">備份</div><div class="text-xs font-bold text-slate-400 mt-1">下載 JSON 備份檔，或用備份檔還原資料（會覆蓋本機資料）。</div></div></div><button @click="showExportModal=false" class="w-10 h-10 rounded-full bg-slate-50 border border-slate-200 flex items-center justify-center text-slate-500 hover:bg-slate-100"><i class="fa-solid fa-xmark"></i></button></div>
-                    <div class="grid grid-cols-2 gap-2 mb-5"><button @click="backupTab='download'" :class="backupTab==='download' ? 'bg-emerald-600 text-white shadow' : 'bg-slate-50 text-slate-600 border border-slate-200'" class="h-11 rounded-xl font-extrabold transition-all"><i class="fa-solid fa-download mr-2"></i>下載備份</button><button @click="backupTab='restore'" :class="backupTab==='restore' ? 'bg-indigo-600 text-white shadow' : 'bg-slate-50 text-slate-600 border border-slate-200'" class="h-11 rounded-xl font-extrabold transition-all"><i class="fa-solid fa-rotate-right mr-2"></i>還原備份</button></div>
+                    <div class="flex items-start justify-between gap-4 mb-4"><div class="flex items-center gap-3"><div class="w-10 h-10 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center shadow-sm"><i class="fa-solid fa-shield-cloud"></i></div><div><div class="text-lg font-black text-slate-800 leading-tight">備份與還原</div><div class="text-xs font-bold text-slate-400 mt-1">本機 JSON 與 Google 雲端備份集中在同一個入口。</div></div></div><button @click="showExportModal=false" class="w-10 h-10 rounded-full bg-slate-50 border border-slate-200 flex items-center justify-center text-slate-500 hover:bg-slate-100"><i class="fa-solid fa-xmark"></i></button></div>
+                    <div class="grid grid-cols-2 gap-2 mb-4"><button @click="backupMode='local'" :class="backupMode==='local' ? 'bg-emerald-600 text-white shadow' : 'bg-slate-50 text-slate-600 border border-slate-200'" class="h-11 rounded-xl font-extrabold transition-all"><i class="fa-solid fa-hard-drive mr-2"></i>本機備份</button><button @click="backupMode='cloud'" :class="backupMode==='cloud' ? 'bg-blue-600 text-white shadow' : 'bg-slate-50 text-slate-600 border border-slate-200'" class="h-11 rounded-xl font-extrabold transition-all"><i class="fa-solid fa-cloud mr-2"></i>雲端備份</button></div>
+                    <div v-if="backupMode==='local'">
+                    <div class="grid grid-cols-2 gap-2 mb-5"><button @click="backupTab='download'" :class="backupTab==='download' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-slate-50 text-slate-500 border-slate-200'" class="h-10 rounded-xl font-extrabold border transition-all"><i class="fa-solid fa-download mr-2"></i>下載</button><button @click="backupTab='restore'" :class="backupTab==='restore' ? 'bg-indigo-50 text-indigo-700 border-indigo-200' : 'bg-slate-50 text-slate-500 border-slate-200'" class="h-10 rounded-xl font-extrabold border transition-all"><i class="fa-solid fa-rotate-right mr-2"></i>還原</button></div>
                     <div v-if="backupTab==='download'"><div class="space-y-4"><div><div class="text-sm font-extrabold text-slate-700 mb-2">檔案名稱</div><div class="flex items-center gap-2"><input v-model="exportFileName" class="flex-1 h-12 rounded-xl px-4 text-slate-700 font-bold bg-slate-50 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-300" placeholder="stock_backup_YYYY-MM-DD"><div class="text-sm font-black text-slate-400">.json</div></div><div class="text-xs font-bold text-slate-400 mt-2">包含：交易紀錄／入出金／獲利提領補回／自選股／分類／設定參數／最新價格／狀態／更新時間</div></div><div class="flex gap-3"><button @click="showExportModal=false" class="flex-1 h-12 rounded-xl font-extrabold text-slate-600 bg-slate-50 border border-slate-200 hover:bg-slate-100 active:scale-[0.98] transition-all">取消</button><button @click="confirmExport" class="flex-1 h-12 rounded-xl font-extrabold text-white bg-emerald-600 hover:bg-emerald-700 active:scale-[0.98] transition-all flex items-center justify-center gap-2"><i class="fa-solid fa-download"></i> 確認下載</button></div></div></div>
                     <div v-else class="space-y-4"><div class="rounded-2xl border border-amber-200 bg-amber-50 p-4"><div class="text-sm font-black text-amber-700 flex items-center gap-2"><i class="fa-solid fa-triangle-exclamation"></i> 還原會覆蓋目前本機資料</div><div class="text-xs font-bold text-amber-700/80 mt-1">建議先下載一份備份，再進行還原。</div></div><div class="rounded-2xl border border-slate-200 bg-white p-4"><div class="text-sm font-extrabold text-slate-700 mb-2">備份檔案</div><div class="flex items-center gap-2"><div class="w-10 h-10 bg-slate-50 rounded-xl flex items-center justify-center text-slate-400 border border-slate-100"><i class="fa-solid fa-file-code"></i></div><div class="flex-1 min-w-0"><div class="text-xs font-bold text-slate-400 uppercase">JSON</div><div class="text-sm font-black text-slate-700 truncate">{{ restoreFileName || '尚未選擇檔案' }}</div></div></div><input ref="restoreFileInput" type="file" accept=".json,application/json" class="hidden" @change="onRestoreBackupFileChange"><div class="flex flex-col md:flex-row gap-3 mt-4"><button @click="$refs.restoreFileInput && $refs.restoreFileInput.click()" class="w-full md:flex-1 h-12 rounded-xl font-extrabold text-slate-600 bg-slate-50 border border-slate-200 hover:bg-slate-100 active:scale-[0.98] transition-all flex items-center justify-center gap-2"><i class="fa-solid fa-folder-open"></i> 選擇檔案</button><button :disabled="!restoreFileObject || restoreBusy" @click="confirmRestoreFromBackupFile" class="w-full md:flex-1 h-12 rounded-xl font-extrabold text-white bg-indigo-600 hover:bg-indigo-700 active:scale-[0.98] disabled:opacity-60 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2"><i class="fa-solid fa-rotate-right"></i> 立即還原</button></div><div v-if="restoreBusy" class="mt-3 text-xs font-bold text-slate-500 flex items-center gap-2"><i class="fa-solid fa-spinner fa-spin"></i> 正在還原備份…</div></div><div class="flex gap-3"><button @click="showExportModal=false" class="flex-1 h-12 rounded-xl font-extrabold text-slate-600 bg-slate-50 border border-slate-200 hover:bg-slate-100 active:scale-[0.98] transition-all">關閉</button><button @click="backupTab='download'" class="flex-1 h-12 rounded-xl font-extrabold text-emerald-700 bg-emerald-50 border border-emerald-200 hover:bg-emerald-100 active:scale-[0.98] transition-all flex items-center justify-center gap-2"><i class="fa-solid fa-download"></i> 先下載備份</button></div></div>
+                    </div>
+                    <div v-else class="space-y-4">
+                        <div class="rounded-2xl border p-4 flex items-center gap-3" :class="cloudBackupStatusClass">
+                            <div class="w-11 h-11 rounded-2xl bg-white/70 flex items-center justify-center shrink-0"><i :class="cloudBackupStatusIcon"></i></div>
+                            <div class="min-w-0"><div class="text-sm font-black">{{ cloudBackupStatusText }}</div><div class="text-xs font-bold opacity-80 mt-0.5">{{ cloudBackupStatusSubtext }}</div></div>
+                        </div>
+                        <div class="grid grid-cols-1 gap-3">
+                            <button @click="uploadToGDrive" :disabled="gdriveBusy" class="h-12 rounded-xl font-extrabold text-white bg-emerald-600 hover:bg-emerald-700 disabled:opacity-60 flex items-center justify-center gap-2"><i class="fa-solid fa-cloud-arrow-up"></i> 上傳到 Google 雲端</button>
+                            <button @click="restoreFromGDrive" :disabled="gdriveBusy" class="h-12 rounded-xl font-extrabold text-white bg-indigo-600 hover:bg-indigo-700 disabled:opacity-60 flex items-center justify-center gap-2"><i class="fa-solid fa-cloud-arrow-down"></i> 從 Google 雲端回復</button>
+                            <button @click="refreshGDriveCloudMeta" :disabled="gdriveBusy" class="h-11 rounded-xl font-extrabold text-slate-700 bg-slate-50 border border-slate-200 hover:bg-slate-100 disabled:opacity-60 flex items-center justify-center gap-2"><i class="fa-solid fa-rotate" :class="{'fa-spin': gdriveBusy}"></i> 刷新雲端狀態</button>
+                        </div>
+                        <div class="rounded-2xl bg-blue-50 border border-blue-200 p-4">
+                            <div class="text-sm font-black text-blue-800">Google 雲端進階設定</div>
+                            <div class="text-xs font-bold text-blue-700/80 mt-1 leading-relaxed">OAuth Client ID、雲端備份檔詳細狀態與移除備份，集中在進階設定中。</div>
+                            <button @click="showExportModal=false; showGDriveModal=true" class="mt-3 w-full h-11 rounded-xl font-extrabold text-blue-700 bg-white border border-blue-200 hover:bg-blue-100 flex items-center justify-center gap-2"><i class="fa-solid fa-gear"></i> 開啟雲端進階設定</button>
+                        </div>
+                        <div v-if="gdriveBusy" class="text-xs font-bold text-slate-500 flex items-center gap-2"><i class="fa-solid fa-spinner fa-spin"></i>{{ gdriveBusyText || '處理中…' }}</div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -2754,7 +2793,7 @@ createApp({
             showEditTxModal: false, editTx: { id: null, date: '', code: '', name: '', type: 'buy', mode: 'cash', price: null, qty: 0, category: 'core', dayTradeEligible: false },
             showAddModal: false, searchText: '', isSearching: false, dividendSearchText: '', dividendSuggestions: [], showDividendSuggestions: false, isDividendSearching: false, isDividendPrevCloseLoading: false, dividendSearchTimeout: null,
             settings: persisted.settings,
-            showSettings: false, showExportModal: false, backupTab: 'download', exportFileName: '', restoreFileName: '', restoreFileObject: null, restoreBusy: false,
+            showSettings: false, showExportModal: false, showMobileMoreTools: false, backupMode: 'local', backupTab: 'download', exportFileName: '', restoreFileName: '', restoreFileObject: null, restoreBusy: false,
             showInfoModal: false, infoTitle: '', infoMessage: '', showConfirmModal: false, confirmTitle: '', confirmMessage: '', confirmCallback: null,
             showGlobalIndices: false, isGlobalLoading: false, isTaiexNightLoading: false, globalIndices: [],
             globalIndicesLastTs: persisted.globalIndicesLastTs,
@@ -4820,7 +4859,7 @@ ${picked.date} 收盤價：${close}`);
         applyKangHePreset() { this.settings.feeRate = 0.1425; this.settings.discount = 1; this.settings.taxRate = 0.3; this.settings.dayTradeTaxRate = 0.15; this.settings.minFee = 20; },
         saveSettings() { const ok = window.StockSaveStatus.runSave(this, '設定', () => window.StockStorage.saveSettings(this.settings)); if (ok) this.showSettings = false; },
         saveData() { return window.StockSaveStatus.runSave(this, '資料', () => window.StockStorage.saveCoreData(this)); },
-        exportData() { const dateStr = new Date().toISOString().split('T')[0]; this.exportFileName = `stock_backup_${dateStr}`; this.backupTab = 'download'; this.restoreFileName = ''; this.restoreFileObject = null; this.showExportModal = true; },
+        exportData() { const dateStr = new Date().toISOString().split('T')[0]; this.exportFileName = `stock_backup_${dateStr}`; this.backupMode = 'local'; this.backupTab = 'download'; this.restoreFileName = ''; this.restoreFileObject = null; this.showExportModal = true; },
         confirmExport() { return window.StockBackupService.confirmExport.call(this); },
         onRestoreBackupFileChange(e) { return window.StockBackupService.onRestoreBackupFileChange.call(this, e); },
         async confirmRestoreFromBackupFile() { if (!this.restoreFileObject) return; this.restoreBusy = true; try { const file = this.restoreFileObject; const text = await file.text(); let payload; try { payload = JSON.parse(text); } catch (err) { throw new Error('備份檔案不是有效的 JSON 格式。'); } this._applyBackupPayload(payload); this.openInfoModal('還原成功', '已從備份檔案還原資料，將重新整理以套用所有狀態。'); setTimeout(() => window.location.reload(), 600); } catch (e) { this.openInfoModal('還原失敗', `發生未預期錯誤：${e?.message || e}`); } finally { this.restoreBusy = false; } },

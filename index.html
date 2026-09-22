@@ -147,6 +147,28 @@
         .mobile-tool-action--categorymgr { background: linear-gradient(135deg, #10b981, #047857); }
         .mobile-tool-action--dividend { background: linear-gradient(135deg, #fb7185, #e11d48); }
         .mobile-tool-action--help { background: linear-gradient(135deg, #22d3ee, #0284c7); }
+        .mobile-primary-tool {
+            min-width: 0; height: 3rem; border-radius: 1rem; color: #fff; display: flex; align-items: center; justify-content: center; gap: .38rem;
+            font-size: .7rem; font-weight: 900; letter-spacing: -.01em; border: 1px solid rgba(255,255,255,.72);
+            box-shadow: 0 10px 22px -15px rgba(15,23,42,.62), inset 0 1px 0 rgba(255,255,255,.28); transition: transform .16s ease, filter .16s ease;
+        }
+        .mobile-primary-tool i { font-size: .86rem; }
+        .mobile-primary-tool:active { transform: scale(.96); filter: brightness(.96); }
+        .mobile-primary-tool--commodity { background: linear-gradient(135deg, #f59e0b, #d97706); }
+        .mobile-primary-tool--dividend { background: linear-gradient(135deg, #fb7185, #e11d48); }
+        .mobile-primary-tool--backup { background: linear-gradient(135deg, #10b981, #059669); }
+        .mobile-primary-tool--more { background: linear-gradient(135deg, #64748b, #334155); }
+        .mobile-more-tool { min-height: 4.5rem; border-radius: 1rem; border: 1px solid #e2e8f0; background: #fff; padding: .8rem; display: flex; align-items: center; gap: .7rem; text-align: left; box-shadow: 0 12px 30px -24px rgba(15,23,42,.5); }
+        .mobile-more-tool:active { transform: scale(.98); background: #f8fafc; }
+        .mobile-more-tool > span:last-child { min-width: 0; display: flex; flex-direction: column; }
+        .mobile-more-tool strong { color: #334155; font-size: .8rem; font-weight: 900; line-height: 1.2; }
+        .mobile-more-tool small { color: #94a3b8; font-size: .62rem; font-weight: 700; margin-top: .18rem; line-height: 1.25; }
+        .mobile-more-tool__icon { width: 2.25rem; height: 2.25rem; border-radius: .8rem; color: #fff; display: inline-flex; align-items: center; justify-content: center; flex: 0 0 auto; }
+        .mobile-more-tool__icon--security { background: linear-gradient(135deg, #a855f7, #7c3aed); }
+        .mobile-more-tool__icon--fee { background: linear-gradient(135deg, #fb923c, #ea580c); }
+        .mobile-more-tool__icon--categorydb { background: linear-gradient(135deg, #3b82f6, #1d4ed8); }
+        .mobile-more-tool__icon--categorymgr { background: linear-gradient(135deg, #10b981, #047857); }
+        .mobile-more-tool__icon--help { background: linear-gradient(135deg, #22d3ee, #0284c7); }
         @media (max-width: 1279px) { .toolbar-action { padding-left: 0 !important; padding-right: 0 !important; } }
 
         .filter-btn { @apply px-4 py-2 rounded-xl text-sm font-bold border border-slate-200 text-slate-500 hover:bg-white hover:text-blue-600 hover:border-blue-300 transition bg-white/90; }
