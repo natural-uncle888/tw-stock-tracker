@@ -1,5 +1,5 @@
 /* 台股損益管理 PWA Service Worker */
-const CACHE_VERSION = 'stock-tracker-pwa-v38-20260922-dashboard-v52';
+const CACHE_VERSION = 'stock-tracker-pwa-v39-20260922-technical-v53';
 const APP_SHELL_CACHE = `${CACHE_VERSION}-shell`;
 const RUNTIME_CACHE = `${CACHE_VERSION}-runtime`;
 
@@ -24,6 +24,7 @@ const APP_SHELL = [
   './services/dividendService.js',
   './services/cashService.js',
   './services/priceService.js',
+  './services/technicalAnalysisService.js',
   './services/institutionalOiService.js',
   './services/chipService.js',
   './services/stockRiskService.js',

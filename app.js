@@ -171,7 +171,8 @@ createApp({
                     <button @click="showMobileMoreTools=false; showSettings=true" class="mobile-more-tool"><span class="mobile-more-tool__icon mobile-more-tool__icon--fee"><i class="fa-solid fa-percent"></i></span><span><strong>費率設定</strong><small>手續費與證交稅</small></span></button>
                     <button @click="showMobileMoreTools=false; openCategoryDbModal()" class="mobile-more-tool"><span class="mobile-more-tool__icon mobile-more-tool__icon--categorydb"><i class="fa-solid fa-layer-group"></i></span><span><strong>族群資料庫</strong><small>匯入與匯出分類</small></span></button>
                     <button @click="showMobileMoreTools=false; openCategoryManagerModal()" class="mobile-more-tool"><span class="mobile-more-tool__icon mobile-more-tool__icon--categorymgr"><i class="fa-solid fa-list-check"></i></span><span><strong>族群管理</strong><small>管理產業與題材</small></span></button>
-                    <button @click="showMobileMoreTools=false; showHelpModal=true" class="mobile-more-tool col-span-2"><span class="mobile-more-tool__icon mobile-more-tool__icon--help"><i class="fa-solid fa-circle-question"></i></span><span><strong>使用說明</strong><small>查看操作方式與備份說明</small></span></button>
+                    <button @click="showMobileMoreTools=false; openTechnicalAnalysis()" class="mobile-more-tool"><span class="mobile-more-tool__icon" style="background:#eef2ff;color:#4f46e5"><i class="fa-solid fa-chart-column"></i></span><span><strong>K棒技術判讀</strong><small>K棒・均線・量價・支撐壓力</small></span></button>
+                    <button @click="showMobileMoreTools=false; showHelpModal=true" class="mobile-more-tool"><span class="mobile-more-tool__icon mobile-more-tool__icon--help"><i class="fa-solid fa-circle-question"></i></span><span><strong>使用說明</strong><small>查看操作方式與備份說明</small></span></button>
                 </div>
             </div>
         </div>
@@ -184,7 +185,7 @@ createApp({
                     </div>
                     <div class="min-w-0">
                         <h1 class="text-3xl font-extrabold text-slate-800 tracking-tight">台股損益管理</h1>
-                        <p class="text-sm text-slate-500 font-bold tracking-wider mt-1">SMART TRACKER v5.2 Pro</p>
+                        <p class="text-sm text-slate-500 font-bold tracking-wider mt-1">SMART TRACKER v5.3 Pro</p>
                     </div>
                 </div>
 
@@ -217,6 +218,7 @@ createApp({
                 <button @click="exportData" class="btn btn-secondary toolbar-action toolbar-action--backup !h-12 !w-12 !p-0 !rounded-2xl" title="備份" aria-label="備份"><i class="fa-solid fa-file-arrow-down"></i></button>
                 <button @click="openCategoryDbModal" class="btn btn-secondary toolbar-action toolbar-action--categorydb !h-12 !w-12 !p-0 !rounded-2xl" title="族群資料庫" aria-label="族群資料庫"><i class="fa-solid fa-layer-group"></i></button>
                 <button @click="openCategoryManagerModal" class="btn btn-secondary toolbar-action toolbar-action--categorymgr !h-12 !w-12 !p-0 !rounded-2xl" title="族群管理" aria-label="族群管理"><i class="fa-solid fa-list-check"></i></button>
+                <button @click="openTechnicalAnalysis()" class="btn btn-secondary toolbar-action !h-12 !w-12 !p-0 !rounded-2xl" title="K棒技術判讀" aria-label="K棒技術判讀"><i class="fa-solid fa-chart-column"></i></button>
                 <button @click="openCommodityModal" class="btn btn-secondary toolbar-action toolbar-action--commodity !h-12 !w-12 !p-0 !rounded-2xl" title="商品期貨" aria-label="商品期貨"><i class="fa-solid fa-chart-line"></i></button>
                 <button @click="openDividendManagerModal" class="btn btn-secondary toolbar-action toolbar-action--dividend !h-12 !w-12 !p-0 !rounded-2xl" title="除息與增資" aria-label="除息與增資"><i class="fa-solid fa-gift"></i></button>
                     <button @click="showHelpModal = true" class="btn btn-secondary toolbar-action toolbar-action--help !h-12 !w-12 !p-0 !rounded-2xl" title="使用說明" aria-label="使用說明"><i class="fa-solid fa-circle-question"></i></button>
@@ -787,7 +789,7 @@ createApp({
                             <span class="hidden sm:inline">一鍵查持股</span><span class="sm:hidden">查持股</span>
                         </button>
                         <button @click="queryStockChipData" :disabled="chipBatchLoading || chipLoading || stockRiskLoading" class="h-12 px-3 md:px-4 rounded-2xl font-black text-white bg-emerald-600 hover:bg-emerald-700 active:scale-[0.98] disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/20">
-                            <i class="fa-solid" :class="(chipLoading || stockRiskLoading) ? 'fa-spinner fa-spin' : 'fa-magnifying-glass-chart'"></i>
+                            <i class="fa-solid" :class="(chipLoading || stockRiskLoading) ? 'fa-spinner fa-spin' : 'fa-magnifying-glass'"></i>
                             <span class="hidden sm:inline">查個股籌碼</span><span class="sm:hidden">個股籌碼</span>
                         </button>
                     </div>
@@ -898,7 +900,7 @@ createApp({
                                 <option :value="60">近 60 筆</option>
                             </select>
                             <button @click="queryStockChipData" :disabled="chipBatchLoading || chipLoading || stockRiskLoading" class="h-11 px-4 rounded-xl font-extrabold text-white bg-emerald-600 hover:bg-emerald-700 active:scale-[0.98] disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2 w-full min-w-0">
-                                <i class="fa-solid shrink-0" :class="(chipLoading || stockRiskLoading) ? 'fa-spinner fa-spin' : 'fa-magnifying-glass-chart'"></i>
+                                <i class="fa-solid shrink-0" :class="(chipLoading || stockRiskLoading) ? 'fa-spinner fa-spin' : 'fa-magnifying-glass'"></i>
                                 <span class="truncate">{{ (chipLoading || stockRiskLoading) ? '查詢中…' : '查詢個股籌碼 / 注意' }}</span>
                             </button>
                             <button @click="queryAllHoldingChipData" :disabled="chipBatchLoading || chipLoading || stockRiskLoading || !holdings.length" class="h-11 px-4 rounded-xl font-extrabold text-white bg-cyan-600 hover:bg-cyan-700 active:scale-[0.98] disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2 w-full min-w-0">
@@ -1201,7 +1203,10 @@ createApp({
                             <div class="text-sm text-slate-500 font-medium mt-1">個股完整損益・交易・指定批次追蹤</div>
                         </div>
                     </div>
-                    <button v-if="selectedStockHolding && Number(selectedStockHolding.qty) > 0" type="button" @click="openSellModal(selectedStockHolding)" class="btn btn-primary !rounded-xl"><i class="fa-solid fa-arrow-right-from-bracket mr-2"></i>賣出 / 指定批次</button>
+                    <div class="flex flex-wrap gap-2">
+                        <button type="button" @click="openTechnicalAnalysis(selectedStock)" class="btn btn-secondary !rounded-xl !border-indigo-200 !text-indigo-700 hover:!bg-indigo-50"><i class="fa-solid fa-chart-column mr-2"></i>K棒技術判讀</button>
+                        <button v-if="selectedStockHolding && Number(selectedStockHolding.qty) > 0" type="button" @click="openSellModal(selectedStockHolding)" class="btn btn-primary !rounded-xl"><i class="fa-solid fa-arrow-right-from-bracket mr-2"></i>賣出 / 指定批次</button>
+                    </div>
                 </div>
 
                 <div class="grid grid-cols-2 xl:grid-cols-4 gap-4">
@@ -2851,6 +2856,72 @@ createApp({
             </div>
         </div>
 
+
+        <!-- v5.3: K棒／技術判讀 -->
+        <div v-if="showTechnicalAnalysisModal" class="fixed inset-0 z-[110] bg-slate-950/65 backdrop-blur-sm flex items-center justify-center p-3 md:p-6" @click.self="closeTechnicalAnalysis">
+            <div class="bg-white rounded-[2rem] w-full max-w-6xl shadow-2xl overflow-hidden flex flex-col" style="max-height:calc(100vh - 32px)">
+                <div class="px-5 md:px-7 py-5 border-b border-slate-200 bg-gradient-to-r from-indigo-950 via-slate-900 to-slate-800 text-white flex items-start justify-between gap-4 shrink-0">
+                    <div><div class="text-xl md:text-2xl font-black flex items-center gap-3"><i class="fa-solid fa-chart-column text-indigo-300"></i>K棒技術判讀</div><div class="text-xs md:text-sm font-bold text-slate-300 mt-1">K棒型態 × 均線位置 × 量價關係 × 趨勢 × 支撐壓力</div></div>
+                    <button @click="closeTechnicalAnalysis" class="w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center"><i class="fa-solid fa-xmark"></i></button>
+                </div>
+                <div class="overflow-y-auto p-5 md:p-7 space-y-5">
+                    <div class="card !p-4 md:!p-5">
+                        <div class="flex flex-col md:flex-row gap-3 md:items-end">
+                            <div class="flex-1"><label class="text-xs font-black text-slate-500">股票代號</label><input v-model.trim="technicalForm.code" @keyup.enter="runTechnicalAnalysis" placeholder="例如 2313" class="mt-2 w-full h-12 px-4 rounded-xl bg-slate-50 border-2 border-slate-200 font-black text-slate-800 outline-none focus:border-indigo-400"></div>
+                            <div class="flex-1"><label class="text-xs font-black text-slate-500">股票名稱</label><div class="mt-2 h-12 px-4 rounded-xl bg-slate-100 border border-slate-200 flex items-center font-black text-slate-700">{{ technicalForm.name || '分析後自動帶入' }}</div></div>
+                            <button @click="runTechnicalAnalysis" :disabled="technicalLoading" class="btn btn-primary !h-12 !rounded-xl md:min-w-[150px]"><i class="fa-solid fa-magnifying-glass mr-2"></i>{{ technicalLoading ? '分析中…' : '開始分析' }}</button>
+                        </div>
+                        <div class="mt-3 text-[11px] font-bold text-slate-400">使用最近約一年日 K 歷史行情。技術型態是歷史價格與量能的描述，不代表未來必然走勢。</div>
+                    </div>
+
+                    <div v-if="technicalLoading" class="py-16 text-center text-slate-500"><i class="fa-solid fa-spinner fa-spin text-4xl text-indigo-500"></i><div class="mt-4 font-black">正在取得日 K 與計算技術訊號…</div></div>
+                    <div v-else-if="technicalError" class="rounded-2xl border border-rose-200 bg-rose-50 p-5 text-rose-700 font-bold"><i class="fa-solid fa-triangle-exclamation mr-2"></i>{{ technicalError }}</div>
+
+                    <template v-if="technicalResult && !technicalLoading">
+                        <div class="grid grid-cols-1 xl:grid-cols-3 gap-4">
+                            <div class="xl:col-span-2 rounded-2xl border-2 p-5" :class="technicalToneClass(technicalResult.tone)">
+                                <div class="text-xs font-black opacity-70">綜合技術狀態</div><div class="text-2xl md:text-3xl font-black mt-1">{{ technicalResult.stance }}</div>
+                                <div class="mt-3 text-sm font-bold leading-relaxed">{{ technicalResult.trendText }}</div>
+                                <div class="mt-3 text-xs font-bold opacity-75">技術分數 {{ technicalResult.score }}（僅用於彙整訊號，不是買賣評分）</div>
+                            </div>
+                            <div class="card !p-5">
+                                <div class="flex items-center justify-between"><div><div class="text-xs font-black text-slate-400">最新收盤</div><div class="text-3xl font-black text-slate-800 mt-1">{{ Number(technicalResult.latest.close).toFixed(2) }}</div></div><div class="text-right"><div class="text-xs font-black text-slate-400">日漲跌</div><div class="text-xl font-black mt-1" :class="technicalResult.dayChange >= 0 ? 'text-red-600' : 'text-emerald-600'">{{ technicalResult.dayChange >= 0 ? '+' : '' }}{{ technicalResult.dayChange }}%</div></div></div>
+                                <div class="mt-3 text-xs font-bold text-slate-400">{{ technicalResult.name }}（{{ technicalResult.code }}）・{{ technicalResult.latest.date }}</div>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                            <div class="card !p-5">
+                                <div class="flex items-center justify-between gap-3"><div><div class="text-xs font-black text-slate-400">最新 K 棒型態</div><div class="text-xl font-black text-slate-800 mt-1">{{ technicalResult.pattern.name }}</div></div><span class="px-3 py-1.5 rounded-full text-xs font-black" :class="technicalBiasClass(technicalResult.pattern.bias)">{{ technicalBiasText(technicalResult.pattern.bias) }}</span></div>
+                                <div class="mt-4 text-sm font-bold text-slate-600 leading-relaxed">{{ technicalResult.pattern.description }}</div>
+                            </div>
+                            <div class="card !p-5">
+                                <div class="text-xs font-black text-slate-400">量價關係</div><div class="text-lg font-black text-slate-800 mt-1">{{ technicalResult.volume.text }}</div>
+                                <div class="grid grid-cols-3 gap-2 mt-4 text-center"><div class="rounded-xl bg-slate-50 p-3"><div class="text-[10px] font-bold text-slate-400">今日量</div><div class="font-black text-slate-700 mt-1">{{ technicalVolumeText(technicalResult.volume.today) }}</div></div><div class="rounded-xl bg-slate-50 p-3"><div class="text-[10px] font-bold text-slate-400">20日均量</div><div class="font-black text-slate-700 mt-1">{{ technicalVolumeText(technicalResult.volume.avg20) }}</div></div><div class="rounded-xl bg-slate-50 p-3"><div class="text-[10px] font-bold text-slate-400">量比</div><div class="font-black text-slate-700 mt-1">{{ technicalResult.volume.ratio20 || '-' }}x</div></div></div>
+                            </div>
+                        </div>
+
+                        <div class="card !p-5">
+                            <div class="flex items-center justify-between"><div><div class="text-xs font-black text-slate-400">均線位置</div><div class="text-lg font-black text-slate-800 mt-1">收盤價相對重要均線</div></div><i class="fa-solid fa-wave-square text-indigo-400 text-xl"></i></div>
+                            <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mt-4"><div v-for="ma in technicalResult.positions" :key="ma.key" class="rounded-xl border p-4" :class="ma.above ? 'bg-red-50 border-red-100' : 'bg-emerald-50 border-emerald-100'"><div class="text-xs font-black text-slate-500">{{ ma.label }}</div><div class="text-xl font-black mt-1" :class="ma.above ? 'text-red-600' : 'text-emerald-700'">{{ ma.above ? '站上' : '跌破' }}</div><div class="text-xs font-bold text-slate-500 mt-2">均線 {{ ma.value ? Number(ma.value).toFixed(2) : '-' }}</div><div class="text-[11px] font-bold text-slate-400">乖離 {{ ma.distance >= 0 ? '+' : '' }}{{ ma.distance ? Number(ma.distance).toFixed(2) : '0.00' }}%</div></div></div>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div class="card !p-5"><div class="text-xs font-black text-slate-400">近端支撐</div><div class="text-2xl font-black text-emerald-700 mt-1">{{ technicalResult.support ? Number(technicalResult.support).toFixed(2) : '-' }}</div><div class="text-xs font-bold text-slate-400 mt-2">依近 60 個交易日低點群聚估算，非固定價位。</div></div>
+                            <div class="card !p-5"><div class="text-xs font-black text-slate-400">近端壓力</div><div class="text-2xl font-black text-rose-600 mt-1">{{ technicalResult.resistance ? Number(technicalResult.resistance).toFixed(2) : '-' }}</div><div class="text-xs font-bold text-slate-400 mt-2">依近 60 個交易日高點群聚估算，突破後角色可能互換。</div></div>
+                        </div>
+
+                        <div v-if="technicalResult.caution && technicalResult.caution.length" class="rounded-2xl bg-amber-50 border border-amber-200 p-5"><div class="font-black text-amber-800"><i class="fa-solid fa-triangle-exclamation mr-2"></i>目前值得注意</div><div class="mt-2 flex flex-wrap gap-2"><span v-for="x in technicalResult.caution" :key="x" class="px-3 py-1.5 rounded-full bg-white border border-amber-200 text-xs font-black text-amber-700">{{ x }}</span></div></div>
+
+                        <div class="card !p-0 overflow-hidden">
+                            <div class="px-5 py-4 bg-slate-50 border-b border-slate-200"><div class="font-black text-slate-800">最近 10 根 K 棒</div><div class="text-xs font-bold text-slate-400 mt-1">方便確認型態不是只看單日，而是放在前後走勢中觀察。</div></div>
+                            <div class="overflow-x-auto"><table class="w-full text-sm"><thead><tr class="text-left text-xs text-slate-400 border-b"><th class="p-3">日期</th><th class="p-3">型態</th><th class="p-3 text-right">開</th><th class="p-3 text-right">高</th><th class="p-3 text-right">低</th><th class="p-3 text-right">收</th><th class="p-3 text-right">量</th></tr></thead><tbody><tr v-for="k in technicalResult.recent" :key="k.date" class="border-b border-slate-100 last:border-0"><td class="p-3 font-bold text-slate-600 whitespace-nowrap">{{ k.date }}</td><td class="p-3"><span class="px-2 py-1 rounded-lg text-xs font-black" :class="technicalBiasClass(k.bias)">{{ k.pattern }}</span></td><td class="p-3 text-right font-bold">{{ Number(k.open).toFixed(2) }}</td><td class="p-3 text-right font-bold text-red-500">{{ Number(k.high).toFixed(2) }}</td><td class="p-3 text-right font-bold text-emerald-600">{{ Number(k.low).toFixed(2) }}</td><td class="p-3 text-right font-black">{{ Number(k.close).toFixed(2) }}</td><td class="p-3 text-right font-bold text-slate-500">{{ technicalVolumeText(k.volume) }}</td></tr></tbody></table></div>
+                        </div>
+                    </template>
+                </div>
+            </div>
+        </div>
+
         <!-- Mobile Bottom Main Tabs -->
         <div v-if="!showGlobalIndices && !showInventoryMarketPanel" class="md:hidden fixed bottom-0 left-0 w-full z-40 bg-white/95 backdrop-blur border-t border-slate-200 px-3 pt-2 pb-[calc(env(safe-area-inset-bottom)+10px)] shadow-[0_-16px_40px_-28px_rgba(15,23,42,.6)]">
             <div class="grid grid-cols-4 gap-2">
@@ -2886,6 +2957,9 @@ createApp({
         return {
             showGDriveModal: false, gdriveBusy: false, gdriveBusyText: '', gdriveCloudMeta: persisted.gdriveCloudMeta,
             showCommodityModal: false,
+            showTechnicalAnalysisModal: false,
+            technicalForm: { code: '', name: '' },
+            technicalLoading: false, technicalError: '', technicalResult: null,
             showInventoryMarketPanel: false,
             showHoldingRadarDetails: false,
             inventoryStickySummaryDocked: false,
@@ -4911,6 +4985,35 @@ ${picked.date} 收盤價：${close}`);
         closeRealizedDetail() { this.showRealizedDetail = false; this.realizedDetailCode = ''; },
 
         // --- Existing Methods (Exactly Preserved) ---
+        openTechnicalAnalysis(stock = null) {
+            const code = String(stock?.code || '').trim();
+            const name = code ? (stock?.name || this.resolveStockName(code, '') || this.nameMap?.[code] || '') : '';
+            this.technicalForm = { code, name };
+            this.technicalError = '';
+            this.technicalResult = null;
+            this.showTechnicalAnalysisModal = true;
+            if (code) this.$nextTick(() => this.runTechnicalAnalysis());
+        },
+        closeTechnicalAnalysis() { this.showTechnicalAnalysisModal = false; this.technicalError = ''; },
+        async runTechnicalAnalysis() {
+            const code = String(this.technicalForm?.code || '').trim().toUpperCase();
+            if (!code) { this.technicalError = '請輸入台股股票代號'; return; }
+            if (!window.StockTechnicalAnalysisService) { this.technicalError = '技術分析模組尚未載入，請重新整理頁面。'; return; }
+            this.technicalLoading = true; this.technicalError = ''; this.technicalResult = null;
+            try {
+                const result = await window.StockTechnicalAnalysisService.analyzeStock(code);
+                const knownName = this.resolveStockName(code, this.nameMap?.[code] || this.technicalForm?.name || result.name || '');
+                this.technicalForm.code = code; this.technicalForm.name = knownName || result.name || code;
+                this.technicalResult = { ...result, name: knownName || result.name || code };
+            } catch (e) {
+                this.technicalError = e?.message || '無法取得歷史行情，請稍後再試。';
+            } finally { this.technicalLoading = false; }
+        },
+        technicalToneClass(tone) { return tone === 'bullish' ? 'text-red-600 bg-red-50 border-red-200' : (tone === 'bearish' ? 'text-emerald-700 bg-emerald-50 border-emerald-200' : 'text-amber-700 bg-amber-50 border-amber-200'); },
+        technicalBiasText(bias) { return bias === 'bullish' ? '偏多' : (bias === 'bearish' ? '偏空' : '中性'); },
+        technicalBiasClass(bias) { return bias === 'bullish' ? 'text-red-600 bg-red-50' : (bias === 'bearish' ? 'text-emerald-700 bg-emerald-50' : 'text-slate-600 bg-slate-100'); },
+        technicalVolumeText(v) { const x=Number(v||0); if (!Number.isFinite(x)) return '-'; if (x >= 100000000) return (x/100000000).toFixed(2)+'億'; if (x >= 10000) return (x/10000).toFixed(1)+'萬'; return Math.round(x).toLocaleString('zh-TW'); },
+
         openStockDetails(stock, returnTab = 'inventory') { if (!stock || !stock.code) return; this.stockDetailsReturnTab = returnTab || 'inventory'; this.selectedStock = { code: stock.code, name: stock.name || this.resolveStockName(stock.code, '') || stock.code }; this.showStockDetails = true; this.currentTab = 'inventory'; window.scrollTo({ top: 0, behavior: 'smooth' }); },
         openStockFromHistory(stock, returnTab = 'history') { this.openStockDetails(stock, returnTab); },
         closeStockDetails() { const back = this.stockDetailsReturnTab || 'inventory'; this.showStockDetails = false; this.selectedStock = null; this.currentTab = back; this.stockDetailsReturnTab = 'inventory'; },
