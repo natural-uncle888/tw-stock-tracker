@@ -114,7 +114,7 @@
         if (!a.code || !(num(a.rightsIssuePrice) > 0) || !(num(a.rightsSubscribedQty) > 0)) push('warning', '現增', `${a.code || '現金增資'} 資料不完整`, '現金增資需要股票代號、認購價格與實際認購股數。', { action: 'dividend', code: a.code, key: `rightsbase:${a.id}` });
         const pay=dateValue(a.rightsPaymentDate), allot=dateValue(a.rightsAllotmentDate);
         if (!pay || !allot) push('warning','現增',`${a.code || '現金增資'} 日期不完整`,'請補上繳款日與撥股日。',{action:'dividend',code:a.code,key:`rightsdate:${a.id}`});
-        if (pay && allot && allot < pay) push('error','現增',`${a.code} 撥股日早於繳款日`,'日期順序不合理，請到企業行動修正。',{action:'dividend',code:a.code,key:`rightsorder:${a.id}`});
+        if (pay && allot && allot < pay) push('error','現增',`${a.code} 撥股日早於繳款日`,'日期順序不合理，請到除息與增資修正。',{action:'dividend',code:a.code,key:`rightsorder:${a.id}`});
         return;
       }
       if (shareKeys.has(key)) {

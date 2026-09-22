@@ -146,8 +146,8 @@ createApp({
                     <button @click="openCommodityModal" class="mobile-primary-tool mobile-primary-tool--commodity" title="商品期貨">
                         <i class="fa-solid fa-chart-line"></i><span>商品期貨</span>
                     </button>
-                    <button @click="openDividendManagerModal" class="mobile-primary-tool mobile-primary-tool--dividend" title="企業行動">
-                        <i class="fa-solid fa-gift"></i><span>企業行動</span>
+                    <button @click="openDividendManagerModal" class="mobile-primary-tool mobile-primary-tool--dividend" title="除息與增資">
+                        <i class="fa-solid fa-gift"></i><span>除息與增資</span>
                     </button>
                     <button @click="exportData" class="mobile-primary-tool mobile-primary-tool--backup" title="備份與還原">
                         <i class="fa-solid fa-cloud-arrow-up"></i><span>備份</span>
@@ -184,7 +184,7 @@ createApp({
                     </div>
                     <div class="min-w-0">
                         <h1 class="text-3xl font-extrabold text-slate-800 tracking-tight">台股損益管理</h1>
-                        <p class="text-sm text-slate-500 font-bold tracking-wider mt-1">SMART TRACKER v5.0 Pro</p>
+                        <p class="text-sm text-slate-500 font-bold tracking-wider mt-1">SMART TRACKER v5.1 Pro</p>
                     </div>
                 </div>
 
@@ -218,7 +218,7 @@ createApp({
                 <button @click="openCategoryDbModal" class="btn btn-secondary toolbar-action toolbar-action--categorydb !h-12 !w-12 !p-0 !rounded-2xl" title="族群資料庫" aria-label="族群資料庫"><i class="fa-solid fa-layer-group"></i></button>
                 <button @click="openCategoryManagerModal" class="btn btn-secondary toolbar-action toolbar-action--categorymgr !h-12 !w-12 !p-0 !rounded-2xl" title="族群管理" aria-label="族群管理"><i class="fa-solid fa-list-check"></i></button>
                 <button @click="openCommodityModal" class="btn btn-secondary toolbar-action toolbar-action--commodity !h-12 !w-12 !p-0 !rounded-2xl" title="商品期貨" aria-label="商品期貨"><i class="fa-solid fa-chart-line"></i></button>
-                <button @click="openDividendManagerModal" class="btn btn-secondary toolbar-action toolbar-action--dividend !h-12 !w-12 !p-0 !rounded-2xl" title="企業行動" aria-label="企業行動"><i class="fa-solid fa-gift"></i></button>
+                <button @click="openDividendManagerModal" class="btn btn-secondary toolbar-action toolbar-action--dividend !h-12 !w-12 !p-0 !rounded-2xl" title="除息與增資" aria-label="除息與增資"><i class="fa-solid fa-gift"></i></button>
                     <button @click="showHelpModal = true" class="btn btn-secondary toolbar-action toolbar-action--help !h-12 !w-12 !p-0 !rounded-2xl" title="使用說明" aria-label="使用說明"><i class="fa-solid fa-circle-question"></i></button>
                 </div>
             </div>
@@ -292,7 +292,7 @@ createApp({
                 <div class="card !p-5 border-rose-100 bg-rose-50/40"><div class="text-xs text-rose-500 font-bold mb-1">已入帳現金股利</div><div class="text-2xl font-black text-rose-600">+{{ formatCurrency(dividendCashSettledNet) }}</div><div class="mt-2 text-xs font-bold text-rose-400">投資收益，不計入本金</div></div>
                 <div class="card !p-5 border-orange-100 bg-orange-50/40"><div class="text-xs text-orange-500 font-bold mb-1">應收現金股利</div><div class="text-2xl font-black text-orange-600">+{{ formatCurrency(dividendReceivable) }}</div><div class="mt-2 text-xs font-bold text-orange-400">已除息、尚未付款</div></div>
                 <div class="card !p-5 border-indigo-100 bg-indigo-50/40"><div class="text-xs text-indigo-500 font-bold mb-1">應收股票股利市值</div><div class="text-2xl font-black text-indigo-600">+{{ formatCurrency(stockDividendReceivableValue) }}</div><div class="mt-2 text-xs font-bold text-indigo-400">已除權、尚未撥股估值</div></div>
-                <button type="button" @click="openDividendManagerModal" class="card !p-5 text-left hover:border-rose-300 hover:bg-rose-50 transition"><div class="text-xs text-slate-400 font-bold mb-1"><i class="fa-solid fa-gift text-rose-500 mr-1"></i>企業行動</div><div class="text-2xl font-black text-slate-800">{{ portfolioCorporateActions.length }}</div><div class="mt-2 text-xs font-bold text-slate-400">股利 / 股票股利 / 現金增資</div></button>
+                <button type="button" @click="openDividendManagerModal" class="card !p-5 text-left hover:border-rose-300 hover:bg-rose-50 transition"><div class="text-xs text-slate-400 font-bold mb-1"><i class="fa-solid fa-gift text-rose-500 mr-1"></i>除息與增資</div><div class="text-2xl font-black text-slate-800">{{ portfolioCorporateActions.length }}</div><div class="mt-2 text-xs font-bold text-slate-400">股利 / 股票股利 / 現金增資</div></button>
             </div>
 
             <div class="card !p-0 overflow-hidden" :class="dataHealthReport.ok ? 'border-emerald-100' : 'border-amber-200'">
@@ -1408,7 +1408,7 @@ createApp({
                 </div>
 
                 <div v-if="dividendHistoryRows.length" class="card !p-0 overflow-hidden mb-6 border-rose-100">
-                    <div class="px-6 py-4 bg-rose-50 border-b border-rose-100 flex items-center justify-between"><h3 class="text-base font-extrabold text-rose-700 flex items-center gap-2"><i class="fa-solid fa-gift"></i> 權息紀錄</h3><button @click="openDividendManagerModal" class="text-xs font-black text-rose-600 hover:underline">企業行動</button></div>
+                    <div class="px-6 py-4 bg-rose-50 border-b border-rose-100 flex items-center justify-between"><h3 class="text-base font-extrabold text-rose-700 flex items-center gap-2"><i class="fa-solid fa-gift"></i> 權息紀錄</h3><button @click="openDividendManagerModal" class="text-xs font-black text-rose-600 hover:underline">除息與增資</button></div>
                     <div class="divide-y divide-slate-100">
                         <div v-for="row in dividendHistoryRows.slice(0, 8)" :key="row.id + '-' + row.historyKind" class="px-6 py-4 flex flex-col md:flex-row md:items-center md:justify-between gap-2">
                             <div><div class="font-black text-slate-800">{{ row.historyDate || row.exDate }}｜{{ row.historyLabel }}｜{{ displayNameOnly(row.code, row.name) }} <span class="text-slate-400">({{ row.code }})</span></div><div class="text-xs font-bold text-slate-400 mt-1">{{ dividendActionSummary(row) }}</div></div>
@@ -2157,7 +2157,7 @@ createApp({
         <div v-if="showDividendManagerModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex justify-center items-start z-[90] p-4 md:p-8 overflow-y-auto">
             <div class="bg-white rounded-[2rem] w-full max-w-6xl shadow-2xl border border-white/80 overflow-hidden my-6">
                 <div class="px-6 py-5 bg-gradient-to-r from-rose-600 to-orange-500 text-white flex items-center justify-between gap-4">
-                    <div><h3 class="text-2xl font-black flex items-center gap-3"><i class="fa-solid fa-building-columns"></i> 企業行動</h3><p class="text-sm font-bold text-rose-100 mt-1">集中管理股利與現金增資；公告條件共用，實際權益與認購股數依目前帳本獨立計算。</p></div>
+                    <div><h3 class="text-2xl font-black flex items-center gap-3"><i class="fa-solid fa-building-columns"></i> 除息與增資</h3><p class="text-sm font-bold text-rose-100 mt-1">集中管理股利與現金增資；公告條件共用，實際權益與認購股數依目前帳本獨立計算。</p></div>
                     <button @click="closeDividendManagerModal" class="w-11 h-11 rounded-2xl bg-white/15 hover:bg-white/25 transition"><i class="fa-solid fa-xmark text-xl"></i></button>
                 </div>
 
@@ -2213,8 +2213,24 @@ createApp({
                         <div v-if="corporateActionMode === 'rights'" class="rounded-2xl border border-cyan-200 p-5 bg-cyan-50/40">
                             <div class="flex items-center justify-between mb-4"><div><h4 class="font-black text-slate-800">{{ rightsIssueForm.id ? '編輯現金增資' : '新增現金增資' }}</h4><p class="text-[11px] font-bold text-slate-400 mt-1">繳款日扣除現金；撥股日後增加庫存並建立獨立現增批次。</p></div><button type="button" @click="resetRightsIssueForm" class="text-xs font-black text-slate-500">清空</button></div>
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div class="input-group"><label class="text-xs font-bold text-slate-500 mb-2 ml-1">股票代號</label><input v-model="rightsIssueForm.code" @input="rightsIssueForm.code=String(rightsIssueForm.code||'').toUpperCase()" placeholder="2330" class="w-full h-[46px] px-4 bg-white border border-slate-300 rounded-xl font-bold outline-none focus:border-cyan-500"></div>
-                                <div class="input-group"><label class="text-xs font-bold text-slate-500 mb-2 ml-1">股票名稱</label><input v-model="rightsIssueForm.name" placeholder="台積電" class="w-full h-[46px] px-4 bg-white border border-slate-300 rounded-xl font-bold outline-none focus:border-cyan-500"></div>
+                                <div class="input-group relative">
+                                    <label class="text-xs font-bold text-slate-500 mb-2 ml-1 flex justify-between">股票代號 / 名稱 <span v-if="isDividendSearching" class="text-cyan-700 text-xs animate-pulse">搜尋中...</span></label>
+                                    <div class="relative flex items-center">
+                                        <input type="text" v-model="dividendSearchText" @input="lookupDividendStock" placeholder="如: 2313" class="w-full h-[46px] pl-10 pr-4 bg-white border border-slate-300 rounded-xl font-bold outline-none focus:border-cyan-500 focus:ring-4 focus:ring-cyan-50/60 transition placeholder:text-slate-300">
+                                        <i class="fa-solid fa-magnifying-glass absolute left-4 text-slate-400 text-sm pointer-events-none"></i>
+                                    </div>
+                                    <div v-if="showDividendSuggestions && dividendSuggestions.length > 0" class="suggestions-list !top-[54px]">
+                                        <div v-for="s in dividendSuggestions" :key="'rights-' + s.code" @click="selectDividendSuggestion(s)" class="suggestion-item group">
+                                            <div>
+                                                <span class="font-black text-cyan-700 mr-2 w-14 inline-block">{{ s.code }}</span>
+                                                <span class="text-slate-700 font-bold">{{ s.name }}</span>
+                                                <span v-if="s.isOnline" class="ml-2 text-[10px] bg-green-100 text-green-700 px-1.5 py-0.5 rounded font-bold">線上</span>
+                                            </div>
+                                            <i class="fa-solid fa-plus text-slate-300 group-hover:text-cyan-600"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="input-group"><label class="text-xs font-bold text-slate-500 mb-2 ml-1">股票名稱</label><input v-model="rightsIssueForm.name" placeholder="選擇股票後自動帶入" class="w-full h-[46px] px-4 bg-white border border-slate-300 rounded-xl font-bold outline-none focus:border-cyan-500"></div>
                                 <div class="input-group"><label class="text-xs font-bold text-slate-500 mb-2 ml-1">認購價格 元 / 股</label><input type="number" step="0.01" v-model.number="rightsIssueForm.rightsIssuePrice" class="w-full h-[46px] px-4 bg-white border border-slate-300 rounded-xl font-bold outline-none focus:border-cyan-500"></div>
                                 <div class="input-group"><label class="text-xs font-bold text-slate-500 mb-2 ml-1">可認股數（選填）</label><input type="number" step="1" v-model.number="rightsIssueForm.rightsEligibleQty" placeholder="例如 500" class="w-full h-[46px] px-4 bg-white border border-slate-300 rounded-xl font-bold outline-none focus:border-cyan-500"></div>
                                 <div class="input-group"><label class="text-xs font-bold text-slate-500 mb-2 ml-1">實際認購股數</label><input type="number" step="1" v-model.number="rightsIssueForm.rightsSubscribedQty" placeholder="例如 300" class="w-full h-[46px] px-4 bg-white border border-slate-300 rounded-xl font-bold outline-none focus:border-cyan-500"></div>
@@ -2236,8 +2252,8 @@ createApp({
                         </div>
 
                         <div class="rounded-2xl border border-slate-200 overflow-hidden">
-                            <div class="px-5 py-4 bg-slate-50 border-b border-slate-200 flex items-center justify-between"><h4 class="font-black text-slate-700">企業行動列表</h4><span class="text-xs font-bold text-slate-400">{{ currentPortfolio.name }}｜權益獨立計算</span></div>
-                            <div v-if="portfolioCorporateActions.length === 0" class="p-10 text-center text-slate-400 font-bold"><i class="fa-solid fa-circle-info text-3xl mb-3 opacity-40"></i><div>尚無企業行動</div></div>
+                            <div class="px-5 py-4 bg-slate-50 border-b border-slate-200 flex items-center justify-between"><h4 class="font-black text-slate-700">除息與增資列表</h4><span class="text-xs font-bold text-slate-400">{{ currentPortfolio.name }}｜權益獨立計算</span></div>
+                            <div v-if="portfolioCorporateActions.length === 0" class="p-10 text-center text-slate-400 font-bold"><i class="fa-solid fa-circle-info text-3xl mb-3 opacity-40"></i><div>尚無除息與增資紀錄</div></div>
                             <div v-else class="divide-y divide-slate-100 max-h-[560px] overflow-y-auto">
                                 <div v-for="action in portfolioCorporateActions" :key="action.id" class="p-5 hover:bg-slate-50 transition">
                                     <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
@@ -2252,7 +2268,7 @@ createApp({
             </div>
         </div>
 
-        <div v-if="showLegacyAdjustmentModal" class="fixed inset-0 bg-slate-900/70 backdrop-blur-sm flex justify-center items-center z-[105] p-4" @click.self="closeLegacyAdjustmentModal"><div class="bg-white w-full max-w-3xl rounded-[2rem] shadow-2xl overflow-hidden"><div class="p-6 bg-gradient-to-r from-amber-600 to-orange-500 text-white flex justify-between gap-4"><div><h3 class="text-xl font-black"><i class="fa-solid fa-scale-balanced mr-2"></i>舊資料帳務校正</h3><p class="text-xs font-bold text-amber-100 mt-1">只建立報表校正層，不修改任何早期買賣、現金或庫存紀錄。</p></div><button @click="closeLegacyAdjustmentModal" class="w-10 h-10 rounded-xl bg-white/15"><i class="fa-solid fa-xmark"></i></button></div><div class="p-6 space-y-4"><div class="grid grid-cols-2 gap-3"><div class="rounded-2xl bg-amber-50 border border-amber-200 p-4"><div class="text-xs font-bold text-amber-600">目前未校正差額</div><div class="text-2xl font-black text-amber-800">{{ dashboardReconciliationGap >= 0 ? '+' : '-' }}{{ formatCurrency(Math.abs(dashboardReconciliationGap)) }}</div></div><div class="rounded-2xl bg-emerald-50 border border-emerald-200 p-4"><div class="text-xs font-bold text-emerald-600">已存在校正</div><div class="text-2xl font-black text-emerald-800">{{ legacyAdjustmentTotal >= 0 ? '+' : '' }}{{ formatCurrency(legacyAdjustmentTotal) }}</div></div></div><div class="rounded-2xl border border-slate-200 overflow-hidden"><div class="px-4 py-3 bg-slate-50 font-black text-slate-700">準備建立的個股校正</div><div v-if="reconciliationDiagnostic.rows.length===0" class="p-5 text-sm font-bold text-emerald-700">目前沒有需要校正的個股。</div><div v-else class="divide-y divide-slate-100 max-h-[360px] overflow-y-auto"><div v-for="row in reconciliationDiagnostic.rows" :key="'legacy-'+row.code" class="px-4 py-3 flex items-center justify-between"><div><div class="font-black text-slate-800">{{ row.name }} <span class="text-slate-400">({{ row.code }})</span></div><div class="text-[11px] font-bold text-slate-400">建立後此檔歷史差額會歸零</div></div><div class="font-black" :class="row.gap>=0?'text-red-600':'text-green-600'">{{ row.gap>=0?'+':'' }}{{ formatCurrency(row.gap) }}</div></div></div></div><div class="rounded-xl bg-slate-50 border border-slate-200 p-4 text-xs font-bold text-slate-500 leading-relaxed"><i class="fa-solid fa-shield-halved text-blue-500 mr-1"></i>這個功能適合處理升級前舊版本造成的成本口徑差異。校正可以隨時清除，原始交易永遠保留。</div><div class="flex gap-3"><button @click="closeLegacyAdjustmentModal" class="btn btn-secondary flex-1">取消</button><button @click="applyLegacyReconciliation" :disabled="reconciliationDiagnostic.rows.length===0" class="btn flex-1 !bg-amber-600 hover:!bg-amber-700 !text-white disabled:opacity-50"><i class="fa-solid fa-check mr-2"></i>建立校正</button></div></div></div></div>
+        <div v-if="showLegacyAdjustmentModal" class="fixed inset-0 bg-slate-900/70 backdrop-blur-sm flex justify-center items-center z-[105] p-4 sm:p-6" @click.self="closeLegacyAdjustmentModal"><div class="bg-white w-full max-w-3xl rounded-[2rem] shadow-2xl overflow-hidden max-h-[calc(100vh-3rem)] sm:max-h-[calc(100vh-5rem)] flex flex-col"><div class="p-5 sm:p-6 bg-gradient-to-r from-amber-600 to-orange-500 text-white flex justify-between gap-4 shrink-0"><div><h3 class="text-xl font-black"><i class="fa-solid fa-scale-balanced mr-2"></i>舊資料帳務校正</h3><p class="text-xs font-bold text-amber-100 mt-1">只建立報表校正層，不修改任何早期買賣、現金或庫存紀錄。</p></div><button @click="closeLegacyAdjustmentModal" class="w-10 h-10 rounded-xl bg-white/15"><i class="fa-solid fa-xmark"></i></button></div><div class="p-5 sm:p-6 space-y-4 overflow-y-auto overscroll-contain flex-1 min-h-0"><div class="grid grid-cols-2 gap-3"><div class="rounded-2xl bg-amber-50 border border-amber-200 p-4"><div class="text-xs font-bold text-amber-600">目前未校正差額</div><div class="text-2xl font-black text-amber-800">{{ dashboardReconciliationGap >= 0 ? '+' : '-' }}{{ formatCurrency(Math.abs(dashboardReconciliationGap)) }}</div></div><div class="rounded-2xl bg-emerald-50 border border-emerald-200 p-4"><div class="text-xs font-bold text-emerald-600">已存在校正</div><div class="text-2xl font-black text-emerald-800">{{ legacyAdjustmentTotal >= 0 ? '+' : '' }}{{ formatCurrency(legacyAdjustmentTotal) }}</div></div></div><div class="rounded-2xl border border-slate-200 overflow-hidden"><div class="px-4 py-3 bg-slate-50 font-black text-slate-700">準備建立的個股校正</div><div v-if="reconciliationDiagnostic.rows.length===0" class="p-5 text-sm font-bold text-emerald-700">目前沒有需要校正的個股。</div><div v-else class="divide-y divide-slate-100 max-h-[240px] sm:max-h-[300px] overflow-y-auto overscroll-contain"><div v-for="row in reconciliationDiagnostic.rows" :key="'legacy-'+row.code" class="px-4 py-3 flex items-center justify-between"><div><div class="font-black text-slate-800">{{ row.name }} <span class="text-slate-400">({{ row.code }})</span></div><div class="text-[11px] font-bold text-slate-400">建立後此檔歷史差額會歸零</div></div><div class="font-black" :class="row.gap>=0?'text-red-600':'text-green-600'">{{ row.gap>=0?'+':'' }}{{ formatCurrency(row.gap) }}</div></div></div></div><div class="rounded-xl bg-slate-50 border border-slate-200 p-4 text-xs font-bold text-slate-500 leading-relaxed"><i class="fa-solid fa-shield-halved text-blue-500 mr-1"></i>這個功能適合處理升級前舊版本造成的成本口徑差異。校正可以隨時清除，原始交易永遠保留。</div><div class="flex gap-3"><button @click="closeLegacyAdjustmentModal" class="btn btn-secondary flex-1">取消</button><button @click="applyLegacyReconciliation" :disabled="reconciliationDiagnostic.rows.length===0" class="btn flex-1 !bg-amber-600 hover:!bg-amber-700 !text-white disabled:opacity-50"><i class="fa-solid fa-check mr-2"></i>建立校正</button></div></div></div></div>
 
         <div v-if="showConfirmModal" class="fixed inset-0 bg-slate-900/70 backdrop-blur-sm flex justify-center items-center z-[100] p-6 transition-all duration-300"><div class="bg-white rounded-[2rem] p-8 w-full max-w-sm shadow-2xl transform scale-100 flex flex-col items-center text-center relative border-2 border-red-50"><div class="w-20 h-20 bg-red-50 rounded-full flex items-center justify-center text-red-500 text-4xl mb-5 shadow-inner"><i class="fa-solid fa-triangle-exclamation"></i></div><h3 class="text-2xl font-black text-slate-800 mb-3">{{ confirmTitle }}</h3><p class="text-slate-500 font-bold mb-8 leading-relaxed">{{ confirmMessage }}</p><div class="flex gap-4 w-full"><button @click="showConfirmModal = false" class="h-[54px] flex-1 rounded-xl font-bold text-slate-500 bg-white border-2 border-slate-200 hover:bg-slate-50 hover:border-slate-400 transition-all duration-200 active:scale-95">取消</button><button @click="confirmAction" class="h-[54px] flex-1 rounded-xl font-bold text-white bg-gradient-to-r from-rose-500 to-red-600 shadow-xl shadow-rose-300 hover:shadow-2xl hover:shadow-rose-400 hover:-translate-y-1 transition-all duration-300 active:scale-95">確認執行</button></div></div></div>
 
@@ -4184,7 +4200,7 @@ const savedCash = localStorage.getItem(window.StockStorage.KEYS.cashBook) || '';
         transactions: { deep: true, handler() { this.scheduleAutoSave("交易資料"); } },
         cashBook: { deep: true, handler() { this.scheduleAutoSave("現金資料"); } },
         profitAdjustments: { deep: true, handler() { this.scheduleAutoSave("獲利用途"); } },
-        corporateActions: { deep: true, handler() { this.scheduleAutoSave("企業行動"); } },
+        corporateActions: { deep: true, handler() { this.scheduleAutoSave("除息與增資"); } },
         legacyAdjustments: { deep: true, handler() { this.scheduleAutoSave("舊資料校正"); } },
         portfolios: { deep: true, handler() { this.scheduleAutoSave("帳本"); } },
         currentPortfolioId() { this.scheduleAutoSave("目前帳本"); },
@@ -4699,7 +4715,7 @@ const savedCash = localStorage.getItem(window.StockStorage.KEYS.cashBook) || '';
             this.showDividendManagerModal = true;
         },
         closeDividendManagerModal() { this.showDividendManagerModal = false; this.showDividendSuggestions = false; },
-        resetRightsIssueForm() { this.rightsIssueForm = { id:null, code:'', name:'', rightsIssuePrice:null, rightsEligibleQty:null, rightsSubscribedQty:null, rightsPaymentDate:'', rightsAllotmentDate:'', note:'' }; },
+        resetRightsIssueForm() { this.rightsIssueForm = { id:null, code:'', name:'', rightsIssuePrice:null, rightsEligibleQty:null, rightsSubscribedQty:null, rightsPaymentDate:'', rightsAllotmentDate:'', note:'' }; if (this.corporateActionMode === 'rights') { this.dividendSearchText=''; this.dividendSuggestions=[]; this.showDividendSuggestions=false; } },
         editRightsIssueAction(action) {
             const a = window.StockDividendService.normalizeAction(action); this.corporateActionMode='rights';
             this.rightsIssueForm = { id:a.id, code:a.code||'', name:this.resolveStockName(a.code,a.name||''), rightsIssuePrice:Number(a.rightsIssuePrice)||null, rightsEligibleQty:Number(a.rightsEligibleQty)||null, rightsSubscribedQty:Number(a.rightsSubscribedQty)||null, rightsPaymentDate:a.rightsPaymentDate||'', rightsAllotmentDate:a.rightsAllotmentDate||'', note:a.note||'' };
@@ -4759,10 +4775,12 @@ const savedCash = localStorage.getItem(window.StockStorage.KEYS.cashBook) || '';
         lookupDividendStock() {
             const raw = String(this.dividendSearchText || '').trim();
             const term = (raw.split(/\s+/)[0] || raw).toUpperCase();
-            this.dividendForm.code = term;
+            const isRights = this.corporateActionMode === 'rights';
+            const targetForm = isRights ? this.rightsIssueForm : this.dividendForm;
+            targetForm.code = term;
             if (!raw) {
-                this.dividendForm.code = '';
-                this.dividendForm.name = '';
+                targetForm.code = '';
+                targetForm.name = '';
                 this.dividendSuggestions = [];
                 this.showDividendSuggestions = false;
                 return;
@@ -4775,7 +4793,7 @@ const savedCash = localStorage.getItem(window.StockStorage.KEYS.cashBook) || '';
             this.dividendSuggestions = localResults.slice(0, 6);
             this.showDividendSuggestions = true;
             const exact = localResults.find(s => String(s.code) === term || String(s.name) === raw || String(s.name) === term);
-            if (exact) this.applyDividendStock(exact);
+            if (exact) { if (isRights) this.applyRightsStock(exact); else this.applyDividendStock(exact); }
             if (term.length > 1 && localResults.length < 3) {
                 if (this.dividendSearchTimeout) clearTimeout(this.dividendSearchTimeout);
                 this.dividendSearchTimeout = setTimeout(() => { this.fetchDividendOnlineSuggestions(term); }, 500);
@@ -4806,7 +4824,7 @@ const savedCash = localStorage.getItem(window.StockStorage.KEYS.cashBook) || '';
                 });
                 const currentTerm = String(this.dividendSearchText || '').trim().split(/\s+/)[0].toUpperCase();
                 const exactOnline = onlineResults.find(item => item.code === currentTerm);
-                if (exactOnline) this.applyDividendStock(exactOnline);
+                if (exactOnline) { if (this.corporateActionMode === 'rights') this.applyRightsStock(exactOnline); else this.applyDividendStock(exactOnline); }
                 if (this.dividendSuggestions.length > 0) this.showDividendSuggestions = true;
             } catch (e) {
             } finally {
@@ -4814,7 +4832,8 @@ const savedCash = localStorage.getItem(window.StockStorage.KEYS.cashBook) || '';
             }
         },
         selectDividendSuggestion(stock) {
-            this.applyDividendStock(stock);
+            if (this.corporateActionMode === 'rights') this.applyRightsStock(stock);
+            else this.applyDividendStock(stock);
             this.showDividendSuggestions = false;
         },
         async fetchDividendPrevClose() {
