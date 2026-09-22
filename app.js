@@ -184,7 +184,7 @@ createApp({
                     </div>
                     <div class="min-w-0">
                         <h1 class="text-3xl font-extrabold text-slate-800 tracking-tight">台股損益管理</h1>
-                        <p class="text-sm text-slate-500 font-bold tracking-wider mt-1">SMART TRACKER v4.4 Pro</p>
+                        <p class="text-sm text-slate-500 font-bold tracking-wider mt-1">SMART TRACKER v4.6 Pro</p>
                     </div>
                 </div>
 
@@ -229,27 +229,63 @@ createApp({
         <div v-show="currentTab === 'dashboard'" class="space-y-6">
             <div class="bg-gradient-to-br from-slate-900 via-slate-800 to-indigo-900 rounded-[2rem] p-6 md:p-8 text-white shadow-xl relative overflow-hidden">
                 <div class="absolute -top-12 -right-12 w-56 h-56 rounded-full bg-white/10 blur-2xl"></div>
-                <div class="relative z-10 flex flex-col lg:flex-row lg:items-end lg:justify-between gap-6">
-                    <div>
-                        <div class="dashboard-portfolio-pill inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/10 border border-white/10 text-xs font-black text-slate-200 mb-4"><i class="fa-solid fa-gauge-high shrink-0"></i><span class="shrink-0">Dashboard 總覽｜</span><span class="portfolio-name-truncate">{{ currentPortfolio.name }}</span></div>
-                        <div class="text-sm font-bold text-slate-300">總資產（現金 + 庫存市值 + 應收股利）</div>
-                        <div class="mt-2 text-4xl md:text-5xl font-black tracking-tight">{{ formatCurrency(netAssetValue) }}</div>
-                        <div class="mt-3 text-sm font-black" :class="cashTotalPnL >= 0 ? 'text-red-200' : 'text-green-200'">總損益：{{ cashTotalPnL >= 0 ? '+' : '' }}{{ formatCurrency(cashTotalPnL) }}（{{ cashRoiPercent }}%）</div>
+                <div class="absolute -bottom-20 -left-16 w-64 h-64 rounded-full bg-indigo-400/10 blur-3xl"></div>
+                <div class="relative z-10 grid grid-cols-1 xl:grid-cols-[1.15fr_.85fr] gap-6 xl:gap-8 items-stretch">
+                    <div class="flex flex-col justify-between">
+                        <div>
+                            <div class="dashboard-portfolio-pill inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/10 border border-white/10 text-xs font-black text-slate-200 mb-4"><i class="fa-solid fa-gauge-high shrink-0"></i><span class="shrink-0">Dashboard 總覽｜</span><span class="portfolio-name-truncate">{{ currentPortfolio.name }}</span></div>
+                            <div class="text-sm font-bold text-slate-300">帳本總資產</div>
+                            <div class="mt-2 text-4xl md:text-5xl font-black tracking-tight">{{ formatCurrency(netAssetValue) }}</div>
+                            <div class="mt-3 flex flex-wrap items-center gap-x-3 gap-y-2 text-sm font-black">
+                                <span :class="cashTotalPnL >= 0 ? 'text-red-200' : 'text-green-200'">總損益 {{ cashTotalPnL >= 0 ? '+' : '' }}{{ formatCurrency(cashTotalPnL) }}</span>
+                                <span class="text-slate-500">•</span>
+                                <span :class="Number(cashRoiPercent) >= 0 ? 'text-red-200' : 'text-green-200'">總報酬率 {{ cashRoiPercent }}%</span>
+                            </div>
+                        </div>
+                        <div class="mt-5 flex flex-wrap items-center gap-2 text-[11px] font-bold text-slate-300">
+                            <span class="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-3 py-1.5"><i class="fa-solid fa-circle-info text-indigo-200"></i>總資產＝現金＋庫存市值＋應收股利</span>
+                            <span class="inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5" :class="dashboardReconciliationOk ? 'border-emerald-300/20 bg-emerald-400/10 text-emerald-100' : 'border-amber-300/20 bg-amber-400/10 text-amber-100'"><i class="fa-solid" :class="dashboardReconciliationOk ? 'fa-circle-check' : 'fa-triangle-exclamation'"></i>{{ dashboardReconciliationOk ? '帳務校驗正常' : ('帳務差額 ' + formatCurrency(Math.abs(dashboardReconciliationGap))) }}</span>
+                        </div>
                     </div>
-                    <div class="grid grid-cols-2 gap-3 w-full lg:w-[420px]">
-                        <div class="rounded-2xl bg-white/10 border border-white/10 p-4"><div class="text-xs font-bold text-slate-300">現金餘額</div><div class="mt-1 text-xl font-black" :class="cashBalance >= 0 ? 'text-emerald-200' : 'text-rose-200'">{{ cashBalance >= 0 ? '' : '-' }}{{ formatCurrency(Math.abs(cashBalance)) }}</div></div>
-                        <div class="rounded-2xl bg-white/10 border border-white/10 p-4"><div class="text-xs font-bold text-slate-300">庫存市值</div><div class="mt-1 text-xl font-black text-white">{{ formatCurrency(estimatedMarketValue) }}</div></div>
-                        <div class="rounded-2xl bg-white/10 border border-white/10 p-4"><div class="text-xs font-bold text-slate-300">股利收益</div><div class="mt-1 text-xl font-black text-rose-100">+{{ formatCurrency(dividendIncomeTotal) }}</div></div>
-                        <div class="rounded-2xl bg-white/10 border border-white/10 p-4"><div class="text-xs font-bold text-slate-300">已實現損益</div><div class="mt-1 text-xl font-black" :class="totalRealizedPnL >= 0 ? 'text-red-200' : 'text-green-200'">{{ totalRealizedPnL >= 0 ? '+' : '' }}{{ formatCurrency(totalRealizedPnL) }}</div></div>
-                        <div class="rounded-2xl bg-white/10 border border-white/10 p-4"><div class="text-xs font-bold text-slate-300">未實現損益</div><div class="mt-1 text-xl font-black" :class="totalUnrealizedPnL >= 0 ? 'text-red-200' : 'text-green-200'">{{ totalUnrealizedPnL >= 0 ? '+' : '' }}{{ formatCurrency(totalUnrealizedPnL) }}</div></div>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div class="rounded-2xl bg-white/10 border border-white/10 p-4"><div class="text-xs font-bold text-slate-300">淨投入本金</div><div class="mt-1 text-xl font-black text-white">{{ formatCurrency(cashNetContribution) }}</div><div class="mt-1 text-[10px] font-bold text-slate-400">期初＋入金－出金</div></div>
+                        <div class="rounded-2xl bg-white/10 border border-white/10 p-4"><div class="text-xs font-bold text-slate-300">現金餘額</div><div class="mt-1 text-xl font-black" :class="cashBalance >= 0 ? 'text-emerald-200' : 'text-rose-200'">{{ cashBalance >= 0 ? '' : '-' }}{{ formatCurrency(Math.abs(cashBalance)) }}</div><div class="mt-1 text-[10px] font-bold text-slate-400">可動用現金</div></div>
+                        <div class="rounded-2xl bg-white/10 border border-white/10 p-4"><div class="text-xs font-bold text-slate-300">庫存市值</div><div class="mt-1 text-xl font-black text-white">{{ formatCurrency(estimatedMarketValue) }}</div><div class="mt-1 text-[10px] font-bold text-slate-400">依最新行情估算</div></div>
+                        <div class="rounded-2xl bg-white/10 border border-white/10 p-4"><div class="text-xs font-bold text-slate-300">應收股利</div><div class="mt-1 text-xl font-black text-orange-100">+{{ formatCurrency(dividendReceivable + stockDividendReceivableValue) }}</div><div class="mt-1 text-[10px] font-bold text-slate-400">現金＋股票股利估值</div></div>
                     </div>
                 </div>
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div class="card !p-5"><div class="text-xs text-slate-400 font-bold mb-1">可用獲利</div><div class="text-2xl font-black" :class="availableRealizedProfit >= 0 ? 'text-red-600' : 'text-green-600'">{{ availableRealizedProfit >= 0 ? '+' : '' }}{{ formatCurrency(availableRealizedProfit) }}</div><div class="mt-2 text-xs font-bold text-slate-400">已實現 - 提領 + 補回</div></div>
-                <div class="card !p-5"><div class="text-xs text-slate-400 font-bold mb-1">已提領獲利</div><div class="text-2xl font-black text-rose-600">-{{ formatCurrency(profitWithdrawalsTotal) }}</div><div class="mt-2 text-xs font-bold text-slate-400">已領出使用的獲利</div></div>
-                <div class="card !p-5"><div class="text-xs text-slate-400 font-bold mb-1">已補回獲利</div><div class="text-2xl font-black text-emerald-700">+{{ formatCurrency(profitRestoresTotal) }}</div><div class="mt-2 text-xs font-bold text-slate-400">補回到獲利池</div></div>
+            <section class="space-y-3">
+                <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-2 px-1">
+                    <div><h2 class="text-lg font-black text-slate-800 flex items-center gap-2"><i class="fa-solid fa-chart-column text-indigo-500"></i>投資核心指標</h2><p class="text-xs font-bold text-slate-400 mt-1">把成本、損益、股息與整體報酬集中在同一區塊。</p></div>
+                    <div class="text-[11px] font-bold text-slate-400">行情更新：{{ lastUpdateTime || '--' }}</div>
+                </div>
+                <div class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-3 md:gap-4">
+                    <div class="card !p-5 col-span-2 md:col-span-1"><div class="flex items-center justify-between"><div class="text-xs text-slate-400 font-bold">目前持倉成本</div><i class="fa-solid fa-coins text-slate-300"></i></div><div class="mt-2 text-2xl font-black text-slate-800">{{ formatCurrency(totalInvestedCost) }}</div><div class="mt-2 text-[11px] font-bold text-slate-400">目前仍持有部位的成本基礎</div></div>
+                    <div class="card !p-5"><div class="flex items-center justify-between"><div class="text-xs text-slate-400 font-bold">未實現損益</div><i class="fa-solid fa-chart-line" :class="totalUnrealizedPnL >= 0 ? 'text-red-400' : 'text-green-500'"></i></div><div class="mt-2 text-2xl font-black" :class="totalUnrealizedPnL >= 0 ? 'text-red-600' : 'text-green-600'">{{ totalUnrealizedPnL >= 0 ? '+' : '' }}{{ formatCurrency(totalUnrealizedPnL) }}</div><div class="mt-2 text-[11px] font-bold text-slate-400">目前庫存帳面損益</div></div>
+                    <div class="card !p-5"><div class="flex items-center justify-between"><div class="text-xs text-slate-400 font-bold">已實現損益</div><i class="fa-solid fa-circle-check" :class="totalRealizedPnL >= 0 ? 'text-red-400' : 'text-green-500'"></i></div><div class="mt-2 text-2xl font-black" :class="totalRealizedPnL >= 0 ? 'text-red-600' : 'text-green-600'">{{ totalRealizedPnL >= 0 ? '+' : '' }}{{ formatCurrency(totalRealizedPnL) }}</div><div class="mt-2 text-[11px] font-bold text-slate-400">所有已完成賣出累計</div></div>
+                    <div class="card !p-5"><div class="flex items-center justify-between"><div class="text-xs text-slate-400 font-bold">今年現金股利</div><i class="fa-solid fa-gift text-rose-400"></i></div><div class="mt-2 text-2xl font-black text-rose-600">+{{ formatCurrency(dashboardCurrentYearCashDividend) }}</div><div class="mt-2 text-[11px] font-bold text-slate-400">依今年除息日，含已入帳與應收</div></div>
+                    <div class="card !p-5 col-span-2 md:col-span-1"><div class="flex items-center justify-between"><div class="text-xs text-slate-400 font-bold">帳本總報酬率</div><i class="fa-solid fa-percent text-indigo-400"></i></div><div class="mt-2 text-2xl font-black" :class="Number(cashRoiPercent) >= 0 ? 'text-red-600' : 'text-green-600'">{{ cashRoiPercent }}%</div><div class="mt-2 text-[11px] font-bold text-slate-400">總損益 ÷ 淨投入本金</div></div>
+                </div>
+            </section>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                <div class="card !p-5">
+                    <div class="flex items-center justify-between mb-4"><div><div class="text-sm font-black text-slate-800">損益組成</div><div class="text-[11px] font-bold text-slate-400 mt-1">已實現＋未實現＋股利收益</div></div><div class="text-xl font-black" :class="totalReturnPnL >= 0 ? 'text-red-600' : 'text-green-600'">{{ totalReturnPnL >= 0 ? '+' : '' }}{{ formatCurrency(totalReturnPnL) }}</div></div>
+                    <div class="grid grid-cols-3 gap-2">
+                        <div class="rounded-2xl bg-slate-50 border border-slate-200 p-3"><div class="text-[10px] font-bold text-slate-400">已實現</div><div class="mt-1 text-sm font-black" :class="totalRealizedPnL >= 0 ? 'text-red-600' : 'text-green-600'">{{ totalRealizedPnL >= 0 ? '+' : '' }}{{ formatCurrency(totalRealizedPnL) }}</div></div>
+                        <div class="rounded-2xl bg-slate-50 border border-slate-200 p-3"><div class="text-[10px] font-bold text-slate-400">未實現</div><div class="mt-1 text-sm font-black" :class="totalUnrealizedPnL >= 0 ? 'text-red-600' : 'text-green-600'">{{ totalUnrealizedPnL >= 0 ? '+' : '' }}{{ formatCurrency(totalUnrealizedPnL) }}</div></div>
+                        <div class="rounded-2xl bg-rose-50 border border-rose-100 p-3"><div class="text-[10px] font-bold text-rose-400">股利收益</div><div class="mt-1 text-sm font-black text-rose-600">+{{ formatCurrency(dividendIncomeTotal) }}</div></div>
+                    </div>
+                </div>
+                <div class="card !p-5">
+                    <div class="flex items-center justify-between mb-4"><div><div class="text-sm font-black text-slate-800">獲利池</div><div class="text-[11px] font-bold text-slate-400 mt-1">追蹤已實現獲利是否已提領</div></div><div class="text-xl font-black" :class="availableRealizedProfit >= 0 ? 'text-red-600' : 'text-green-600'">{{ availableRealizedProfit >= 0 ? '+' : '' }}{{ formatCurrency(availableRealizedProfit) }}</div></div>
+                    <div class="grid grid-cols-2 gap-2">
+                        <div class="rounded-2xl bg-rose-50 border border-rose-100 p-3"><div class="text-[10px] font-bold text-rose-400">已提領</div><div class="mt-1 text-sm font-black text-rose-600">-{{ formatCurrency(profitWithdrawalsTotal) }}</div></div>
+                        <div class="rounded-2xl bg-emerald-50 border border-emerald-100 p-3"><div class="text-[10px] font-bold text-emerald-500">已補回</div><div class="mt-1 text-sm font-black text-emerald-700">+{{ formatCurrency(profitRestoresTotal) }}</div></div>
+                    </div>
+                </div>
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -258,8 +294,6 @@ createApp({
                 <div class="card !p-5 border-indigo-100 bg-indigo-50/40"><div class="text-xs text-indigo-500 font-bold mb-1">應收股票股利市值</div><div class="text-2xl font-black text-indigo-600">+{{ formatCurrency(stockDividendReceivableValue) }}</div><div class="mt-2 text-xs font-bold text-indigo-400">已除權、尚未撥股估值</div></div>
                 <button type="button" @click="openDividendManagerModal" class="card !p-5 text-left hover:border-rose-300 hover:bg-rose-50 transition"><div class="text-xs text-slate-400 font-bold mb-1"><i class="fa-solid fa-gift text-rose-500 mr-1"></i>權息管理</div><div class="text-2xl font-black text-slate-800">{{ portfolioCorporateActions.length }}</div><div class="mt-2 text-xs font-bold text-slate-400">新增 / 編輯共用權息公告</div></button>
             </div>
-
-
 
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <div class="card">
@@ -3746,6 +3780,19 @@ const savedCash = localStorage.getItem(window.StockStorage.KEYS.cashBook) || '';
         categoryManagerCurrentLabel() { const tab = (this.categoryManagerTabs || []).find(t => t.key === this.categoryManagerTab); return tab ? tab.label : '題材族群'; },
         categoryManagerPlaceholder() { if (this.categoryManagerTab === 'sectors') return '電子 / 金融 / 傳產'; if (this.categoryManagerTab === 'industries') return 'PCB / 散熱 / 光通訊'; return 'GB300 / BBU / 玻纖布'; },
         categoryManagerItems() { const master = window.StockCategoryService ? window.StockCategoryService.normalizeMaster(this.categoryMaster) : (this.categoryMaster || {}); return Array.isArray(master[this.categoryManagerTab]) ? master[this.categoryManagerTab] : []; },
+        dashboardCurrentYearCashDividend() {
+            const year = new Date().getFullYear();
+            const today = new Date();
+            const yyyy = today.getFullYear();
+            const mm = String(today.getMonth() + 1).padStart(2, '0');
+            const dd = String(today.getDate()).padStart(2, '0');
+            const todayIso = `${yyyy}-${mm}-${dd}`;
+            return (this.portfolioCorporateActions || [])
+                .filter(a => a && Number(a.cashDividendPerShare || 0) > 0 && String(a.exDate || '').startsWith(`${year}-`) && String(a.exDate || '') <= todayIso)
+                .reduce((sum, a) => sum + (Number(a.cashDividendNet) || 0), 0);
+        },
+        dashboardReconciliationGap() { return (Number(this.cashTotalPnL) || 0) - (Number(this.totalReturnPnL) || 0); },
+        dashboardReconciliationOk() { return Math.abs(Number(this.dashboardReconciliationGap) || 0) <= 2; },
         totalInvestedCost() { return this.holdings.reduce((sum, h) => sum + (h.investedBase || 0), 0); },
         estimatedMarketValue() { return this.holdings.reduce((sum, h) => { const price = this.latestPrices[h.code] || h.currentPrice || h.buyAvgPrice || 0; return sum + Math.abs(price * h.qty); }, 0); },
         totalUnrealizedPnL() { return this.holdings.reduce((sum, h) => sum + h.unrealizedPnL, 0); },

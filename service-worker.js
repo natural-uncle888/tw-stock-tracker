@@ -1,5 +1,5 @@
 /* 台股損益管理 PWA Service Worker */
-const CACHE_VERSION = 'stock-tracker-pwa-v31-20260922-cross-device-cloud-hotfix';
+const CACHE_VERSION = 'stock-tracker-pwa-v32-20260922-dashboard-phase1';
 const APP_SHELL_CACHE = `${CACHE_VERSION}-shell`;
 const RUNTIME_CACHE = `${CACHE_VERSION}-runtime`;
 
