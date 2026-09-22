@@ -1,5 +1,5 @@
 /* 台股損益管理 PWA Service Worker */
-const CACHE_VERSION = 'stock-tracker-pwa-v32-20260922-dashboard-phase1';
+const CACHE_VERSION = 'stock-tracker-pwa-v34-20260922-phase3-v48';
 const APP_SHELL_CACHE = `${CACHE_VERSION}-shell`;
 const RUNTIME_CACHE = `${CACHE_VERSION}-runtime`;
 
@@ -27,6 +27,7 @@ const APP_SHELL = [
   './services/institutionalOiService.js',
   './services/chipService.js',
   './services/stockRiskService.js',
+  './services/auditService.js',
   './services/backupService.js',
   './taiwan_hot_stock_category_database_2026.json'
 ];

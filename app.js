@@ -184,7 +184,7 @@ createApp({
                     </div>
                     <div class="min-w-0">
                         <h1 class="text-3xl font-extrabold text-slate-800 tracking-tight">台股損益管理</h1>
-                        <p class="text-sm text-slate-500 font-bold tracking-wider mt-1">SMART TRACKER v4.7 Pro</p>
+                        <p class="text-sm text-slate-500 font-bold tracking-wider mt-1">SMART TRACKER v4.8 Pro</p>
                     </div>
                 </div>
 
@@ -293,6 +293,31 @@ createApp({
                 <div class="card !p-5 border-orange-100 bg-orange-50/40"><div class="text-xs text-orange-500 font-bold mb-1">應收現金股利</div><div class="text-2xl font-black text-orange-600">+{{ formatCurrency(dividendReceivable) }}</div><div class="mt-2 text-xs font-bold text-orange-400">已除息、尚未付款</div></div>
                 <div class="card !p-5 border-indigo-100 bg-indigo-50/40"><div class="text-xs text-indigo-500 font-bold mb-1">應收股票股利市值</div><div class="text-2xl font-black text-indigo-600">+{{ formatCurrency(stockDividendReceivableValue) }}</div><div class="mt-2 text-xs font-bold text-indigo-400">已除權、尚未撥股估值</div></div>
                 <button type="button" @click="openDividendManagerModal" class="card !p-5 text-left hover:border-rose-300 hover:bg-rose-50 transition"><div class="text-xs text-slate-400 font-bold mb-1"><i class="fa-solid fa-gift text-rose-500 mr-1"></i>權息管理</div><div class="text-2xl font-black text-slate-800">{{ portfolioCorporateActions.length }}</div><div class="mt-2 text-xs font-bold text-slate-400">新增 / 編輯共用權息公告</div></button>
+            </div>
+
+            <div class="card !p-0 overflow-hidden" :class="dataHealthReport.ok ? 'border-emerald-100' : 'border-amber-200'">
+                <div class="px-5 md:px-6 py-4 border-b flex flex-col md:flex-row md:items-center md:justify-between gap-3" :class="dataHealthReport.ok ? 'bg-emerald-50/60 border-emerald-100' : 'bg-amber-50/70 border-amber-100'">
+                    <div>
+                        <h3 class="text-base font-extrabold text-slate-700 flex items-center gap-2"><i class="fa-solid" :class="dataHealthReport.ok ? 'fa-shield-heart text-emerald-500' : 'fa-triangle-exclamation text-amber-500'"></i> 資料健康檢查</h3>
+                        <p class="text-xs font-bold text-slate-400 mt-1">自動檢查交易、指定批次、庫存、權息與帳務是否出現明顯不一致。</p>
+                    </div>
+                    <div class="flex flex-wrap items-center gap-2 text-xs font-black">
+                        <span class="px-3 py-1.5 rounded-full border" :class="dataHealthReport.ok ? 'bg-white text-emerald-700 border-emerald-200' : 'bg-white text-slate-600 border-slate-200'">{{ dataHealthReport.ok ? '目前正常' : ('共 ' + dataHealthReport.total + ' 項提醒') }}</span>
+                        <span v-if="dataHealthReport.counts.error" class="px-3 py-1.5 rounded-full bg-rose-100 text-rose-700 border border-rose-200">需處理 {{ dataHealthReport.counts.error }}</span>
+                        <span v-if="dataHealthReport.counts.warning" class="px-3 py-1.5 rounded-full bg-amber-100 text-amber-700 border border-amber-200">注意 {{ dataHealthReport.counts.warning }}</span>
+                    </div>
+                </div>
+                <div v-if="dataHealthReport.ok" class="px-6 py-5 flex items-center gap-3 text-sm font-bold text-emerald-700"><i class="fa-solid fa-circle-check text-xl"></i><div>目前沒有偵測到明顯的負庫存、批次數量、權息日期或帳務校驗異常。</div></div>
+                <div v-else class="divide-y divide-slate-100">
+                    <div v-for="item in dataHealthAlerts" :key="item.key || (item.title + item.message)" class="px-5 md:px-6 py-4 flex flex-col md:flex-row md:items-center gap-3 justify-between">
+                        <div class="flex items-start gap-3 min-w-0">
+                            <div class="w-9 h-9 shrink-0 rounded-xl flex items-center justify-center" :class="item.severity === 'error' ? 'bg-rose-100 text-rose-600' : 'bg-amber-100 text-amber-600'"><i class="fa-solid" :class="item.severity === 'error' ? 'fa-circle-exclamation' : 'fa-triangle-exclamation'"></i></div>
+                            <div class="min-w-0"><div class="flex flex-wrap items-center gap-2"><span class="text-[10px] px-2 py-1 rounded-full font-black bg-slate-100 text-slate-500">{{ item.kind }}</span><div class="font-black text-slate-800">{{ item.title }}</div></div><div class="text-xs font-bold text-slate-500 mt-1 leading-relaxed">{{ item.message }}</div></div>
+                        </div>
+                        <button v-if="item.action" type="button" @click="handleDataHealthAction(item)" class="btn btn-secondary !px-3 !py-2 !rounded-xl shrink-0"><i class="fa-solid fa-arrow-up-right-from-square mr-1"></i>查看</button>
+                    </div>
+                    <div v-if="dataHealthReport.total > dataHealthAlerts.length" class="px-6 py-3 text-center text-xs font-bold text-slate-400">另有 {{ dataHealthReport.total - dataHealthAlerts.length }} 項提醒；修正上方資料後會自動重新檢查。</div>
+                </div>
             </div>
 
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -1235,8 +1260,8 @@ createApp({
                 <div class="grid grid-cols-2 xl:grid-cols-4 gap-4">
                     <div class="card !p-5"><div class="flex items-center justify-between"><div class="text-xs text-slate-400 font-bold">未實現損益</div><i class="fa-solid fa-chart-line text-blue-400"></i></div><div class="mt-2 text-xl md:text-2xl font-black" :class="selectedStockPerformance.unrealized >= 0 ? 'text-up' : 'text-down'">{{ selectedStockPerformance.unrealized >= 0 ? '+' : '' }}{{ formatCurrency(selectedStockPerformance.unrealized) }}</div></div>
                     <div class="card !p-5"><div class="flex items-center justify-between"><div class="text-xs text-slate-400 font-bold">已實現損益</div><i class="fa-solid fa-circle-check text-slate-400"></i></div><div class="mt-2 text-xl md:text-2xl font-black" :class="selectedStockPerformance.realized >= 0 ? 'text-up' : 'text-down'">{{ selectedStockPerformance.realized >= 0 ? '+' : '' }}{{ formatCurrency(selectedStockPerformance.realized) }}</div></div>
-                    <div class="card !p-5"><div class="flex items-center justify-between"><div class="text-xs text-slate-400 font-bold">股利收益</div><i class="fa-solid fa-coins text-amber-400"></i></div><div class="mt-2 text-xl md:text-2xl font-black text-amber-600">+{{ formatCurrency(selectedStockPerformance.dividendCash) }}</div><div class="mt-1 text-[11px] font-bold text-slate-400">已入帳＋應收</div></div>
-                    <div class="card !p-5 border-2" :class="selectedStockPerformance.totalReturn >= 0 ? '!border-red-100' : '!border-emerald-100'"><div class="flex items-center justify-between"><div class="text-xs text-slate-400 font-bold">個股總損益</div><i class="fa-solid fa-sack-dollar" :class="selectedStockPerformance.totalReturn >= 0 ? 'text-red-400' : 'text-emerald-500'"></i></div><div class="mt-2 text-xl md:text-2xl font-black" :class="selectedStockPerformance.totalReturn >= 0 ? 'text-up' : 'text-down'">{{ selectedStockPerformance.totalReturn >= 0 ? '+' : '' }}{{ formatCurrency(selectedStockPerformance.totalReturn) }}</div><div class="mt-1 text-[11px] font-bold text-slate-400">已實現＋未實現＋股利</div></div>
+                    <div class="card !p-5"><div class="flex items-center justify-between"><div class="text-xs text-slate-400 font-bold">權息貢獻</div><i class="fa-solid fa-coins text-amber-400"></i></div><div class="mt-2 text-xl md:text-2xl font-black text-amber-600">+{{ formatCurrency(selectedStockPerformance.dividendContribution) }}</div><div class="mt-2 space-y-1 text-[11px] font-bold text-slate-400"><div>現金：{{ formatCurrency(selectedStockPerformance.dividendCash) }}（已入帳 {{ formatCurrency(selectedStockPerformance.dividendCashSettled) }} / 應收 {{ formatCurrency(selectedStockPerformance.dividendCashReceivable) }}）</div><div v-if="selectedStockPerformance.dividendStockSettledQty || selectedStockPerformance.dividendStockReceivableQty">股票：已撥 {{ formatCurrency(selectedStockPerformance.dividendStockSettledQty) }} 股 / 應收 {{ formatCurrency(selectedStockPerformance.dividendStockReceivableQty) }} 股<span v-if="selectedStockPerformance.dividendStockReceivableValue">・應收估值 {{ formatCurrency(selectedStockPerformance.dividendStockReceivableValue) }}</span></div></div></div>
+                    <div class="card !p-5 border-2" :class="selectedStockPerformance.totalReturn >= 0 ? '!border-red-100' : '!border-emerald-100'"><div class="flex items-center justify-between"><div class="text-xs text-slate-400 font-bold">個股總損益</div><i class="fa-solid fa-sack-dollar" :class="selectedStockPerformance.totalReturn >= 0 ? 'text-red-400' : 'text-emerald-500'"></i></div><div class="mt-2 text-xl md:text-2xl font-black" :class="selectedStockPerformance.totalReturn >= 0 ? 'text-up' : 'text-down'">{{ selectedStockPerformance.totalReturn >= 0 ? '+' : '' }}{{ formatCurrency(selectedStockPerformance.totalReturn) }}</div><div class="mt-1 text-[11px] font-bold text-slate-400">已實現＋未實現＋現金股利＋應收股票股利估值</div></div>
                 </div>
 
                 <div class="card !p-0 overflow-hidden">
@@ -3882,6 +3907,8 @@ const savedCash = localStorage.getItem(window.StockStorage.KEYS.cashBook) || '';
         },
         dashboardReconciliationGap() { return (Number(this.cashTotalPnL) || 0) - (Number(this.totalReturnPnL) || 0); },
         dashboardReconciliationOk() { return Math.abs(Number(this.dashboardReconciliationGap) || 0) <= 2; },
+        dataHealthReport() { return window.StockAuditService ? window.StockAuditService.analyze(this) : { items: [], counts: { error: 0, warning: 0, info: 0 }, ok: true, total: 0 }; },
+        dataHealthAlerts() { return (this.dataHealthReport.items || []).slice(0, 8); },
         totalInvestedCost() { return this.holdings.reduce((sum, h) => sum + (h.investedBase || 0), 0); },
         estimatedMarketValue() { return this.holdings.reduce((sum, h) => { const price = this.latestPrices[h.code] || h.currentPrice || h.buyAvgPrice || 0; return sum + Math.abs(price * h.qty); }, 0); },
         totalUnrealizedPnL() { return this.holdings.reduce((sum, h) => sum + h.unrealizedPnL, 0); },
@@ -3904,7 +3931,7 @@ const savedCash = localStorage.getItem(window.StockStorage.KEYS.cashBook) || '';
             const code = this.selectedStock?.code;
             const txs = code ? (this.portfolioTransactions || []).filter(tx => String(tx.code) === String(code)) : [];
             const realized = txs.reduce((sum, tx) => sum + (tx.realizedPnL != null ? (Number(tx.realizedPnL) || 0) : 0), 0);
-            const div = code && window.StockDividendService ? window.StockDividendService.dividendSummaryByCode(this, code) : { totalCash: 0 };
+            const div = code && window.StockDividendService ? window.StockDividendService.dividendSummaryByCode(this, code) : { totalCash: 0, settledCash: 0, receivableCash: 0, settledStockQty: 0, receivableStockQty: 0, receivableStockValue: 0, totalContribution: 0 };
             const qty = Number(h?.qty) || 0;
             const currentCost = Math.abs(Number(h?.totalCost) || 0);
             const avgCost = qty ? Math.abs(Number(h?.buyAvgPrice) || 0) : 0;
@@ -3912,9 +3939,21 @@ const savedCash = localStorage.getItem(window.StockStorage.KEYS.cashBook) || '';
             const marketValue = Math.abs(qty) * currentPrice;
             const unrealized = Number(h?.unrealizedPnL) || 0;
             const dividendCash = Number(div?.totalCash) || 0;
-            const totalReturn = realized + unrealized + dividendCash;
+            const dividendStockReceivableValue = Number(div?.receivableStockValue) || 0;
+            const dividendContribution = Number(div?.totalContribution ?? dividendCash + dividendStockReceivableValue) || 0;
+            const totalReturn = realized + unrealized + dividendContribution;
             const totalReturnRoi = currentCost > 0 ? (totalReturn / currentCost * 100) : 0;
-            return { qty, currentCost, avgCost, currentPrice, marketValue, realized, unrealized, dividendCash, totalReturn, totalReturnRoi };
+            return {
+                qty, currentCost, avgCost, currentPrice, marketValue, realized, unrealized,
+                dividendCash,
+                dividendCashSettled: Number(div?.settledCash) || 0,
+                dividendCashReceivable: Number(div?.receivableCash) || 0,
+                dividendStockSettledQty: Number(div?.settledStockQty) || 0,
+                dividendStockReceivableQty: Number(div?.receivableStockQty) || 0,
+                dividendStockReceivableValue,
+                dividendContribution,
+                totalReturn, totalReturnRoi
+            };
         },
         selectedStockOpenLots() {
             if (!this.selectedStock?.code || !window.StockTradeService?.openLongLots) return [];
@@ -4000,6 +4039,29 @@ const savedCash = localStorage.getItem(window.StockStorage.KEYS.cashBook) || '';
             Object.keys(overrides).forEach(code => {
                 if (code && overrides[code]) this.nameMap[code] = overrides[code];
             });
+        },
+
+        handleDataHealthAction(item) {
+            if (!item) return;
+            if (item.action === 'dividend') {
+                this.openDividendManagerModal();
+                return;
+            }
+            if (item.action === 'cash') {
+                this.currentTab = 'cash';
+                this.showStockDetails = false;
+                return;
+            }
+            if (item.action === 'history') {
+                this.currentTab = 'history';
+                this.showStockDetails = false;
+                return;
+            }
+            if (item.action === 'inventory') {
+                this.currentTab = 'inventory';
+                this.showStockDetails = false;
+                return;
+            }
         },
 
         updateInventoryStickySummaryDocked() {

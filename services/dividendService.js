@@ -496,7 +496,27 @@
     const receivableCash = rows.reduce((s, a) => s + Number(a.cashReceivable || 0), 0);
     const settledStockQty = rows.reduce((s, a) => s + (a.stockSettled ? Number(a.stockDividendQty || 0) : 0), 0);
     const receivableStockQty = rows.reduce((s, a) => s + Number(a.stockReceivableQty || 0), 0);
-    return { code: target, rows, settledCash, receivableCash, settledStockQty, receivableStockQty, totalCash: settledCash + receivableCash };
+    const latestPrice = Math.max(0, Number((vm && vm.latestPrices && vm.latestPrices[target]) || 0));
+    const fallbackPrice = rows.reduce((p, a) => p || Number(a.prevClose || a.exReferencePrice || 0), 0);
+    const referencePrice = latestPrice || Math.max(0, fallbackPrice);
+    const receivableStockValue = receivableStockQty * referencePrice;
+    const settledStockMarketValue = settledStockQty * referencePrice;
+    const totalCash = settledCash + receivableCash;
+    return {
+      code: target,
+      rows,
+      settledCash,
+      receivableCash,
+      settledStockQty,
+      receivableStockQty,
+      referencePrice,
+      receivableStockValue,
+      settledStockMarketValue,
+      totalCash,
+      // Settled stock dividends are already part of current holdings/market value.
+      // Only receivable stock value is added separately to total-return/NAV calculations.
+      totalContribution: totalCash + receivableStockValue,
+    };
   }
 
   window.StockDividendService = {

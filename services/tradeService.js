@@ -153,7 +153,7 @@
                     const roi = investedBase > 0 ? ((unrealizedPnL / investedBase) * 100).toFixed(2) : 0;
                     const status = this.latestStatus[code] || { isWarning: false, disposition: 0 };
                     const dividendSummary = window.StockDividendService ? window.StockDividendService.dividendSummaryByCode(this, code) : { settledCash: 0, receivableCash: 0, settledStockQty: 0, receivableStockQty: 0, totalCash: 0 };
-                    const totalReturnPnL = unrealizedPnL + (realized[code] || 0) + Number(dividendSummary.totalCash || 0);
+                    const totalReturnPnL = unrealizedPnL + (realized[code] || 0) + Number(dividendSummary.totalContribution ?? dividendSummary.totalCash ?? 0);
                     const totalReturnRoi = investedBase > 0 ? ((totalReturnPnL / investedBase) * 100).toFixed(2) : 0;
                     return {
                         code,
@@ -170,6 +170,8 @@
                         roi,
                         dividendSummary,
                         dividendIncome: Number(dividendSummary.totalCash || 0),
+                        dividendStockReceivableValue: Number(dividendSummary.receivableStockValue || 0),
+                        dividendContribution: Number(dividendSummary.totalContribution ?? dividendSummary.totalCash ?? 0),
                         dividendStockQty: Number(dividendSummary.settledStockQty || 0),
                         totalReturnPnL,
                         totalReturnRoi,
@@ -197,13 +199,34 @@
                     .filter(tx => {
                         const t = new Date(`${tx.date}T12:00:00`).getTime();
                         return Number.isFinite(t) && t <= cutoff;
-                    })
-                    .sort((a, b) => {
-                        const da = new Date(a.date).getTime();
-                        const db = new Date(b.date).getTime();
-                        if (da !== db) return da - db;
-                        return Number(a.id || 0) - Number(b.id || 0);
                     });
+                const dividendEvents = window.StockDividendService ? window.StockDividendService.portfolioActionsFor(this, pid)
+                    .filter(a => a && String(a.code || '').trim() === targetCode && a.stockSettled && a.stockPaymentDate && Number(a.stockDividendQty || 0) > 0)
+                    .filter(a => {
+                        const t = new Date(`${a.stockPaymentDate}T12:00:00`).getTime();
+                        return Number.isFinite(t) && t <= cutoff;
+                    })
+                    .map(a => {
+                        const sortId = Number(String(a.id || '').replace(/\D/g, '').slice(-10)) || 0;
+                        return {
+                            kind: 'stock_dividend',
+                            date: a.stockPaymentDate,
+                            sortId,
+                            buyTxId: `dividend:${sortId}:${a.stockPaymentDate}`,
+                            qty: Number(a.stockDividendQty || 0),
+                            actionId: a.id,
+                        };
+                    }) : [];
+                const events = [
+                    ...txs.map(tx => ({ kind: 'trade', date: tx.date, sortId: Number(tx.id || 0), tx })),
+                    ...dividendEvents,
+                ].sort((a, b) => {
+                    const da = new Date(a.date).getTime();
+                    const db = new Date(b.date).getTime();
+                    if (da !== db) return da - db;
+                    if (a.kind !== b.kind) return a.kind === 'stock_dividend' ? -1 : 1;
+                    return Number(a.sortId || 0) - Number(b.sortId || 0);
+                });
 
                 const lots = [];
                 let shortQty = 0;
@@ -244,7 +267,30 @@
                     if (remain > 1e-9) shortQty += remain;
                 };
 
-                for (const tx of txs) {
+                for (const event of events) {
+                    if (event.kind === 'stock_dividend') {
+                        let q = Math.max(0, Number(event.qty) || 0);
+                        if (shortQty > 0) {
+                            const cover = Math.min(q, shortQty);
+                            shortQty -= cover;
+                            q -= cover;
+                        }
+                        if (q > 1e-9) {
+                            lots.push({
+                                buyTxId: event.buyTxId,
+                                actionId: event.actionId,
+                                date: event.date,
+                                price: 0,
+                                unitCost: 0,
+                                originalQty: q,
+                                remainingQty: q,
+                                mode: 'stock_dividend',
+                                sourceType: 'dividend'
+                            });
+                        }
+                        continue;
+                    }
+                    const tx = event.tx;
                     const qty = Math.max(0, Number(tx.posQty ?? tx.qty) || 0);
                     if (qty <= 0) continue;
                     if (tx.type === 'buy') {
