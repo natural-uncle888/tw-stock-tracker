@@ -65,3 +65,11 @@ window.STOCK_TRACKER_GOOGLE_CLIENT_ID = 'xxxxxxxxxxxx-xxxxxxxxxxxxxxxxxxxxxxxxxx
 - 匯出我的族群資料庫：只匯出個股族群資料與下拉選單，不包含交易與資金資料。
 
 專案根目錄附有：`taiwan_hot_stock_category_database_2026.json`，可直接匯入網站使用。
+
+## 2026-09-22 更新：指定買進批次賣出
+
+- 庫存頁「股票賣出」新增買進批次清單，可自行指定本次要沖銷的買進紀錄與股數。
+- 新增「最低買進價優先」與「最早買進優先」快捷選擇，也可手動輸入各批次賣出股數。
+- 新產生的賣出交易會保存 `lotAllocations`，已實現損益與剩餘持股成本依指定批次計算。
+- 既有歷史交易若沒有 `lotAllocations`，仍沿用原本平均成本計算方式，避免升級後歷史損益被改寫。
+- 當沖配對開啟時仍沿用原本同日自動配對邏輯，不套用指定批次。

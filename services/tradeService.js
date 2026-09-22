@@ -30,6 +30,7 @@
                             cost: 0,
                             category: seed && seed.category,
                             name: (this.nameMap && this.nameMap[code]) ? this.nameMap[code] : (seed && seed.name) || code,
+                            lots: [],
                         };
                     }
                     if (!realized[code]) realized[code] = 0;
@@ -49,6 +50,7 @@
                         if (s.qty >= 0) {
                             s.qty += qty;
                             s.cost += totalAmount;
+                            s.lots.push({ buyTxId: tx.id, date: tx.date, price: Number(tx.price) || 0, unitCost: qty > 0 ? totalAmount / qty : 0, remainingQty: qty, sourceType: 'buy' });
                         } else {
                             const absShort = Math.abs(s.qty);
                             const coverQty = Math.min(qty, absShort);
@@ -61,6 +63,7 @@
                                 const remainAmount = totalAmount - coverAmount;
                                 s.qty += remain;
                                 s.cost += remainAmount;
+                                s.lots.push({ buyTxId: tx.id, date: tx.date, price: Number(tx.price) || 0, unitCost: remain > 0 ? remainAmount / remain : 0, remainingQty: remain, sourceType: 'buy' });
                             }
                         }
                     } else if (tx.type === 'sell') {
@@ -69,10 +72,40 @@
                             s.cost -= totalAmount;
                         } else {
                             const closeQty = Math.min(qty, s.qty);
-                            const avgEntry = s.cost / s.qty;
                             const closeAmount = totalAmount * (closeQty / qty);
+                            let qtyToClose = closeQty;
+                            let closedCost = 0;
+                            const allocations = Array.isArray(tx.lotAllocations) ? tx.lotAllocations : [];
+                            if (!allocations.length) {
+                                // Preserve the pre-upgrade average-cost behaviour for historical sells.
+                                const avgEntry = s.qty > 0 ? s.cost / s.qty : 0;
+                                closedCost = avgEntry * closeQty;
+                                const totalOpen = s.lots.reduce((sum, lot) => sum + Math.max(0, Number(lot.remainingQty) || 0), 0);
+                                const ratio = totalOpen > 1e-9 ? Math.min(1, closeQty / totalOpen) : 0;
+                                if (ratio > 0) s.lots.forEach(lot => { lot.remainingQty = Math.max(0, Number(lot.remainingQty) || 0) * (1 - ratio); });
+                                qtyToClose = 0;
+                            } else {
+                                const consumeLot = (lot, wantedQty) => {
+                                    if (!lot || qtyToClose <= 1e-9) return;
+                                    const q = Math.min(qtyToClose, Math.max(0, Number(wantedQty) || 0), Math.max(0, Number(lot.remainingQty) || 0));
+                                    if (q <= 0) return;
+                                    closedCost += q * (Number(lot.unitCost) || 0);
+                                    lot.remainingQty -= q;
+                                    qtyToClose -= q;
+                                };
+                                for (const alloc of allocations) {
+                                    if (qtyToClose <= 1e-9) break;
+                                    const lot = s.lots.find(l => String(l.buyTxId) === String(alloc && alloc.buyTxId) && Number(l.remainingQty) > 1e-9);
+                                    consumeLot(lot, alloc && alloc.qty);
+                                }
+                                for (const lot of s.lots) {
+                                    if (qtyToClose <= 1e-9) break;
+                                    consumeLot(lot, lot.remainingQty);
+                                }
+                            }
                             s.qty -= closeQty;
-                            s.cost -= avgEntry * closeQty;
+                            s.cost -= closedCost;
+                            s.lots = s.lots.filter(l => Number(l.remainingQty) > 1e-9);
                             const remain = qty - closeQty;
                             if (remain > 0) {
                                 const remainAmount = totalAmount - closeAmount;
@@ -95,6 +128,7 @@
                     s.qty += qtyEffect;
                     // Stock dividends increase share count but do not increase original cost.
                     s.cost += Number(effect.costEffect) || 0;
+                    if (qtyEffect > 0) s.lots.push({ buyTxId: `dividend:${effect.id || effect.date}`, date: effect.date, price: 0, unitCost: 0, remainingQty: qtyEffect, sourceType: 'dividend' });
                     if (Math.abs(s.qty) < 1e-9) { s.qty = 0; s.cost = 0; }
                     s.name = effect.name || s.name;
                 };
@@ -151,6 +185,103 @@
                 return cats.filter(c => c && c.id && used.has(c.id));
             },
     
+
+
+            openLongLots(code, portfolioId, asOfDate) {
+                const targetCode = String(code || '').trim();
+                const pid = portfolioId || 'main';
+                if (!targetCode) return [];
+                const cutoff = asOfDate ? new Date(`${asOfDate}T23:59:59`).getTime() : Infinity;
+                const txs = (Array.isArray(this.transactions) ? this.transactions : [])
+                    .filter(tx => tx && String(tx.code || '').trim() === targetCode && (tx.portfolioId || 'main') === pid)
+                    .filter(tx => {
+                        const t = new Date(`${tx.date}T12:00:00`).getTime();
+                        return Number.isFinite(t) && t <= cutoff;
+                    })
+                    .sort((a, b) => {
+                        const da = new Date(a.date).getTime();
+                        const db = new Date(b.date).getTime();
+                        if (da !== db) return da - db;
+                        return Number(a.id || 0) - Number(b.id || 0);
+                    });
+
+                const lots = [];
+                let shortQty = 0;
+                const findLot = id => lots.find(l => String(l.buyTxId) === String(id) && l.remainingQty > 1e-9);
+                const consume = (qty, allocations) => {
+                    let remain = Math.max(0, Number(qty) || 0);
+                    if (remain <= 0) return;
+                    const allocs = Array.isArray(allocations) ? allocations : [];
+                    if (!allocs.length) {
+                        // Legacy sells used average-cost accounting. Keep old records unchanged by
+                        // reducing every open lot proportionally instead of assigning a specific lot.
+                        const totalOpen = lots.reduce((sum, lot) => sum + Math.max(0, Number(lot.remainingQty) || 0), 0);
+                        const closeQty = Math.min(remain, totalOpen);
+                        if (totalOpen > 1e-9 && closeQty > 0) {
+                            const ratio = closeQty / totalOpen;
+                            for (const lot of lots) lot.remainingQty = Math.max(0, Number(lot.remainingQty) || 0) * (1 - ratio);
+                            remain -= closeQty;
+                        }
+                    } else {
+                        for (const a of allocs) {
+                            if (remain <= 1e-9) break;
+                            const lot = findLot(a && a.buyTxId);
+                            if (!lot) continue;
+                            const q = Math.min(remain, lot.remainingQty, Math.max(0, Number(a.qty) || 0));
+                            if (q <= 0) continue;
+                            lot.remainingQty -= q;
+                            remain -= q;
+                        }
+                        // Defensive fallback for edited/manual data whose allocations are incomplete.
+                        for (const lot of lots) {
+                            if (remain <= 1e-9) break;
+                            if (lot.remainingQty <= 1e-9) continue;
+                            const q = Math.min(remain, lot.remainingQty);
+                            lot.remainingQty -= q;
+                            remain -= q;
+                        }
+                    }
+                    if (remain > 1e-9) shortQty += remain;
+                };
+
+                for (const tx of txs) {
+                    const qty = Math.max(0, Number(tx.posQty ?? tx.qty) || 0);
+                    if (qty <= 0) continue;
+                    if (tx.type === 'buy') {
+                        let q = qty;
+                        if (shortQty > 0) {
+                            const cover = Math.min(q, shortQty);
+                            shortQty -= cover;
+                            q -= cover;
+                        }
+                        if (q > 1e-9) {
+                            const totalPosAmount = Number(tx.posAmount ?? tx.totalAmount) || 0;
+                            const unitCost = qty > 0 ? totalPosAmount / qty : Number(tx.price) || 0;
+                            lots.push({
+                                buyTxId: tx.id,
+                                date: tx.date,
+                                price: Number(tx.price) || 0,
+                                unitCost,
+                                originalQty: q,
+                                remainingQty: q,
+                                mode: tx.mode || 'cash',
+                                sourceType: 'buy'
+                            });
+                        }
+                    } else if (tx.type === 'sell') {
+                        if (shortQty > 0 || !lots.some(l => l.remainingQty > 1e-9)) {
+                            shortQty += qty;
+                        } else {
+                            consume(qty, tx.lotAllocations);
+                        }
+                    }
+                }
+
+                return lots
+                    .filter(l => l.remainingQty > 1e-9)
+                    .map(l => ({ ...l, remainingQty: Number(l.remainingQty.toFixed(6)) }));
+            },
+
             filteredStats() { let realizedPnL = 0, fees = 0, buyAmount = 0, sellAmount = 0; this.filteredTransactions.forEach(tx => { fees += (Number(tx.fee || 0) + Number(tx.tax || 0)); if (tx.type === 'buy') buyAmount += Number(tx.totalAmount || 0); else if (tx.type === 'sell') sellAmount += Number(tx.totalAmount || 0); if (tx.realizedPnL !== null && tx.realizedPnL !== undefined) realizedPnL += Number(tx.realizedPnL) || 0; }); return { realizedPnL, fees, buyAmount, sellAmount }; },
     
             calcBrokerFee(subTotal) { const grossFee = Number(subTotal || 0) * (Number(this.settings.feeRate || 0) / 100) * Number(this.settings.discount || 1); return Math.max(Math.floor(grossFee), Math.round(this.settings.minFee || 0)); },
@@ -375,8 +506,12 @@
                     if (event.kind === 'stock_dividend') {
                         const code = event.code;
                         if (!code) continue;
-                        if (!state[code]) state[code] = { qty: 0, cost: 0 };
-                        state[code].qty += Number(event.qtyEffect || 0);
+                        if (!state[code]) state[code] = { qty: 0, cost: 0, lots: [] };
+                        const dividendQty = Number(event.qtyEffect || 0);
+                        state[code].qty += dividendQty;
+                        if (dividendQty > 0 && state[code].qty > 0) {
+                            state[code].lots.push({ buyTxId: `dividend:${event.sortId}:${event.date}`, date: event.date, price: 0, unitCost: 0, remainingQty: dividendQty, sourceType: 'dividend' });
+                        }
                         if (Math.abs(state[code].qty) < 1e-9) {
                             state[code].qty = 0;
                             state[code].cost = 0;
@@ -387,7 +522,7 @@
                     const tx = event.tx;
                     if (!tx || !tx.code) continue;
                     const code = tx.code;
-                    if (!state[code]) state[code] = { qty: 0, cost: 0 };
+                    if (!state[code]) state[code] = { qty: 0, cost: 0, lots: [] };
     
                     const qty = Number(tx.posQty) || 0;
                     if (qty <= 0) continue; // no position impact (pure day-trade matched)
@@ -402,6 +537,14 @@
                         if (state[code].qty >= 0) {
                             state[code].qty += qty;
                             state[code].cost += amount;
+                            state[code].lots.push({
+                                buyTxId: tx.id,
+                                date: tx.date,
+                                price: Number(tx.price) || 0,
+                                unitCost: qty > 0 ? amount / qty : 0,
+                                remainingQty: qty,
+                                sourceType: 'buy'
+                            });
                             if (tx.flow == null) tx.flow = 'buy';
                         } else {
                             const absShort = Math.abs(state[code].qty);
@@ -423,6 +566,14 @@
                                 const remainAmount = amount - coverAmount;
                                 state[code].qty += remain;
                                 state[code].cost += remainAmount;
+                                state[code].lots.push({
+                                    buyTxId: tx.id,
+                                    date: tx.date,
+                                    price: Number(tx.price) || 0,
+                                    unitCost: remain > 0 ? remainAmount / remain : 0,
+                                    remainingQty: remain,
+                                    sourceType: 'buy'
+                                });
                             }
                         }
                     } else {
@@ -438,16 +589,55 @@
                             if (tx.flow == null) tx.flow = 'short';
                         } else {
                             const closeQty = Math.min(qty, state[code].qty);
-                            const avgEntry = state[code].cost / state[code].qty;
                             const closeAmount = amount * (closeQty / qty);
-    
-                            const pnl = closeAmount - (avgEntry * closeQty);
+
+                            // New sells may carry explicit lot allocations. Historical sells do
+                            // not, so keep their original average-cost accounting unchanged.
+                            let qtyToClose = closeQty;
+                            let closedCost = 0;
+                            const lots = Array.isArray(state[code].lots) ? state[code].lots : (state[code].lots = []);
+                            const allocationRows = Array.isArray(tx.lotAllocations) ? tx.lotAllocations : [];
+                            if (!allocationRows.length) {
+                                const avgEntry = state[code].qty > 0 ? state[code].cost / state[code].qty : 0;
+                                closedCost = avgEntry * closeQty;
+                                const totalOpen = lots.reduce((sum, lot) => sum + Math.max(0, Number(lot.remainingQty) || 0), 0);
+                                const ratio = totalOpen > 1e-9 ? Math.min(1, closeQty / totalOpen) : 0;
+                                if (ratio > 0) lots.forEach(lot => { lot.remainingQty = Math.max(0, Number(lot.remainingQty) || 0) * (1 - ratio); });
+                                qtyToClose = 0;
+                            } else {
+                                const consumeLot = (lot, wantedQty) => {
+                                    if (!lot || qtyToClose <= 1e-9) return 0;
+                                    const q = Math.min(qtyToClose, Math.max(0, Number(wantedQty) || 0), Math.max(0, Number(lot.remainingQty) || 0));
+                                    if (q <= 0) return 0;
+                                    closedCost += q * (Number(lot.unitCost) || 0);
+                                    lot.remainingQty -= q;
+                                    qtyToClose -= q;
+                                    return q;
+                                };
+                                for (const alloc of allocationRows) {
+                                    if (qtyToClose <= 1e-9) break;
+                                    const lot = lots.find(l => String(l.buyTxId) === String(alloc && alloc.buyTxId) && Number(l.remainingQty) > 1e-9);
+                                    consumeLot(lot, alloc && alloc.qty);
+                                }
+                                // Defensive fallback if a later history edit made allocations incomplete.
+                                for (const lot of lots) {
+                                    if (qtyToClose <= 1e-9) break;
+                                    consumeLot(lot, lot.remainingQty);
+                                }
+                            }
+
+                            if (qtyToClose > 1e-6) {
+                                this.openInfoModal('指定批次不足', `${tx.name || code} ${tx.date}：指定的買進批次可用股數不足，請重新選擇賣出批次。`);
+                                return false;
+                            }
+
+                            const pnl = closeAmount - closedCost;
                             tx.realizedPnL = basePnL + pnl;
                             tx.closedQty = baseClosedQty + closeQty;
-                            tx.closedBase = baseClosedBase + (avgEntry * closeQty);
-    
+                            tx.closedBase = baseClosedBase + closedCost;
+
                             state[code].qty -= closeQty;
-                            state[code].cost -= avgEntry * closeQty;
+                            state[code].cost -= closedCost;
     
                             const remain = qty - closeQty;
                             if (remain > 0) {
@@ -468,6 +658,9 @@
                     if (Math.abs(state[code].qty) < 1e-9) {
                         state[code].qty = 0;
                         state[code].cost = 0;
+                        if (Array.isArray(state[code].lots)) state[code].lots = [];
+                    } else if (Array.isArray(state[code].lots)) {
+                        state[code].lots = state[code].lots.filter(l => Number(l.remainingQty) > 1e-9);
                     }
                 }
     

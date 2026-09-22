@@ -1535,7 +1535,7 @@ createApp({
                     <div class="text-right"><div class="text-xs text-slate-400 font-bold uppercase mb-1">庫存股數</div><div class="font-black text-2xl text-slate-800">{{ formatCurrency(sellTx.maxQty) }}</div></div>
                 </div>
                 <div class="space-y-6">
-                    <div class="input-group"><label class="text-xs font-bold text-slate-500 mb-2 ml-1">交易日期</label><div class="relative flex items-center"><input type="date" v-model="sellTx.date" class="w-full h-[50px] pl-11 pr-4 bg-white border border-slate-300 rounded-xl text-slate-700 font-bold text-lg outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-50/50 transition-all shadow-sm"><i class="fa-regular fa-calendar-days absolute left-4 text-slate-400 text-lg pointer-events-none"></i></div></div>
+                    <div class="input-group"><label class="text-xs font-bold text-slate-500 mb-2 ml-1">交易日期</label><div class="relative flex items-center"><input type="date" v-model="sellTx.date" @change="refreshSellLots(true)" class="w-full h-[50px] pl-11 pr-4 bg-white border border-slate-300 rounded-xl text-slate-700 font-bold text-lg outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-50/50 transition-all shadow-sm"><i class="fa-regular fa-calendar-days absolute left-4 text-slate-400 text-lg pointer-events-none"></i></div></div>
                     <div class="input-group">
                         <label class="text-xs font-bold text-slate-500 mb-2 ml-1">交易身分</label>
                         <div class="relative flex items-center">
@@ -1561,19 +1561,62 @@ createApp({
   <div class="input-group">
     <div class="flex items-center justify-between mb-2 ml-1">
       <label class="text-xs font-bold text-slate-500">賣出股數</label>
-      <button @click="sellTx.qty = sellTx.maxQty"
+      <button @click="sellTx.qty = sellTx.maxQty; applySellLotStrategy(sellTx.lotStrategy === 'fifo' ? 'fifo' : 'lowest')"
         class="text-xs bg-blue-50 text-blue-600 px-2 py-1 rounded font-bold hover:bg-blue-100 whitespace-nowrap shrink-0">
         全部賣出
       </button>
     </div>
     <div class="relative flex items-center">
-      <input type="number" v-model.number="sellTx.qty"
+      <input type="number" v-model.number="sellTx.qty" @change="sellTx.dayTradeEligible ? null : applySellLotStrategy(sellTx.lotStrategy === 'fifo' ? 'fifo' : 'lowest')"
         class="w-full h-[50px] pl-11 pr-4 bg-white border border-slate-300 rounded-xl text-slate-700 font-bold text-lg outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-50/50 transition-all shadow-sm"
         :max="sellTx.maxQty">
       <i class="fa-solid fa-cubes absolute left-4 text-slate-400 text-base pointer-events-none"></i>
     </div>
   </div>
-</div><div class="flex items-center justify-between bg-amber-50 border border-amber-200 rounded-xl px-4 py-3">
+</div>
+
+                    <div class="rounded-2xl border border-blue-200 bg-blue-50/60 p-4 space-y-4">
+                        <div class="flex items-start justify-between gap-3">
+                            <div>
+                                <div class="font-black text-slate-800 flex items-center gap-2"><i class="fa-solid fa-layer-group text-blue-500"></i> 指定賣出買進批次</div>
+                                <div class="text-[11px] text-slate-500 font-bold mt-1 leading-relaxed">選擇這次要用哪一筆買進成本計算已實現損益。既有歷史交易維持原本計算方式，不會回頭改動。</div>
+                            </div>
+                            <div class="text-right shrink-0">
+                                <div class="text-[10px] font-bold text-slate-400">已選</div>
+                                <div class="font-black" :class="Math.abs(sellLotSelectedQty() - Number(sellTx.qty || 0)) < 0.000001 ? 'text-emerald-600' : 'text-orange-500'">{{ formatCurrency(sellLotSelectedQty()) }}</div>
+                            </div>
+                        </div>
+
+                        <div v-if="!sellTx.dayTradeEligible" class="flex flex-wrap gap-2">
+                            <button type="button" @click="applySellLotStrategy('lowest')" class="px-3 py-2 rounded-xl text-xs font-black border transition" :class="sellTx.lotStrategy === 'lowest' ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-blue-700 border-blue-200 hover:bg-blue-100'"><i class="fa-solid fa-arrow-down-1-9 mr-1"></i>最低買進價優先</button>
+                            <button type="button" @click="applySellLotStrategy('fifo')" class="px-3 py-2 rounded-xl text-xs font-black border transition" :class="sellTx.lotStrategy === 'fifo' ? 'bg-slate-800 text-white border-slate-800' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-100'"><i class="fa-solid fa-clock-rotate-left mr-1"></i>最早買進優先</button>
+                            <button type="button" @click="clearSellLotSelection" class="px-3 py-2 rounded-xl text-xs font-black bg-white text-slate-500 border border-slate-200 hover:bg-slate-100"><i class="fa-solid fa-eraser mr-1"></i>手動重選</button>
+                        </div>
+
+                        <div v-if="sellTx.dayTradeEligible" class="rounded-xl bg-amber-50 border border-amber-200 px-3 py-2 text-xs font-bold text-amber-700">當沖配對開啟時，由系統依同日成交自動配對，不套用指定買進批次。</div>
+
+                        <div v-else-if="sellTx.lots && sellTx.lots.length" class="space-y-2 max-h-56 overflow-y-auto pr-1">
+                            <div v-for="lot in sellTx.lots" :key="String(lot.buyTxId)" class="bg-white border border-slate-200 rounded-xl p-3">
+                                <div class="flex items-center justify-between gap-3 mb-2">
+                                    <div>
+                                        <div class="text-xs font-black text-slate-700">{{ lot.sourceType === 'dividend' ? '股票股利' : lot.date }}</div>
+                                        <div class="text-[11px] font-bold text-slate-400">買進價 {{ formatCurrency(lot.price) }}｜含費成本/股 {{ Number(lot.unitCost || 0).toFixed(3) }}</div>
+                                    </div>
+                                    <div class="text-right">
+                                        <div class="text-[10px] text-slate-400 font-bold">可用股數</div>
+                                        <div class="font-black text-slate-700">{{ formatCurrency(lot.remainingQty) }}</div>
+                                    </div>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <input type="number" min="0" :max="lot.remainingQty" v-model.number="lot.selectedQty" @input="sellTx.lotStrategy = 'manual'" class="flex-1 h-10 px-3 rounded-lg border border-slate-300 font-bold text-slate-700 outline-none focus:border-blue-500" placeholder="本次賣出股數">
+                                    <button type="button" @click="selectWholeSellLot(lot)" class="h-10 px-3 rounded-lg bg-blue-50 text-blue-600 text-xs font-black hover:bg-blue-100">整批</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div v-else-if="!sellTx.dayTradeEligible" class="text-xs font-bold text-slate-400">目前找不到可指定的買進批次。</div>
+                    </div>
+
+                    <div class="flex items-center justify-between bg-amber-50 border border-amber-200 rounded-xl px-4 py-3">
                         <div class="flex items-center gap-3">
                             <i class="fa-solid fa-bolt text-amber-500 text-lg"></i>
                             <div>
@@ -2706,7 +2749,7 @@ createApp({
             cashShortForm: { amount: null, note: '' },
             pendingCashShortTx: null,
             pendingCashShortMeta: null,
-            showSellModal: false, sellTx: { date: '', code: '', name: '', price: 0, qty: 0, maxQty: 0, category: '', mode: 'cash', dayTradeEligible: false },
+            showSellModal: false, sellTx: { date: '', code: '', name: '', price: 0, qty: 0, maxQty: 0, category: '', mode: 'cash', dayTradeEligible: false, lotStrategy: 'lowest', lots: [] },
             showEditBuyModal: false, editBuyTx: { id: null, date: '', code: '', name: '', price: null, qty: 0, category: 'core' },
             showEditTxModal: false, editTx: { id: null, date: '', code: '', name: '', type: 'buy', mode: 'cash', price: null, qty: 0, category: 'core', dayTradeEligible: false },
             showAddModal: false, searchText: '', isSearching: false, dividendSearchText: '', dividendSuggestions: [], showDividendSuggestions: false, isDividendSearching: false, isDividendPrevCloseLoading: false, dividendSearchTimeout: null,
@@ -4650,6 +4693,70 @@ ${picked.date} 收盤價：${close}`);
             }
         },
 
+        sellLotSelectedQty() {
+            return (this.sellTx?.lots || []).reduce((sum, lot) => sum + Math.max(0, Number(lot.selectedQty) || 0), 0);
+        },
+        sellLotAllocations() {
+            return (this.sellTx?.lots || [])
+                .map(lot => ({ buyTxId: lot.buyTxId, qty: Math.max(0, Number(lot.selectedQty) || 0) }))
+                .filter(row => row.qty > 0);
+        },
+        clearSellLotSelection() {
+            if (!this.sellTx || !Array.isArray(this.sellTx.lots)) return;
+            this.sellTx.lots.forEach(lot => { lot.selectedQty = 0; });
+            this.sellTx.lotStrategy = 'manual';
+        },
+        selectWholeSellLot(lot) {
+            if (!lot || this.sellTx.dayTradeEligible) return;
+            lot.selectedQty = Math.max(0, Number(lot.remainingQty) || 0);
+            this.sellTx.lotStrategy = 'manual';
+            this.sellTx.qty = Math.min(Number(this.sellTx.maxQty) || Infinity, this.sellLotSelectedQty());
+        },
+        applySellLotStrategy(strategy = 'lowest') {
+            if (!this.sellTx || this.sellTx.dayTradeEligible) return;
+            const lots = Array.isArray(this.sellTx.lots) ? this.sellTx.lots : [];
+            lots.forEach(lot => { lot.selectedQty = 0; });
+            let remain = Math.max(0, Math.min(Number(this.sellTx.qty) || 0, Number(this.sellTx.maxQty) || 0));
+            const ordered = [...lots].sort((a, b) => {
+                if (strategy === 'fifo') {
+                    const da = new Date(a.date || 0).getTime();
+                    const db = new Date(b.date || 0).getTime();
+                    if (da !== db) return da - db;
+                    return Number(a.buyTxId || 0) - Number(b.buyTxId || 0);
+                }
+                const pa = Number(a.price) || 0;
+                const pb = Number(b.price) || 0;
+                if (pa !== pb) return pa - pb;
+                const ca = Number(a.unitCost) || 0;
+                const cb = Number(b.unitCost) || 0;
+                if (ca !== cb) return ca - cb;
+                const da = new Date(a.date || 0).getTime();
+                const db = new Date(b.date || 0).getTime();
+                return da - db;
+            });
+            for (const lot of ordered) {
+                if (remain <= 1e-9) break;
+                const q = Math.min(remain, Math.max(0, Number(lot.remainingQty) || 0));
+                lot.selectedQty = q;
+                remain -= q;
+            }
+            this.sellTx.lotStrategy = strategy;
+        },
+        refreshSellLots(reapplyStrategy = false) {
+            if (!this.sellTx || !this.sellTx.code) return;
+            try { this.recomputeAllTradesAndValidate(); } catch (_) {}
+            const rows = window.StockTradeService.openLongLots.call(
+                this,
+                this.sellTx.code,
+                this.currentPortfolioId || 'main',
+                this.sellTx.date
+            );
+            this.sellTx.lots = (rows || []).map(lot => ({ ...lot, selectedQty: 0 }));
+            if (reapplyStrategy && !this.sellTx.dayTradeEligible) {
+                this.applySellLotStrategy(this.sellTx.lotStrategy === 'fifo' ? 'fifo' : 'lowest');
+            }
+        },
+
         openSellModal(stock) {
             if (!stock || !stock.code) return;
             // Inventory sell modal is for closing long positions. For shorts, use the top trade form.
@@ -4668,14 +4775,31 @@ ${picked.date} 收盤價：${close}`);
                 qty: Math.abs(stock.qty),
                 maxQty: Math.abs(stock.qty),
                 category: stock.category,
-                                mode: defaultMode,
-                dayTradeEligible: false
+                mode: defaultMode,
+                dayTradeEligible: false,
+                lotStrategy: 'lowest',
+                lots: []
             };
+            this.refreshSellLots(false);
+            this.applySellLotStrategy('lowest');
             this.showSellModal = true;
         },
         confirmSell() {
             if(!this.sellTx.price || !this.sellTx.qty || this.sellTx.qty <= 0) { this.openInfoModal('資料錯誤', '請輸入正確價格與股數'); return; }
             if(this.sellTx.maxQty && this.sellTx.qty > this.sellTx.maxQty) { this.openInfoModal('庫存不足', '賣出股數不可大於庫存'); return; }
+
+            let lotAllocations = [];
+            if (!this.sellTx.dayTradeEligible) {
+                const invalidLot = (this.sellTx.lots || []).find(lot => (Number(lot.selectedQty) || 0) < 0 || (Number(lot.selectedQty) || 0) > (Number(lot.remainingQty) || 0) + 1e-9);
+                if (invalidLot) { this.openInfoModal('批次股數錯誤', '指定賣出的股數不可超過該買進批次目前可用股數。'); return; }
+                const selectedQty = this.sellLotSelectedQty();
+                if (Math.abs(selectedQty - Number(this.sellTx.qty || 0)) > 1e-6) {
+                    this.openInfoModal('請完成批次選擇', `目前賣出 ${this.formatCurrency(this.sellTx.qty)} 股，但指定批次合計為 ${this.formatCurrency(selectedQty)} 股。請讓兩者一致。`);
+                    return;
+                }
+                lotAllocations = this.sellLotAllocations();
+                if (!lotAllocations.length) { this.openInfoModal('請選擇買進批次', '請至少選擇一筆買進批次，或開啟當沖配對讓系統自動配對。'); return; }
+            }
 
             const subTotal = this.sellTx.price * this.sellTx.qty;
             const fee = this.calcBrokerFee(subTotal);
@@ -4685,7 +4809,7 @@ ${picked.date} 收盤價：${close}`);
             const totalAmount = subTotal - fee - tax;
 
             const backup = JSON.parse(JSON.stringify(this.transactions));
-            this.transactions.push({ id: Date.now(), portfolioId: (this.currentPortfolioId || 'main'), date: this.sellTx.date, code: this.sellTx.code, name: this.sellTx.name, type: 'sell', mode: (this.sellTx.mode || 'cash'), dayTradeEligible: !!this.sellTx.dayTradeEligible, price: Number(this.sellTx.price), qty: Number(this.sellTx.qty), category: this.sellTx.category, fee, tax, totalAmount, realizedPnL: null });
+            this.transactions.push({ id: Date.now(), portfolioId: (this.currentPortfolioId || 'main'), date: this.sellTx.date, code: this.sellTx.code, name: this.sellTx.name, type: 'sell', mode: (this.sellTx.mode || 'cash'), dayTradeEligible: !!this.sellTx.dayTradeEligible, price: Number(this.sellTx.price), qty: Number(this.sellTx.qty), category: this.sellTx.category, fee, tax, totalAmount, realizedPnL: null, lotSelectionMode: this.sellTx.dayTradeEligible ? null : (this.sellTx.lotStrategy || 'manual'), lotAllocations: this.sellTx.dayTradeEligible ? [] : lotAllocations });
 
             const ok = this.recomputeAllTradesAndValidate();
             if (!ok) { this.transactions = backup; return; }
