@@ -2202,7 +2202,20 @@ createApp({
 
         <div v-if="showLegacyAdjustmentModal" class="fixed inset-0 bg-slate-900/70 backdrop-blur-sm flex justify-center items-center z-[105] p-4 sm:p-6" @click.self="closeLegacyAdjustmentModal"><div class="bg-white w-full max-w-3xl rounded-[2rem] shadow-2xl overflow-hidden max-h-[calc(100vh-3rem)] sm:max-h-[calc(100vh-5rem)] flex flex-col"><div class="p-5 sm:p-6 bg-gradient-to-r from-amber-600 to-orange-500 text-white flex justify-between gap-4 shrink-0"><div><h3 class="text-xl font-black"><i class="fa-solid fa-scale-balanced mr-2"></i>舊資料帳務校正</h3><p class="text-xs font-bold text-amber-100 mt-1">只建立報表校正層，不修改任何早期買賣、現金或庫存紀錄。</p></div><button @click="closeLegacyAdjustmentModal" class="w-10 h-10 rounded-xl bg-white/15"><i class="fa-solid fa-xmark"></i></button></div><div class="p-5 sm:p-6 space-y-4 overflow-y-auto overscroll-contain flex-1 min-h-0"><div class="grid grid-cols-2 gap-3"><div class="rounded-2xl bg-amber-50 border border-amber-200 p-4"><div class="text-xs font-bold text-amber-600">目前未校正差額</div><div class="text-2xl font-black text-amber-800">{{ dashboardReconciliationGap >= 0 ? '+' : '-' }}{{ formatCurrency(Math.abs(dashboardReconciliationGap)) }}</div></div><div class="rounded-2xl bg-emerald-50 border border-emerald-200 p-4"><div class="text-xs font-bold text-emerald-600">已存在校正</div><div class="text-2xl font-black text-emerald-800">{{ legacyAdjustmentTotal >= 0 ? '+' : '' }}{{ formatCurrency(legacyAdjustmentTotal) }}</div></div></div><div class="rounded-2xl border border-slate-200 overflow-hidden"><div class="px-4 py-3 bg-slate-50 font-black text-slate-700">準備建立的個股校正</div><div v-if="reconciliationDiagnostic.rows.length===0" class="p-5 text-sm font-bold text-emerald-700">目前沒有需要校正的個股。</div><div v-else class="divide-y divide-slate-100 max-h-[240px] sm:max-h-[300px] overflow-y-auto overscroll-contain"><div v-for="row in reconciliationDiagnostic.rows" :key="'legacy-'+row.code" class="px-4 py-3 flex items-center justify-between"><div><div class="font-black text-slate-800">{{ row.name }} <span class="text-slate-400">({{ row.code }})</span></div><div class="text-[11px] font-bold text-slate-400">建立後此檔歷史差額會歸零</div></div><div class="font-black" :class="row.gap>=0?'text-red-600':'text-green-600'">{{ row.gap>=0?'+':'' }}{{ formatCurrency(row.gap) }}</div></div></div></div><div class="rounded-xl bg-slate-50 border border-slate-200 p-4 text-xs font-bold text-slate-500 leading-relaxed"><i class="fa-solid fa-shield-halved text-blue-500 mr-1"></i>這個功能適合處理升級前舊版本造成的成本口徑差異。校正可以隨時清除，原始交易永遠保留。</div><div class="flex gap-3"><button @click="closeLegacyAdjustmentModal" class="btn btn-secondary flex-1">取消</button><button @click="applyLegacyReconciliation" :disabled="reconciliationDiagnostic.rows.length===0" class="btn flex-1 !bg-amber-600 hover:!bg-amber-700 !text-white disabled:opacity-50"><i class="fa-solid fa-check mr-2"></i>建立校正</button></div></div></div></div>
 
-        <div v-if="showConfirmModal" class="fixed inset-0 bg-slate-900/70 backdrop-blur-sm flex justify-center items-center z-[100] p-6 transition-all duration-300"><div class="bg-white rounded-[2rem] p-8 w-full max-w-sm shadow-2xl transform scale-100 flex flex-col items-center text-center relative border-2 border-red-50"><div class="w-20 h-20 bg-red-50 rounded-full flex items-center justify-center text-red-500 text-4xl mb-5 shadow-inner"><i class="fa-solid fa-triangle-exclamation"></i></div><h3 class="text-2xl font-black text-slate-800 mb-3">{{ confirmTitle }}</h3><p class="text-slate-500 font-bold mb-8 leading-relaxed">{{ confirmMessage }}</p><div class="flex gap-4 w-full"><button @click="showConfirmModal = false" class="h-[54px] flex-1 rounded-xl font-bold text-slate-500 bg-white border-2 border-slate-200 hover:bg-slate-50 hover:border-slate-400 transition-all duration-200 active:scale-95">取消</button><button @click="confirmAction" class="h-[54px] flex-1 rounded-xl font-bold text-white bg-gradient-to-r from-rose-500 to-red-600 shadow-xl shadow-rose-300 hover:shadow-2xl hover:shadow-rose-400 hover:-translate-y-1 transition-all duration-300 active:scale-95">確認執行</button></div></div></div>
+        <div v-if="showConfirmModal" class="stock-vue-dialog-overlay">
+            <section class="stock-vue-dialog-panel stock-vue-dialog-panel--danger" role="alertdialog" aria-modal="true" aria-labelledby="stock-vue-confirm-title">
+                <div class="stock-dialog-kicker"><i class="fa-solid fa-shield-halved mr-2"></i>重要操作確認</div>
+                <div class="stock-vue-dialog-header">
+                    <div class="stock-vue-dialog-icon"><i class="fa-solid fa-triangle-exclamation"></i></div>
+                    <div><h3 id="stock-vue-confirm-title" class="stock-vue-dialog-title">{{ confirmTitle || '請確認操作' }}</h3><p class="stock-vue-dialog-subtitle">請確認以下內容，再決定是否繼續。</p></div>
+                </div>
+                <p class="stock-vue-dialog-message">{{ confirmMessage }}</p>
+                <div class="stock-vue-dialog-footer">
+                    <button @click="showConfirmModal = false" type="button" class="stock-dialog-btn stock-dialog-btn--secondary">取消</button>
+                    <button @click="confirmAction" type="button" class="stock-dialog-btn stock-dialog-btn--primary"><i class="fa-solid fa-check"></i>確認執行</button>
+                </div>
+            </section>
+        </div>
 
         <div v-if="showCashShortModal" @click.self="cancelCashShortBuy" class="fixed inset-0 bg-slate-900/70 backdrop-blur-sm flex justify-center items-center z-[120] p-6 transition-all duration-300">
             <div class="bg-white w-full max-w-md rounded-[2rem] shadow-2xl overflow-hidden border border-amber-100 relative">
@@ -2270,7 +2283,17 @@ createApp({
         </div>
 
 
-        <div v-if="showInfoModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex justify-center items-center z-[100] p-6 transition-all duration-300"><div class="bg-white rounded-[2rem] p-8 w-full max-w-sm shadow-2xl transform scale-100 flex flex-col items-center text-center"><div class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 text-3xl mb-4 shadow-sm"><i class="fa-solid fa-circle-info"></i></div><h3 class="text-xl font-black text-slate-800 mb-2">{{ infoTitle }}</h3><p class="text-slate-500 font-bold mb-6 whitespace-pre-line">{{ infoMessage }}</p><button @click="showInfoModal = false" class="h-[54px] w-full rounded-xl font-bold text-white bg-gradient-to-r from-blue-500 to-indigo-600 shadow-xl shadow-blue-300 hover:shadow-2xl hover:shadow-blue-400 hover:-translate-y-1 transition-all duration-300 active:scale-95">好，我知道了</button></div></div>
+        <div v-if="showInfoModal" class="stock-vue-dialog-overlay">
+            <section class="stock-vue-dialog-panel" :class="'stock-vue-dialog-panel--' + getInfoDialogTone(infoTitle)" role="alertdialog" aria-modal="true" aria-labelledby="stock-vue-info-title">
+                <div class="stock-dialog-kicker"><i class="fa-solid fa-circle-info mr-2"></i>系統通知</div>
+                <div class="stock-vue-dialog-header">
+                    <div class="stock-vue-dialog-icon"><i :class="'fa-solid ' + (getInfoDialogTone(infoTitle) === 'danger' ? 'fa-triangle-exclamation' : getInfoDialogTone(infoTitle) === 'success' ? 'fa-circle-check' : 'fa-circle-info')"></i></div>
+                    <div><h3 id="stock-vue-info-title" class="stock-vue-dialog-title">{{ infoTitle || '操作提醒' }}</h3><p class="stock-vue-dialog-subtitle">{{ getInfoDialogTone(infoTitle) === 'danger' ? '請確認提示內容與後續操作' : '台股損益管理・系統訊息' }}</p></div>
+                </div>
+                <p class="stock-vue-dialog-message">{{ infoMessage }}</p>
+                <div class="stock-vue-dialog-footer"><button @click="showInfoModal = false" type="button" class="stock-dialog-btn stock-dialog-btn--primary"><i class="fa-solid fa-check"></i>我知道了</button></div>
+            </section>
+        </div>
         
         <div v-if="showGDriveModal" class="fixed inset-0 bg-slate-900/70 backdrop-blur-sm flex justify-center items-center z-[85] p-4">
             <div class="bg-white w-full max-w-xl rounded-3xl shadow-2xl shadow-slate-900/20 overflow-hidden relative flex flex-col max-h-[calc(100dvh-2rem)]">
@@ -5114,7 +5137,21 @@ ${picked.date} 收盤價：${close}`);
         updateSecurityConfig() { localStorage.setItem(window.StockStorage.KEYS.auth, JSON.stringify(this.securityConfig)); },
         handleChangePassword() { if (!this.changePassInput.old || !this.changePassInput.new) { this.openInfoModal('錯誤', '欄位不可為空'); return; } if (btoa(this.changePassInput.old) !== this.securityConfig.passwordHash) { this.openInfoModal('錯誤', '舊密碼不正確'); return; } this.securityConfig.passwordHash = btoa(this.changePassInput.new); localStorage.setItem(window.StockStorage.KEYS.auth, JSON.stringify(this.securityConfig)); this.changePassInput = { old: '', new: '' }; this.showChangePasswordModal = false; this.openInfoModal('成功', '密碼已變更'); },
         triggerClearAuth() { this.confirmTitle = '清除密碼'; this.confirmMessage = '確定要移除帳號保護嗎？這將會刪除您儲存的登入憑證，下次進入時需重新設定。'; this.confirmCallback = () => { localStorage.removeItem(window.StockStorage.KEYS.auth); localStorage.removeItem(window.StockStorage.KEYS.savedUsername); location.reload(); }; this.showConfirmModal = true; },
-        forgotPassword() { if(confirm("您確定要重置應用程式並清除密碼嗎？(交易資料保留，但需重新設定帳號)")) { localStorage.removeItem(window.StockStorage.KEYS.auth); location.reload(); } },
+        async forgotPassword() {
+            const approved = await window.StockDialog.confirm({
+                variant: 'danger', icon: 'fa-key', eyebrow: '帳號安全性', title: '確定要重設登入密碼？',
+                description: '此操作只會清除目前裝置儲存的登入設定，下次開啟需要重新建立帳號。',
+                note: { tone: 'warning', title: '交易紀錄會保留', description: '目前本機的交易、庫存和資金資料不會因清除密碼而刪除。' },
+                confirmText: '確認清除密碼', cancelText: '保留原設定'
+            });
+            if (approved) { localStorage.removeItem(window.StockStorage.KEYS.auth); location.reload(); }
+        },
+        getInfoDialogTone(title) {
+            const value = String(title || '');
+            if (/(失敗|錯誤|異常|無法|不正確|不足)/.test(value)) return 'danger';
+            if (/(成功|完成|已新增|已更新|已匯入)/.test(value)) return 'success';
+            return 'info';
+        },
         openInfoModal(title, msg) { this.infoTitle = title; this.infoMessage = msg; this.showInfoModal = true; },
         openContextMenu(e, stock) { if (e && typeof e.preventDefault === 'function') e.preventDefault(); this.contextMenu.visible = true; this.contextMenu.x = e?.clientX ?? 0; this.contextMenu.y = e?.clientY ?? 0; this.contextMenu.stock = stock; this.$nextTick(() => { const el = this.$refs.contextMenuEl; if (!el) return; const padding = 8; const vw = window.innerWidth || 0; const vh = window.innerHeight || 0; const rect = el.getBoundingClientRect(); const maxX = Math.max(padding, vw - rect.width - padding); const maxY = Math.max(padding, vh - rect.height - padding); this.contextMenu.x = Math.min(Math.max(this.contextMenu.x, padding), maxX); this.contextMenu.y = Math.min(Math.max(this.contextMenu.y, padding), maxY); }); },
         closeContextMenu() { this.contextMenu.visible = false; },
@@ -5717,10 +5754,15 @@ ${picked.date} 收盤價：${close}`);
             });
             return count ? `已套用於 ${count} 檔手動 / 匯入分類` : '尚未套用於手動 / 匯入分類';
         },
-        renameCategoryManagerItem(oldName) {
+        async renameCategoryManagerItem(oldName) {
             const oldValue = String(oldName || '').trim();
             if (!oldValue) return;
-            const nextValue = window.prompt(`將「${oldValue}」改名為：`, oldValue);
+            const nextValue = await window.StockDialog.prompt({
+                eyebrow: '族群分類管理', title: '重新命名分類',
+                description: `目前名稱：${oldValue}`,
+                inputLabel: '新的分類名稱', initialValue: oldValue,
+                confirmText: '儲存名稱', cancelText: '取消修改'
+            });
             if (nextValue === null) return;
             const nv = String(nextValue || '').trim();
             if (!nv || nv === oldValue) return;

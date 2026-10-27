@@ -469,8 +469,25 @@
           const remote = this._summarizeBackupPayload(await this._downloadBackupPayload(accessToken, fileId));
           if (!remote.deviceId || remote.deviceId !== summary.deviceId) {
             const email = this._readCloudMeta().googleAccountEmail || '目前授權帳號';
-            const text = `Google 帳號：${email}\n雲端目前已有${remote.deviceName ? '「' + remote.deviceName + '」' : '另一個裝置／舊版本'}建立的備份（${formatTime(fileInfo.modifiedTime)}）。\n\n直接上傳會以「目前這台裝置」的全部帳本覆蓋雲端最新備份，不會自動合併兩台裝置各自新增的交易。\n\n若這台還沒有先從雲端回復，請按「取消」，先下載本機 JSON 備份，再按「從 Google 雲端回復」。\n\n確定要覆蓋雲端備份嗎？`;
-            if (!window.confirm(text)) {
+            const approved = await window.StockDialog.confirm({
+              variant: 'danger', icon: 'fa-cloud-arrow-up', eyebrow: '跨裝置備份保護',
+              title: '確定要覆蓋雲端備份？',
+              description: '目前 Google 雲端已有其他裝置建立的備份，請先確認要保留哪一台裝置的資料。',
+              account: email,
+              details: [
+                { label: '雲端備份來源', value: remote.deviceName || '另一個裝置／舊版本' },
+                { label: '雲端最後更新', value: formatTime(fileInfo.modifiedTime) },
+                { label: '雲端交易筆數', value: `${remote.txCount} 筆` },
+                { label: '這台裝置交易筆數', value: `${summary.txCount} 筆` }
+              ],
+              note: {
+                tone: 'danger', title: '雲端原有資料將被覆蓋',
+                description: '這次上傳會以「目前裝置」的完整帳本取代雲端備份，不會自動合併兩台裝置的交易。'
+              },
+              tip: '如果尚未先從雲端回復，建議按「先不要上傳」，先下載本機 JSON 備份再檢查資料。',
+              cancelText: '先不要上傳', confirmText: '確認覆蓋雲端'
+            });
+            if (!approved) {
               this.openInfoModal('已取消上傳', '雲端資料沒有被修改。請先確認哪台裝置的資料最完整。');
               return;
             }
@@ -702,7 +719,24 @@
         const summary = this._summarizeBackupPayload(payload);
         // 回復會取代本機交易資料；必須再次明確確認，不自動合併。
         const email = this._readCloudMeta().googleAccountEmail || '目前授權帳號';
-        const approved = window.confirm(`Google 帳號：${email}\n即將從雲端回復「${summary.deviceName || '未知裝置'}」在 ${formatTime(summary.exportedAt || fileInfo.modifiedTime)} 建立的資料。\n交易 ${summary.txCount} 筆，資金 ${summary.cashBookCount} 筆。\n\n這會取代本機目前的交易、帳本與資金記錄，不會自動合併。\n請先在這台裝置按「下載本機備份」保存 JSON，再按確定繼續。\n\n確定要回復嗎？`);
+        const approved = await window.StockDialog.confirm({
+          variant: 'danger', icon: 'fa-cloud-arrow-down', eyebrow: 'Google 雲端資料還原',
+          title: '確定要回復這份雲端備份？',
+          description: '已找到最新雲端資料。請確認備份來源與筆數後，再進行回復。',
+          account: email,
+          details: [
+            { label: '備份來源裝置', value: summary.deviceName || '未知裝置' },
+            { label: '建立備份時間', value: formatTime(summary.exportedAt || fileInfo.modifiedTime) },
+            { label: '交易紀錄', value: `${summary.txCount} 筆` },
+            { label: '資金紀錄', value: `${summary.cashBookCount} 筆` }
+          ],
+          note: {
+            tone: 'danger', title: '這不是資料合併',
+            description: '回復後會取代這台裝置目前的交易、帳本與資金記錄，兩台裝置各自新增的資料不會自動合併。'
+          },
+          tip: '建議先按「先不要回復」，下載本機 JSON 備份保存目前資料，再進行回復。',
+          cancelText: '先不要回復', confirmText: '確認覆蓋並回復'
+        });
         if (!approved) {
           this.openInfoModal('已取消回復', '本機資料未被修改，雲端備份也未被修改。');
           return;

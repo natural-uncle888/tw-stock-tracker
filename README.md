@@ -177,3 +177,14 @@ window.STOCK_TRACKER_GOOGLE_CLIENT_ID = 'xxxxxxxxxxxx-xxxxxxxxxxxxxxxxxxxxxxxxxx
 4. 後續若換另一台裝置新增交易，仍需由該裝置重新「上傳」，另一台再手動「回復」。此版本**不是即時、自動、雙向合併同步**。
 
 **注意：** 舊版若使用其他 OAuth 應用程式 Client ID，該應用程式 AppDataFolder 的資料不會自動移轉到新 ID；請從仍能看見舊備份的裝置下載 JSON，再以新站回復/上傳。更新後務必使用同一個站址與 Google 帳號。
+
+
+## 2026-10-27 系統警示／確認視窗美化
+
+- 原生 `window.confirm()`（跨裝置雲端回復、覆蓋上傳、忘記密碼）改用站內一致的品牌風格對話框。
+- Google 雲端回復先顯示授權帳號、備份來源、時間及交易／資金筆數；強調「覆蓋本機、不自動合併」。
+- 上傳覆蓋雲端時顯示原備份資訊，須明確按確認才會執行，按取消不變更雲端資料。
+- 族群分類重新命名改用站內輸入對話框，取代瀏覽器 `window.prompt()`。
+- 原有 Vue 系統資訊／刪除確認視窗統一更新視覺，改善手機可讀性、長文字捲動與背景遮罩。
+- 新增 `services/dialogService.js`、`styles/dialog.css`；PWA 快取版號升級，保留前次跨裝置 Google 雲端備份修正。
+- 不更改交易計算、本機儲存資料結構、Google Drive 備份資料格式或交易記錄。

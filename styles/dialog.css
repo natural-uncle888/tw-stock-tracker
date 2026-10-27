@@ -1,0 +1,122 @@
+/* 台股損益管理｜統一系統警示／確認視窗（2026-10-27） */
+.stock-dialog-overlay,
+.stock-vue-dialog-overlay {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: max(16px, env(safe-area-inset-top)) 16px max(16px, env(safe-area-inset-bottom));
+    background: rgba(15, 23, 42, .64);
+    -webkit-backdrop-filter: blur(9px);
+    backdrop-filter: blur(9px);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+}
+.stock-dialog-overlay { z-index: 2147482000; }
+.stock-vue-dialog-overlay { z-index: 12000; }
+.stock-dialog-panel,
+.stock-vue-dialog-panel {
+    --sd-color: #2563eb;
+    --sd-bright: #6366f1;
+    --sd-soft: #eff6ff;
+    --sd-line: #bfdbfe;
+    position: relative;
+    flex: 0 1 510px;
+    width: min(100%, 510px);
+    margin: auto;
+    border: 1px solid rgba(255, 255, 255, .86);
+    border-radius: 28px;
+    background: linear-gradient(160deg, #ffffff 5%, #f8fbff 100%);
+    box-shadow: 0 34px 110px -30px rgba(8, 22, 46, .6), 0 2px 12px rgba(15, 23, 42, .08);
+    overflow: hidden;
+    color: #1e293b;
+    font-family: 'Noto Sans TC', system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    animation: sd-enter .24s cubic-bezier(.16, 1, .3, 1) both;
+}
+.stock-dialog-panel[data-variant="danger"],
+.stock-vue-dialog-panel--danger { --sd-color: #e11d48; --sd-bright: #f97373; --sd-soft: #fff1f2; --sd-line: #fecdd3; }
+.stock-dialog-panel[data-variant="warning"] { --sd-color: #d97706; --sd-bright: #f59e0b; --sd-soft: #fffbeb; --sd-line: #fde68a; }
+.stock-dialog-panel[data-variant="success"],
+.stock-vue-dialog-panel--success { --sd-color: #059669; --sd-bright: #10b981; --sd-soft: #ecfdf5; --sd-line: #a7f3d0; }
+.stock-dialog-panel::before,
+.stock-vue-dialog-panel::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 0; right: 0;
+    height: 5px;
+    background: linear-gradient(90deg, var(--sd-color), var(--sd-bright));
+}
+.stock-dialog-content { padding: 28px 30px 22px; max-height: calc(90dvh - 94px); overflow-y: auto; scrollbar-width: thin; scrollbar-color: #cbd5e1 transparent; }
+.stock-dialog-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 14px; margin-bottom: 17px; }
+.stock-dialog-icon,
+.stock-vue-dialog-icon {
+    display: flex; align-items: center; justify-content: center; flex: 0 0 auto;
+    width: 60px; height: 60px; border-radius: 20px;
+    color: var(--sd-color);
+    background: var(--sd-soft);
+    border: 1px solid var(--sd-line);
+    box-shadow: 0 10px 25px -16px var(--sd-color), inset 0 1px rgba(255,255,255,.8);
+    font-size: 25px;
+}
+.stock-dialog-exit { border: 0; width: 36px; height: 36px; display: grid; place-items: center; border-radius: 12px; color: #64748b; background: #f1f5f9; cursor: pointer; font-size: 16px; transition: .18s; }
+.stock-dialog-exit:hover { background: #e2e8f0; color: #0f172a; }
+.stock-dialog-kicker { display: inline-flex; align-items: center; gap: 7px; margin: 0 0 7px; padding: 4px 10px; border: 1px solid var(--sd-line); background: var(--sd-soft); border-radius: 9999px; color: var(--sd-color); font-size: 11px; letter-spacing: .045em; font-weight: 900; }
+.stock-dialog-title { margin: 0 0 9px; font-size: 23px; line-height: 1.43; font-weight: 900; color: #0f172a; letter-spacing: -.03em; overflow-wrap: anywhere; }
+.stock-dialog-description { margin: 0; font-size: 13px; line-height: 1.85; color: #64748b; font-weight: 600; white-space: pre-line; overflow-wrap: anywhere; }
+.stock-dialog-account { display: flex; align-items: center; gap: 12px; padding: 13px 15px; border: 1px solid #e0e7ff; background: linear-gradient(125deg,#eff6ff,#fff); border-radius: 16px; margin-top: 18px; }
+.stock-dialog-account-icon { width: 38px; height: 38px; border-radius: 12px; background: #dbeafe; color: #2563eb; display: grid; place-items: center; font-size: 16px; }
+.stock-dialog-account-caption { color: #64748b; font-weight: 700; font-size: 11px; }
+.stock-dialog-account-email { margin-top: 2px; color: #1e40af; font-size: 13px; font-weight: 900; overflow-wrap: anywhere; user-select: text; -webkit-user-select: text; }
+.stock-dialog-metrics { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 10px; margin-top: 14px; }
+.stock-dialog-metric { min-width: 0; padding: 14px 15px; background: #fff; border: 1px solid #e2e8f0; border-radius: 16px; box-shadow: 0 5px 15px -12px rgba(15,23,42,.18); }
+.stock-dialog-metric-label { font-size: 11px; color: #94a3b8; font-weight: 800; margin-bottom: 6px; }
+.stock-dialog-metric-value { color: #1e293b; font-weight: 900; font-size: 14px; line-height: 1.55; overflow-wrap: anywhere; user-select: text; -webkit-user-select: text; }
+.stock-dialog-note { display: flex; align-items: flex-start; gap: 10px; border-radius: 16px; padding: 14px 15px; margin-top: 15px; border: 1px solid #fed7aa; background: #fff7ed; color: #9a3412; }
+.stock-dialog-note[data-tone="danger"] { border-color: #fecdd3; background: #fff1f2; color: #be123c; }
+.stock-dialog-note[data-tone="info"] { border-color: #bfdbfe; background: #eff6ff; color: #1d4ed8; }
+.stock-dialog-note[data-tone="success"] { border-color: #a7f3d0; background: #ecfdf5; color: #047857; }
+.stock-dialog-note-icon { font-size: 16px; margin-top: 2px; }
+.stock-dialog-note-title { font-size: 13px; line-height: 1.5; font-weight: 900; margin: 0 0 3px; }
+.stock-dialog-note-desc { font-size: 12px; line-height: 1.8; font-weight: 650; margin: 0; white-space: pre-line; overflow-wrap: anywhere; }
+.stock-dialog-tip { color: #64748b; font-weight: 650; font-size: 12px; line-height: 1.8; margin: 15px 1px 0; white-space: pre-line; }
+.stock-dialog-tip i { margin-right: 5px; color: #3b82f6; }
+.stock-dialog-input-label { display: block; margin: 17px 0 8px; font-size: 12px; font-weight: 900; color: #475569; }
+.stock-dialog-input { box-sizing: border-box; width: 100%; min-height: 52px; padding: 12px 14px; border-radius: 14px; border: 1.5px solid #cbd5e1; background: #fff; color: #0f172a; font-size: 16px; font-family: inherit; font-weight: 700; outline: none; transition: .2s; user-select: text; -webkit-user-select: text; }
+.stock-dialog-input:focus { border-color: #6366f1; box-shadow: 0 0 0 4px rgba(99,102,241,.12); }
+.stock-dialog-input-error { font-size: 12px; color: #be123c; font-weight: 800; margin-top: 7px; }
+.stock-dialog-footer { display: flex; gap: 11px; padding: 15px 30px max(20px, env(safe-area-inset-bottom)); background: #fff; border-top: 1px solid #edf2f7; }
+.stock-dialog-btn { flex: 1; min-width: 0; min-height: 52px; border: 0; border-radius: 15px; display: flex; justify-content: center; align-items: center; gap: 8px; padding: 9px 12px; font-family: inherit; font-size: 13px; font-weight: 900; line-height: 1.35; cursor: pointer; transition: transform .16s,filter .16s,box-shadow .16s; }
+.stock-dialog-btn:hover { transform: translateY(-1px); }
+.stock-dialog-btn:active { transform: scale(.98); }
+.stock-dialog-btn:focus-visible,.stock-dialog-exit:focus-visible { outline: 3px solid #93c5fd; outline-offset: 2px; }
+.stock-dialog-btn--secondary { color: #475569; background: #f1f5f9; border: 1px solid #e2e8f0; }
+.stock-dialog-btn--secondary:hover { background: #e2e8f0; }
+.stock-dialog-btn--primary { color: white; background: linear-gradient(135deg, var(--sd-color), var(--sd-bright)); box-shadow: 0 13px 22px -15px var(--sd-color); }
+.stock-dialog-btn--primary:hover { filter: brightness(.96); box-shadow: 0 16px 28px -14px var(--sd-color); }
+/* 既有 Vue 資訊／刪除視窗共用新視覺 */
+.stock-vue-dialog-panel { padding: 28px; text-align: left; max-width: 465px; }
+.stock-vue-dialog-header { display: flex; align-items: flex-start; gap: 16px; margin-bottom: 18px; }
+.stock-vue-dialog-title { font-size: 23px; line-height: 1.4; color: #0f172a; font-weight: 900; margin: 0 0 5px; }
+.stock-vue-dialog-subtitle { font-size: 12px; color: #64748b; font-weight: 700; line-height: 1.7; margin: 0; }
+.stock-vue-dialog-message { white-space: pre-line; overflow-wrap: anywhere; user-select: text; -webkit-user-select: text; line-height: 1.9; font-size: 14px; color: #475569; font-weight: 650; padding: 16px; margin: 0 0 20px; border: 1px solid #e2e8f0; border-radius: 16px; background: #f8fafc; max-height: 39dvh; overflow-y: auto; }
+.stock-vue-dialog-footer { display: flex; gap: 10px; }
+.stock-vue-dialog-footer .stock-dialog-btn { min-height: 52px; }
+@keyframes sd-enter { from { opacity: 0; transform: translateY(18px) scale(.975); } to { opacity: 1; transform: translateY(0) scale(1); } }
+@media (max-width: 520px) {
+    .stock-dialog-overlay, .stock-vue-dialog-overlay { padding-left: 12px; padding-right: 12px; }
+    .stock-dialog-panel, .stock-vue-dialog-panel { border-radius: 23px; }
+    .stock-dialog-content { padding: 22px 19px 18px; max-height: calc(91dvh - 92px); }
+    .stock-dialog-title, .stock-vue-dialog-title { font-size: 20px; }
+    .stock-dialog-icon, .stock-vue-dialog-icon { width: 52px; height: 52px; border-radius: 17px; font-size: 21px; }
+    .stock-dialog-footer { padding: 13px 17px max(17px, env(safe-area-inset-bottom)); }
+    .stock-dialog-btn { font-size: 12px; padding-left: 8px; padding-right: 8px; }
+    .stock-dialog-metric { padding: 11px 12px; }
+    .stock-dialog-metric-value { font-size: 12px; }
+    .stock-vue-dialog-panel { padding: 22px 18px; }
+}
+@media (prefers-reduced-motion: reduce) {
+    .stock-dialog-panel, .stock-vue-dialog-panel { animation: none; }
+    .stock-dialog-btn { transition: none; }
+}

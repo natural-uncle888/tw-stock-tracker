@@ -1,5 +1,5 @@
 /* 台股損益管理 PWA Service Worker */
-const CACHE_VERSION = 'stock-tracker-pwa-v41-20261027-cloud-cross-device-fix';
+const CACHE_VERSION = 'stock-tracker-pwa-v42-20261027-polished-system-dialogs';
 const APP_SHELL_CACHE = `${CACHE_VERSION}-shell`;
 const RUNTIME_CACHE = `${CACHE_VERSION}-runtime`;
 
@@ -7,6 +7,8 @@ const APP_SHELL = [
   './',
   './index.html',
   './manifest.json',
+  './styles/dialog.css',
+  './services/dialogService.js',
   './favicon.ico',
   './rise-logo-red-16.png',
   './rise-logo-red-32.png',
