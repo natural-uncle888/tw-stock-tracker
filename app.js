@@ -130,7 +130,7 @@ createApp({
                         </div>
                         <div class="leading-tight">
                             <div class="text-lg font-black text-slate-800 tracking-tight">台股損益</div>
-                            <div class="text-[11px] font-bold text-slate-500">快速切換帳本／設定</div>
+                            <div class="text-[11px] font-bold text-slate-500">{{ activeArea === 'portfolio' ? '我的投資管理' : '市場研究中心' }}</div>
                         </div>
                     </div>
 
@@ -142,19 +142,21 @@ createApp({
                     </button>
                 </div>
 
-                <div class="grid grid-cols-4 gap-2">
-                    <button @click="openCommodityModal" class="mobile-primary-tool mobile-primary-tool--commodity" title="商品期貨">
-                        <i class="fa-solid fa-chart-line"></i><span>商品期貨</span>
-                    </button>
-                    <button @click="openDividendManagerModal" class="mobile-primary-tool mobile-primary-tool--dividend" title="除息與增資">
-                        <i class="fa-solid fa-gift"></i><span>除息與增資</span>
-                    </button>
-                    <button @click="exportData" class="mobile-primary-tool mobile-primary-tool--backup" title="備份與還原">
-                        <i class="fa-solid fa-cloud-arrow-up"></i><span>備份</span>
-                    </button>
-                    <button @click="showMobileMoreTools = true" class="mobile-primary-tool mobile-primary-tool--more" title="更多工具">
-                        <i class="fa-solid fa-ellipsis"></i><span>更多</span>
-                    </button>
+                <div class="workspace-switch workspace-switch--mobile" role="group" aria-label="主要功能區域">
+                    <button type="button" :class="{'is-active':activeArea==='portfolio'}" :aria-pressed="activeArea==='portfolio'" @click="switchWorkspace('portfolio')"><i class="fa-solid fa-wallet"></i><span>我的投資管理</span></button>
+                    <button type="button" :class="{'is-active':activeArea==='research'}" :aria-pressed="activeArea==='research'" @click="switchWorkspace('research')"><i class="fa-solid fa-chart-line"></i><span>市場研究中心</span></button>
+                </div>
+                <div v-if="activeArea==='portfolio'" class="grid grid-cols-4 gap-2">
+                    <button @click="openDividendManagerModal" class="mobile-primary-tool mobile-primary-tool--dividend"><i class="fa-solid fa-gift"></i><span>股利增資</span></button>
+                    <button @click="exportData" class="mobile-primary-tool mobile-primary-tool--backup"><i class="fa-solid fa-cloud-arrow-up"></i><span>備份</span></button>
+                    <button @click="showSystemTools=true" class="mobile-primary-tool mobile-primary-tool--more"><i class="fa-solid fa-gear"></i><span>設定</span></button>
+                    <button @click="showMobileMoreTools=true" class="mobile-primary-tool mobile-primary-tool--more"><i class="fa-solid fa-ellipsis"></i><span>更多</span></button>
+                </div>
+                <div v-else class="grid grid-cols-4 gap-2">
+                    <button @click="openTechnicalAnalysis()" class="mobile-primary-tool mobile-primary-tool--commodity"><i class="fa-solid fa-chart-column"></i><span>K 棒分析</span></button>
+                    <button @click="openMarketObservation" class="mobile-primary-tool mobile-primary-tool--commodity"><i class="fa-solid fa-building-columns"></i><span>法人籌碼</span></button>
+                    <button @click="openGlobalMarketResearch" class="mobile-primary-tool mobile-primary-tool--commodity"><i class="fa-solid fa-earth-americas"></i><span>全球指數</span></button>
+                    <button @click="showMobileMoreTools=true" class="mobile-primary-tool mobile-primary-tool--more"><i class="fa-solid fa-ellipsis"></i><span>更多</span></button>
                 </div>
             </div>
         </div>
@@ -163,30 +165,45 @@ createApp({
             <div class="w-full bg-white rounded-t-[2rem] shadow-2xl p-5 pb-[calc(env(safe-area-inset-bottom)+20px)] animate-slide-up">
                 <div class="w-12 h-1.5 rounded-full bg-slate-200 mx-auto mb-4"></div>
                 <div class="flex items-center justify-between mb-4">
-                    <div><div class="text-lg font-black text-slate-800">更多工具</div><div class="text-xs font-bold text-slate-400 mt-1">較少使用的設定集中在這裡</div></div>
+                    <div><div class="text-lg font-black text-slate-800">{{activeArea==='portfolio'?'投資管理工具':'市場研究工具'}}</div><div class="text-xs font-bold text-slate-400 mt-1">工具可自訂排列；備份、安全與費率請至「設定」</div></div>
                     <button @click="showMobileMoreTools=false" class="w-10 h-10 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center"><i class="fa-solid fa-xmark"></i></button>
                 </div>
-                <div class="flex justify-end mb-3"><button type="button" @click="showMobileMoreTools=false; showToolOrderModal=true" class="tool-sort-link"><i class="fa-solid fa-arrow-down-up-across-line mr-1"></i>自訂排列順序</button></div>
+                <div class="flex justify-end mb-3"><button type="button" @click="showMobileMoreTools=false; openToolOrderModal(activeArea)" class="tool-sort-link"><i class="fa-solid fa-arrow-down-up-across-line mr-1"></i>自訂排列順序</button></div>
                 <div class="grid grid-cols-2 gap-3">
-                    <button v-for="tool in orderedMoreTools" :key="tool.id" @click="showMobileMoreTools=false; launchIndependentTool(tool.id)" class="mobile-more-tool">
+                    <button v-for="tool in orderedCurrentAreaTools" :key="tool.id" @click="showMobileMoreTools=false; launchIndependentTool(tool.id)" class="mobile-more-tool">
                         <span class="mobile-more-tool__icon" :style="{ background: tool.bg, color: tool.color }"><i :class="tool.icon"></i></span>
                         <span><strong>{{ tool.label }}</strong><small>{{ tool.desc }}</small></span>
                     </button>
+                    <button type="button" @click="showMobileMoreTools=false; showSystemTools=true" class="mobile-more-tool"><span class="mobile-more-tool__icon" style="background:#f1f5f9;color:#475569"><i class="fa-solid fa-gear"></i></span><span><strong>系統設定</strong><small>備份、安全、費率</small></span></button>
                 </div>
             </div>
         </div>
 
         <div v-if="showToolOrderModal" class="tool-order-overlay" @click.self="showToolOrderModal=false">
             <section class="tool-order-panel" role="dialog" aria-modal="true" aria-label="自訂獨立工具順序">
-                <div class="tool-order-heading"><div><h2><i class="fa-solid fa-grip-vertical mr-2 text-indigo-500"></i>自訂工具排列</h2><p>電腦可拖曳卡片；手機可使用上下按鈕調整。</p></div><button class="tool-order-close" @click="showToolOrderModal=false" aria-label="關閉"><i class="fa-solid fa-xmark"></i></button></div>
+                <div class="tool-order-heading"><div><h2><i class="fa-solid fa-grip-vertical mr-2 text-indigo-500"></i>自訂工具排列</h2><p>依功能區域個別排序，電腦拖曳、手機點上下箭頭。</p></div><button class="tool-order-close" @click="showToolOrderModal=false" aria-label="關閉"><i class="fa-solid fa-xmark"></i></button></div>
+                <div class="tool-order-sections" role="group" aria-label="選擇要排列的區域">
+                    <button type="button" v-for="item in [{id:'portfolio',name:'投資管理'},{id:'research',name:'市場研究'},{id:'system',name:'系統設定'}]" :key="item.id" @click="toolOrderArea=item.id; toolDragId=null" :class="{'is-active':toolOrderArea===item.id}">{{item.name}}</button>
+                </div>
                 <div class="tool-order-list">
-                    <div v-for="(tool,index) in orderedIndependentTools" :key="tool.id" class="tool-order-item" :class="{'is-dragging':toolDragId===tool.id}" draggable="true" @dragstart="startToolDrag($event,tool.id)" @dragover.prevent @drop.prevent="dropToolOrder(tool.id)" @dragend="toolDragId=null">
+                    <div v-for="(tool,index) in orderedEditableTools" :key="tool.id" class="tool-order-item" :class="{'is-dragging':toolDragId===tool.id}" draggable="true" @dragstart="startToolDrag($event,tool.id)" @dragover.prevent @drop.prevent="dropToolOrder(tool.id)" @dragend="toolDragId=null">
                         <i class="fa-solid fa-grip-vertical tool-order-handle"></i><span class="tool-order-icon" :style="{ background:tool.bg,color:tool.color }"><i :class="tool.icon"></i></span><span class="tool-order-name">{{tool.label}}</span>
-                        <div class="tool-order-controls"><button type="button" @click="moveIndependentTool(tool.id,-1)" :disabled="index===0" :aria-label="'上移'+tool.label"><i class="fa-solid fa-chevron-up"></i></button><button type="button" @click="moveIndependentTool(tool.id,1)" :disabled="index===orderedIndependentTools.length-1" :aria-label="'下移'+tool.label"><i class="fa-solid fa-chevron-down"></i></button></div>
+                        <div class="tool-order-controls"><button type="button" @click="moveIndependentTool(tool.id,-1)" :disabled="index===0" :aria-label="'上移'+tool.label"><i class="fa-solid fa-chevron-up"></i></button><button type="button" @click="moveIndependentTool(tool.id,1)" :disabled="index===orderedEditableTools.length-1" :aria-label="'下移'+tool.label"><i class="fa-solid fa-chevron-down"></i></button></div>
                     </div>
                 </div>
-                <div class="tool-order-footer"><button class="tool-order-reset" @click="resetIndependentTools">恢復預設</button><button class="tool-order-done" @click="showToolOrderModal=false"><i class="fa-solid fa-check mr-2"></i>完成</button></div>
-                <p class="tool-order-note"><i class="fa-solid fa-circle-info mr-1"></i>排列將保存在目前瀏覽器，不影響交易與帳務資料。手機頂部快捷按鈕維持原位置。</p>
+                <div class="tool-order-footer"><button class="tool-order-reset" @click="resetIndependentTools">此區恢復預設</button><button class="tool-order-done" @click="showToolOrderModal=false"><i class="fa-solid fa-check mr-2"></i>完成</button></div>
+                <p class="tool-order-note"><i class="fa-solid fa-circle-info mr-1"></i>順序僅保存在目前瀏覽器，不影響投資帳務。各區域可分別排序。</p>
+            </section>
+        </div>
+
+        <div v-if="showSystemTools" class="workspace-system-overlay" @click.self="showSystemTools=false">
+            <section class="workspace-system-panel" role="dialog" aria-modal="true" aria-label="系統設定">
+                <div class="workspace-system-title"><div><div class="workspace-system-eyebrow">SMART TRACKER · SETTINGS</div><h2><i class="fa-solid fa-gear mr-2 text-slate-500"></i>系統設定</h2><p>帳本、備份、安全與操作偏好集中管理</p></div><button type="button" class="workspace-system-close" aria-label="關閉系統設定" @click="showSystemTools=false"><i class="fa-solid fa-xmark"></i></button></div>
+                <button type="button" class="workspace-system-portfolio" @click="showSystemTools=false;openPortfolioModal()"><span><i class="fa-solid fa-book-open mr-2"></i>投資帳本管理</span><span class="workspace-system-portfolio-name">{{currentPortfolio.name}} <i class="fa-solid fa-chevron-right ml-1"></i></span></button>
+                <div class="workspace-system-grid">
+                    <button v-for="tool in orderedSystemTools" :key="tool.id" type="button" class="workspace-card workspace-card--compact" @click="showSystemTools=false;launchIndependentTool(tool.id)"><span class="workspace-card-icon" :style="{background:tool.bg,color:tool.color}"><i :class="tool.icon"></i></span><span class="workspace-card-copy"><strong>{{tool.label}}</strong><small>{{tool.desc}}</small></span><i class="fa-solid fa-arrow-up-right-from-square workspace-card-arrow"></i></button>
+                </div>
+                <button type="button" class="workspace-system-sort" @click="showSystemTools=false;openToolOrderModal('system')"><i class="fa-solid fa-arrow-down-up-across-line mr-2"></i>自訂系統工具排列</button>
             </section>
         </div>
 
@@ -202,14 +219,16 @@ createApp({
                     </div>
                 </div>
 
-                <button @click="openPortfolioModal" class="btn btn-secondary toolbar-action toolbar-action--portfolio portfolio-header-btn !h-12 !rounded-2xl px-4" title="投資帳本／自訂帳本" aria-label="投資帳本／自訂帳本">
+                <div class="workspace-header-controls"><button @click="openPortfolioModal" class="btn btn-secondary toolbar-action toolbar-action--portfolio portfolio-header-btn !h-12 !rounded-2xl px-4" title="投資帳本／自訂帳本" aria-label="投資帳本／自訂帳本">
                     <i class="fa-solid fa-book-open"></i>
                     <span class="portfolio-header-name ml-2 text-sm font-black text-indigo-700">{{ currentPortfolio.name }}</span>
                     <i class="fa-solid fa-chevron-down !w-auto !h-auto !rounded-none !bg-transparent !shadow-none !text-slate-400 text-xs ml-1"></i>
-                </button>
+                </button><button type="button" class="workspace-settings-btn" @click="showSystemTools=true" title="系統設定" aria-label="系統設定"><i class="fa-solid fa-gear"></i><span>設定</span></button></div>
             </div>
 
-            <div class="desktop-header-bottom flex items-center justify-between gap-4">
+            <div class="workspace-switch workspace-switch--desktop" role="group" aria-label="主要功能區域"><button type="button" :class="{'is-active':activeArea==='portfolio'}" :aria-pressed="activeArea==='portfolio'" @click="switchWorkspace('portfolio')"><i class="fa-solid fa-wallet"></i><span>我的投資管理</span><small>持股 · 交易 · 資金 · 股利</small></button><button type="button" :class="{'is-active':activeArea==='research'}" :aria-pressed="activeArea==='research'" @click="switchWorkspace('research')"><i class="fa-solid fa-chart-line"></i><span>市場研究中心</span><small>K 棒 · 法人 · 行情 · 題材</small></button></div>
+
+            <div v-if="activeArea==='portfolio'" class="desktop-header-bottom flex items-center justify-between gap-4">
                 <div class="tab-switch" role="tablist" aria-label="主功能分頁">
                 <button @click="currentTab = 'dashboard'; showStockDetails = false" type="button" role="tab" :aria-selected="currentTab === 'dashboard'" :class="['tab-btn tab-btn--dashboard', currentTab === 'dashboard' ? 'active' : '']">
                     <i class="fa-solid fa-gauge-high text-base"></i><span>總覽</span>
@@ -226,15 +245,28 @@ createApp({
                 </div>
 
                 <div class="header-actions">
-                    <button v-for="tool in orderedIndependentTools" :key="tool.id" type="button" @click="launchIndependentTool(tool.id)" class="btn btn-secondary toolbar-action !h-12 !w-12 !p-0 !rounded-2xl" :title="tool.label" :aria-label="tool.label"><i :class="tool.icon"></i></button>
-                    <button type="button" @click="showToolOrderModal=true" class="btn btn-secondary toolbar-action tool-order-trigger !h-12 !rounded-2xl" title="自訂獨立工具順序" aria-label="自訂獨立工具順序"><i class="fa-solid fa-arrow-down-up-across-line"></i><span>排列</span></button>
+                    <button v-for="tool in orderedPortfolioTools" :key="tool.id" type="button" @click="launchIndependentTool(tool.id)" class="btn btn-secondary toolbar-action !h-12 !rounded-2xl" :title="tool.label"><i :class="tool.icon" class="mr-2"></i>{{tool.label}}</button>
+                    <button type="button" @click="openToolOrderModal('portfolio')" class="btn btn-secondary toolbar-action tool-order-trigger !h-12 !rounded-2xl" title="自訂投資管理工具順序"><i class="fa-solid fa-arrow-down-up-across-line"></i><span>排列</span></button>
                 </div>
             </div>
+            <div v-else class="workspace-research-nav"><span class="workspace-research-caption"><i class="fa-solid fa-compass mr-2"></i>探索市場・研究工具</span><button type="button" @click="openToolOrderModal('research')"><i class="fa-solid fa-arrow-down-up-across-line mr-2"></i>排列研究工具</button></div>
         </header>
 
-        <div class="h-36 md:hidden"></div>
+        <div class="h-[13rem] md:hidden"></div>
 
-        <div v-show="currentTab === 'dashboard'" class="space-y-5">
+        <section v-show="activeArea==='research'" class="workspace-research-page" aria-label="市場研究中心">
+            <div class="workspace-research-hero"><div class="workspace-research-hero-content"><span class="workspace-hero-tag"><i class="fa-solid fa-chart-simple mr-1"></i> MARKET RESEARCH</span><h2>市場研究中心</h2><p>用技術、籌碼與市場資訊輔助研究；投資紀錄仍保存在「我的投資管理」。</p></div><i class="fa-solid fa-chart-line workspace-hero-deco"></i></div>
+            <div class="workspace-market-shortcuts">
+                <button type="button" class="workspace-market-shortcut" @click="openMarketObservation"><span class="workspace-market-shortcut-icon"><i class="fa-solid fa-building-columns"></i></span><strong>市場觀察・法人籌碼</strong><small>三大法人／融資融券／股票風險／台指期未平倉</small><i class="fa-solid fa-arrow-right"></i></button>
+                <button type="button" class="workspace-market-shortcut" @click="openGlobalMarketResearch"><span class="workspace-market-shortcut-icon"><i class="fa-solid fa-earth-americas"></i></span><strong>全球指數・台股夜盤</strong><small>美股指數、台股夜盤與行情資料</small><i class="fa-solid fa-arrow-right"></i></button>
+            </div>
+            <div class="workspace-section-heading"><div><h3>研究工具</h3><p>工具順序可自行調整，保留你之前的排列設定。</p></div><button type="button" @click="openToolOrderModal('research')"><i class="fa-solid fa-arrow-down-up-across-line mr-1"></i>自訂排列</button></div>
+            <div class="workspace-card-grid"><button v-for="tool in orderedResearchTools" :key="tool.id" type="button" class="workspace-card" @click="launchIndependentTool(tool.id)"><span class="workspace-card-icon" :style="{background:tool.bg,color:tool.color}"><i :class="tool.icon"></i></span><span class="workspace-card-copy"><strong>{{tool.label}}</strong><small>{{tool.desc}}</small></span><i class="fa-solid fa-chevron-right workspace-card-arrow"></i></button></div>
+            <div class="workspace-section-heading workspace-section-heading--minor"><div><h3>與我的投資連動</h3><p>不重建資料，直接返回現有持股與分析。</p></div></div>
+            <div class="workspace-portfolio-link"><div class="workspace-portfolio-link-icon"><i class="fa-solid fa-briefcase"></i></div><div><strong>從庫存查看持股分析雷達</strong><p>可繼續使用原有個股技術分析與持股風險摘要</p></div><button type="button" @click="goToPortfolioInventory(true)">查看持股 <i class="fa-solid fa-arrow-right ml-1"></i></button></div>
+        </section>
+
+        <div v-show="activeArea==='portfolio' && currentTab === 'dashboard'" class="space-y-5">
             <!-- v5.2: 精簡首頁主儀表板 -->
             <section class="bg-gradient-to-br from-slate-900 via-slate-800 to-indigo-900 rounded-[2rem] p-5 md:p-7 text-white shadow-xl relative overflow-hidden">
                 <div class="absolute -top-16 -right-12 w-56 h-56 rounded-full bg-white/10 blur-2xl"></div>
@@ -330,7 +362,7 @@ createApp({
             <div class="px-1 text-[11px] font-bold text-slate-400 flex flex-wrap items-center justify-between gap-2"><span>行情更新：{{ lastUpdateTime || '--' }}</span><span>總資產＝現金＋庫存市值＋應收股利</span></div>
         </div>
 
-        <div v-show="currentTab === 'inventory'">
+        <div v-show="(activeArea==='portfolio' && currentTab==='inventory') || (activeArea==='research' && (showGlobalIndices || showInventoryMarketPanel))">
             <div v-if="!showStockDetails">
                 <div v-show="inventoryStickySummaryDocked" class="fixed top-[8.75rem] md:top-4 left-3 right-3 md:left-1/2 md:right-auto md:w-[min(80rem,calc(100vw-4rem))] md:-translate-x-1/2 z-[35] rounded-2xl border border-slate-200/80 bg-white/90 backdrop-blur-xl shadow-[0_16px_40px_-28px_rgba(15,23,42,0.45)] px-3 py-2 md:px-5 md:py-3 transition-all duration-200">
                     <div class="flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] md:text-sm font-black text-slate-600">
@@ -530,7 +562,7 @@ createApp({
                 </div>
             </div>
 
-            <button v-if="!showGlobalIndices && !showInventoryMarketPanel" @click="showAddModal = true" class="md:hidden fixed bottom-24 right-5 w-16 h-16 bg-blue-600 text-white rounded-full shadow-2xl shadow-blue-500/40 z-50 flex items-center justify-center text-3xl active:scale-90 transition-transform"><i class="fa-solid fa-plus"></i></button>
+            <button v-if="activeArea==='portfolio' && !showGlobalIndices && !showInventoryMarketPanel" @click="showAddModal = true" class="md:hidden fixed bottom-24 right-5 w-16 h-16 bg-blue-600 text-white rounded-full shadow-2xl shadow-blue-500/40 z-50 flex items-center justify-center text-3xl active:scale-90 transition-transform"><i class="fa-solid fa-plus"></i></button>
 
             <!-- Mobile Add Transaction Modal -->
             <div v-if="showAddModal" @click.self="showAddModal = false" class="fixed inset-0 bg-slate-900/70 backdrop-blur-sm z-[95] md:hidden flex items-end justify-center">
@@ -1295,7 +1327,7 @@ createApp({
             </div>
         </div>
 
-        <div v-show="currentTab === 'history'" class="page-readable">
+        <div v-show="activeArea==='portfolio' && currentTab === 'history'" class="page-readable">
             
             <div class="sub-tab-container">
                 <div @click="historyMode = 'list'" :class="['sub-tab-item', historyMode === 'list' ? 'active' : '']">
@@ -1905,7 +1937,7 @@ createApp({
                 </div>
             </div>
 
-        <div v-show="currentTab === 'cash'" class="page-readable">
+        <div v-show="activeArea==='portfolio' && currentTab === 'cash'" class="page-readable">
             <div class="space-y-6">
                 <div class="card">
                     <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-5">
@@ -3054,7 +3086,7 @@ createApp({
         </div>
 
         <!-- Mobile Bottom Main Tabs -->
-        <div v-if="!showGlobalIndices && !showInventoryMarketPanel" class="md:hidden fixed bottom-0 left-0 w-full z-40 bg-white/95 backdrop-blur border-t border-slate-200 px-3 pt-2 pb-[calc(env(safe-area-inset-bottom)+10px)] shadow-[0_-16px_40px_-28px_rgba(15,23,42,.6)]">
+        <div v-if="activeArea==='portfolio' && !showGlobalIndices && !showInventoryMarketPanel" class="md:hidden fixed bottom-0 left-0 w-full z-40 bg-white/95 backdrop-blur border-t border-slate-200 px-3 pt-2 pb-[calc(env(safe-area-inset-bottom)+10px)] shadow-[0_-16px_40px_-28px_rgba(15,23,42,.6)]">
             <div class="grid grid-cols-4 gap-2">
                 <button type="button" @click="currentTab = 'dashboard'; showStockDetails = false" class="mobile-main-tab mobile-main-tab--dashboard flex flex-col items-center justify-center py-2"
                     :class="currentTab === 'dashboard' ? 'active' : 'hover:bg-slate-50'">
@@ -3089,6 +3121,9 @@ createApp({
             showGDriveModal: false, gdriveBusy: false, gdriveBusyText: '', gdriveCloudMeta: persisted.gdriveCloudMeta,
             showGDriveHistoryModal: false, gdriveHistory: [], gdriveHistoryError: '', gdriveHistoryAccountEmail: '', gdriveHistoryVisibleCount: 20,
             showToolOrderModal: false,
+            showSystemTools: false,
+            toolOrderArea: 'research',
+            activeArea: (() => { try { return localStorage.getItem('tw_stock_workspace_v1') === 'research' ? 'research' : 'portfolio'; } catch (_) { return 'portfolio'; } })(),
             toolDragId: null,
             independentToolOrder: (() => { try { const v=JSON.parse(localStorage.getItem('tw_stock_independent_tool_order_v1') || '[]'); return Array.isArray(v) ? v : []; } catch { return []; } })(),
             showCommodityModal: false,
@@ -3315,7 +3350,11 @@ const savedCash = localStorage.getItem(window.StockStorage.KEYS.cashBook) || '';
             const rank=this.independentToolOrder;
             return [...defs].sort((a,b) => (rank.includes(a.id)?rank.indexOf(a.id):defs.indexOf(a)+rank.length)-(rank.includes(b.id)?rank.indexOf(b.id):defs.indexOf(b)+rank.length));
         },
-        orderedMoreTools() { return this.orderedIndependentTools.filter(t=>!['backup','commodity','dividend'].includes(t.id)); },
+        orderedPortfolioTools() { return this.orderedIndependentTools.filter(t => ['dividend'].includes(t.id)); },
+        orderedResearchTools() { return this.orderedIndependentTools.filter(t => ['technical','commodity','categorydb','categorymgr'].includes(t.id)); },
+        orderedSystemTools() { return this.orderedIndependentTools.filter(t => ['security','fee','backup','help'].includes(t.id)); },
+        orderedCurrentAreaTools() { return this.activeArea === 'portfolio' ? this.orderedPortfolioTools : this.orderedResearchTools; },
+        orderedEditableTools() { return this.toolOrderArea === 'portfolio' ? this.orderedPortfolioTools : this.toolOrderArea === 'research' ? this.orderedResearchTools : this.orderedSystemTools; },
         hotCategoryDbCount() { const db = window.StockCategoryService && window.StockCategoryService.HOT_STOCK_CATEGORY_DATABASE_2026; return db && db.stocks ? Object.keys(db.stocks).length : 0; },
         unclassifiedHoldingCount() { return (this.holdings || []).filter(s => this.getStockCategory(s.code).source === 'unclassified').length; },
         institutionalOiRows() { return Array.isArray(this.institutionalOiData?.rows) ? this.institutionalOiData.rows : []; },
@@ -4373,6 +4412,31 @@ const savedCash = localStorage.getItem(window.StockStorage.KEYS.cashBook) || '';
         showStockDetails() { this.$nextTick(() => this.updateInventoryStickySummaryDocked()); }
     },
     methods: {
+        switchWorkspace(area, tab = null) {
+            if (!['portfolio','research'].includes(area)) return;
+            this.activeArea = area;
+            if (area === 'portfolio' && ['dashboard','inventory','history','cash'].includes(tab)) {
+                this.currentTab = tab;
+                this.showStockDetails = false;
+            }
+            this.showMobileMoreTools = false;
+            this.showSystemTools = false;
+            this.showToolOrderModal = false;
+            try { localStorage.setItem('tw_stock_workspace_v1', area); } catch (_) {}
+            this.$nextTick(() => this.updateInventoryStickySummaryDocked());
+            window.scrollTo({ top: 0, behavior: 'auto' });
+        },
+        goToPortfolioInventory(showRadar = false) {
+            this.switchWorkspace('portfolio', 'inventory');
+            if (showRadar) this.showHoldingRadarDetails = true;
+        },
+        openMarketObservation() { this.showInventoryMarketPanel = true; },
+        openGlobalMarketResearch() { this.showGlobalIndices = true; this.fetchGlobalIndices(); },
+        openToolOrderModal(section = this.activeArea) {
+            this.toolOrderArea = ['portfolio','research','system'].includes(section) ? section : 'research';
+            this.toolDragId = null;
+            this.showToolOrderModal = true;
+        },
         launchIndependentTool(id) {
             const actions={ security:()=>{this.showSecurityModal=true;},fee:()=>{this.showSettings=true;},backup:()=>this.exportData(),categorydb:()=>this.openCategoryDbModal(),categorymgr:()=>this.openCategoryManagerModal(),technical:()=>this.openTechnicalAnalysis(),commodity:()=>this.openCommodityModal(),dividend:()=>this.openDividendManagerModal(),help:()=>{this.showHelpModal=true;} };
             if(actions[id]) actions[id]();
@@ -4381,10 +4445,17 @@ const savedCash = localStorage.getItem(window.StockStorage.KEYS.cashBook) || '';
             this.independentToolOrder=[...ids];
             try { localStorage.setItem('tw_stock_independent_tool_order_v1',JSON.stringify(ids)); } catch(e) { console.warn('無法儲存工具順序',e); }
         },
+        saveSectionToolOrder(sectionIds) {
+            const whole=this.orderedIndependentTools.map(t=>t.id);
+            const set=new Set(this.orderedEditableTools.map(t=>t.id));
+            if (sectionIds.length !== set.size || sectionIds.some(id=>!set.has(id))) return;
+            let i=0;
+            this.saveIndependentToolOrder(whole.map(id=>set.has(id)?sectionIds[i++]:id));
+        },
         moveIndependentTool(id,offset) {
-            const ids=this.orderedIndependentTools.map(t=>t.id),from=ids.indexOf(id),to=from+offset;
+            const ids=this.orderedEditableTools.map(t=>t.id),from=ids.indexOf(id),to=from+offset;
             if(from<0||to<0||to>=ids.length)return;
-            ids.splice(to,0,ids.splice(from,1)[0]); this.saveIndependentToolOrder(ids);
+            ids.splice(to,0,ids.splice(from,1)[0]); this.saveSectionToolOrder(ids);
         },
         startToolDrag(event,id) {
             this.toolDragId=id;
@@ -4394,11 +4465,14 @@ const savedCash = localStorage.getItem(window.StockStorage.KEYS.cashBook) || '';
             const source=this.toolDragId;
             this.toolDragId=null;
             if(!source||source===targetId)return;
-            const ids=this.orderedIndependentTools.map(t=>t.id),from=ids.indexOf(source),to=ids.indexOf(targetId);
+            const ids=this.orderedEditableTools.map(t=>t.id),from=ids.indexOf(source),to=ids.indexOf(targetId);
             if(from<0||to<0)return;
-            ids.splice(to,0,ids.splice(from,1)[0]);this.saveIndependentToolOrder(ids);
+            ids.splice(to,0,ids.splice(from,1)[0]);this.saveSectionToolOrder(ids);
         },
-        resetIndependentTools() { this.saveIndependentToolOrder(this.independentToolDefinitions.map(t=>t.id)); },
+        resetIndependentTools() {
+            const enabled=new Set(this.orderedEditableTools.map(t=>t.id));
+            this.saveSectionToolOrder(this.independentToolDefinitions.map(t=>t.id).filter(id=>enabled.has(id)));
+        },
         resolveStockName(code, fallbackName = '') {
             return window.resolveTwStockName ? window.resolveTwStockName(code, fallbackName, this.nameMap) : String(fallbackName || '').trim();
         },
@@ -4441,7 +4515,7 @@ const savedCash = localStorage.getItem(window.StockStorage.KEYS.cashBook) || '';
 
         updateInventoryStickySummaryDocked() {
             try {
-                const isInventory = this.isLoggedIn && this.currentTab === 'inventory' && !this.showStockDetails;
+                const isInventory = this.isLoggedIn && this.activeArea === 'portfolio' && this.currentTab === 'inventory' && !this.showStockDetails;
                 if (!isInventory) { this.inventoryStickySummaryDocked = false; return; }
                 const scrollY = window.pageYOffset || document.documentElement.scrollTop || 0;
                 let shouldDock = false;
@@ -5208,7 +5282,7 @@ ${picked.date} 收盤價：${close}`);
         technicalPriceTicks() { const sc=this.technicalResult?.chart?.scale||{}; const lo=Number(sc.priceMin),hi=Number(sc.priceMax); if(!Number.isFinite(lo)||!Number.isFinite(hi)) return []; return Array.from({length:5},(_,i)=>{const v=hi-(hi-lo)*(i/4); return {label:v.toFixed(v>=100?1:2),y:this.technicalChartYPrice(v)};}); },
         technicalDateTicks() { const rows=this.technicalResult?.chart?.rows||[]; if(!rows.length) return []; const count=Math.min(6,rows.length); const idxs=[]; for(let i=0;i<count;i++) idxs.push(Math.round((rows.length-1)*(i/Math.max(1,count-1)))); return [...new Set(idxs)].map(i=>({x:this.technicalChartX(i),label:String(rows[i]?.date||'').slice(5)})); },
 
-        openStockDetails(stock, returnTab = 'inventory') { if (!stock || !stock.code) return; this.stockDetailsReturnTab = returnTab || 'inventory'; this.selectedStock = { code: stock.code, name: stock.name || this.resolveStockName(stock.code, '') || stock.code }; this.showStockDetails = true; this.currentTab = 'inventory'; window.scrollTo({ top: 0, behavior: 'smooth' }); },
+        openStockDetails(stock, returnTab = 'inventory') { if (!stock || !stock.code) return; this.stockDetailsReturnTab = returnTab || 'inventory'; this.selectedStock = { code: stock.code, name: stock.name || this.resolveStockName(stock.code, '') || stock.code }; this.showStockDetails = true; this.activeArea = 'portfolio'; this.currentTab = 'inventory'; window.scrollTo({ top: 0, behavior: 'smooth' }); },
         openStockFromHistory(stock, returnTab = 'history') { this.openStockDetails(stock, returnTab); },
         closeStockDetails() { const back = this.stockDetailsReturnTab || 'inventory'; this.showStockDetails = false; this.selectedStock = null; this.currentTab = back; this.stockDetailsReturnTab = 'inventory'; },
         openEditBuyModal(row) { if (!row || !row.id) { this.openInfoModal('無法編輯', '找不到這筆買入紀錄的識別碼'); return; } const tx = this.transactions.find(t => t.id === row.id); if (!tx) { this.openInfoModal('無法編輯', '找不到對應的交易紀錄'); return; } if (tx.type !== 'buy') { this.openInfoModal('無法編輯', '目前僅支援編輯「買入」紀錄'); return; } this.editBuyTx = { id: tx.id, date: tx.date, code: tx.code, name: (this.nameMap && this.nameMap[tx.code]) ? this.nameMap[tx.code] : tx.name, price: tx.price, qty: tx.qty, category: tx.category || 'core' }; this.showEditBuyModal = true; },

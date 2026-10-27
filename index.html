@@ -845,7 +845,8 @@
         .sub-tab-item:hover:not(.active) { @apply text-slate-700 bg-slate-200/50; }
 
     </style>
-<link rel="stylesheet" href="./styles/tool-order.css?v=20261027-cloud-history" />
+<link rel="stylesheet" href="./styles/tool-order.css?v=20261027-phase2-areas" />
+<link rel="stylesheet" href="./styles/workspaces.css?v=20261027-phase2-areas" />
 </head>
 <body>
 
@@ -870,7 +871,7 @@
 <script src="./services/auditService.js?v=20260922-v53-technical"></script>
 <script src="./services/dialogService.js?v=20261027-cloud-history"></script>
 <script src="./services/backupService.js?v=20261027-cloud-history"></script>
-<script src="./app.js?v=20261027-cloud-history"></script>
+<script src="./app.js?v=20261027-phase2-areas"></script>
 
 <script>
   // PWA 離線 App：首次開啟需連線載入資源，之後可離線打開並讀取本機資料。
@@ -882,7 +883,7 @@
         swReloaded = true;
         window.location.reload();
       });
-      navigator.serviceWorker.register('./service-worker.js?v=20261027-cloud-history')
+      navigator.serviceWorker.register('./service-worker.js?v=20261027-phase2-areas')
         .catch((err) => console.warn('Service worker registration failed:', err));
     });
   }
