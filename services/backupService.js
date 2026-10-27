@@ -215,15 +215,21 @@
           this._writeCloudMeta({
             cloudFileModifiedTime: '',
             cloudFileExists: false,
+            cloudFileId: '',
             cloudDuplicateCount: 0,
             cloudBackupExportedAt: '',
             cloudBackupDeviceName: '',
             cloudBackupDeviceId: '',
             cloudBackupClientIdSource: '',
+            cloudBackupClientIdHint: '',
+            cloudBackupTxCount: 0,
+            cloudBackupCashBookCount: 0,
+            cloudBackupPortfolioCount: 0,
             lastCloudErrorAt: '',
             lastCloudErrorMessage: ''
           });
-          this.openInfoModal('雲端狀態', `雲端目前沒有找到備份檔（${BACKUP_FILE_NAME}）。`);
+          const email = this._readCloudMeta().googleAccountEmail || '無法確認（請檢查 Google 授權）';
+          this.openInfoModal('雲端狀態', `目前授權 Google 帳號：${email}\n在此帳號及此網站的 AppDataFolder 中沒有找到備份。\n請先核對電腦與手機選擇的是同一個 Google 帳號，並確認兩台都是更新後的網站；不要急著上傳覆蓋。`);
           return;
         }
 
@@ -252,7 +258,8 @@
           lastCloudErrorMessage: ''
         });
 
-        this.openInfoModal('雲端狀態', buildSummaryMessage('已找到雲端最新備份。', info, summary));
+        const email = this._readCloudMeta().googleAccountEmail || '無法確認';
+        this.openInfoModal('雲端狀態', buildSummaryMessage(`Google 帳號：${email}\n已找到雲端最新備份。`, info, summary));
       } catch(e) {
         this._writeCloudMeta({ lastCloudErrorAt: new Date().toISOString(), lastCloudErrorMessage: e?.message || String(e || '雲端狀態刷新失敗') });
         this.openInfoModal('雲端狀態', `發生未預期錯誤：${e?.message || e}`);
@@ -349,7 +356,8 @@
           reject(new Error('無法啟動授權流程。請允許彈出視窗（Popup）後再試一次。'));
         }
       });
-      // 記錄實際授權帳號，方便跨裝置確認是否登入同一個 Google 帳號。
+      // 每次操作顯示實際授權的帳號。若換了 Google 帳號，清除「本機顯示的」
+      // 舊帳號雲端狀態（不會刪除或改動任何帳號的 Drive 檔案）。
       try {
         const res = await fetch('https://openidconnect.googleapis.com/v1/userinfo', {
           headers: { Authorization: `Bearer ${token}` }
@@ -357,29 +365,45 @@
         if (res.ok) {
           const profile = await res.json();
           if (profile && profile.email) {
-            this._writeCloudMeta({ googleAccountEmail: String(profile.email), googleAccountCheckedAt: new Date().toISOString() });
+            const email = String(profile.email).trim();
+            const previous = String(this._readCloudMeta().googleAccountEmail || '').trim();
+            if (previous && previous.toLowerCase() !== email.toLowerCase()) {
+              this._writeCloudMeta({
+                cloudFileExists: false, cloudFileId: '', cloudFileModifiedTime: '',
+                cloudDuplicateCount: 0, cloudBackupDeviceName: '', cloudBackupDeviceId: '',
+                cloudBackupTxCount: 0, cloudBackupCashBookCount: 0,
+                lastCloudUploadAt: '', lastCloudRestoreAt: '', lastAction: ''
+              });
+            }
+            this._writeCloudMeta({ googleAccountEmail: email, googleAccountCheckedAt: new Date().toISOString() });
           }
+        } else {
+          this._writeCloudMeta({ googleAccountEmail: '', googleAccountCheckedAt: '' });
         }
-      } catch (_) {}
+      } catch (_) {
+        this._writeCloudMeta({ googleAccountEmail: '', googleAccountCheckedAt: '' });
+      }
       return token;
     },
 
     async _findAllBackupFiles(accessToken) {
-      const q = encodeURIComponent(`name='${BACKUP_FILE_NAME}' and 'appDataFolder' in parents and trashed=false`);
-      const orderBy = encodeURIComponent('modifiedTime desc');
-      const fields = encodeURIComponent('nextPageToken,files(id,name,modifiedTime,createdTime,size,md5Checksum)');
+      // 使用 Google 官方的 AppDataFolder 列檔方式（以 spaces 指定空間），
+      // 再於本機比對檔名。原本疊加 q 的 parents 限制可能漏掉既有備份。
+      // 不依賴此裝置 localStorage 內記錄的 fileId；每次都向 Drive 查詢。
+      const fields = encodeURIComponent('nextPageToken,incompleteSearch,files(id,name,modifiedTime,createdTime,size,md5Checksum)');
       let pageToken = '';
       const files = [];
       do {
         const tokenPart = pageToken ? `&pageToken=${encodeURIComponent(pageToken)}` : '';
-        const url = `https://www.googleapis.com/drive/v3/files?spaces=appDataFolder&q=${q}&orderBy=${orderBy}&fields=${fields}&pageSize=100${tokenPart}`;
+        const url = `https://www.googleapis.com/drive/v3/files?spaces=appDataFolder&fields=${fields}&pageSize=100${tokenPart}`;
         const res = await fetch(url, { headers: { Authorization: `Bearer ${accessToken}` }});
         if (!res.ok) {
-          const text = await res.text().catch(() => '');
-          throw new Error(`Drive 查詢失敗（${res.status}）${text ? '：' + text : ''}`);
+          const detail = await res.text().catch(() => '');
+          throw makeDriveHttpError('Drive 備份查詢失敗', res, detail);
         }
         const j = await res.json();
-        files.push(...safeArray(j.files));
+        files.push(...safeArray(j.files).filter(f => f && f.name === BACKUP_FILE_NAME));
+        if (j.incompleteSearch) throw new Error('Google Drive 備份查詢結果不完整，請稍後再試，避免誤建新備份。');
         pageToken = j.nextPageToken || '';
       } while (pageToken);
       files.sort((a, b) => new Date(b.modifiedTime || b.createdTime || 0) - new Date(a.modifiedTime || a.createdTime || 0));
@@ -439,6 +463,19 @@
         const fileId = fileInfo && fileInfo.id ? fileInfo.id : null;
         const payload = this._buildBackupPayload();
         const summary = this._summarizeBackupPayload(payload);
+        if (fileId) {
+          // A second device must not silently replace a newer backup produced
+          // by the first device. Keep the remote file untouched on cancel.
+          const remote = this._summarizeBackupPayload(await this._downloadBackupPayload(accessToken, fileId));
+          if (!remote.deviceId || remote.deviceId !== summary.deviceId) {
+            const email = this._readCloudMeta().googleAccountEmail || '目前授權帳號';
+            const text = `Google 帳號：${email}\n雲端目前已有${remote.deviceName ? '「' + remote.deviceName + '」' : '另一個裝置／舊版本'}建立的備份（${formatTime(fileInfo.modifiedTime)}）。\n\n直接上傳會以「目前這台裝置」的全部帳本覆蓋雲端最新備份，不會自動合併兩台裝置各自新增的交易。\n\n若這台還沒有先從雲端回復，請按「取消」，先下載本機 JSON 備份，再按「從 Google 雲端回復」。\n\n確定要覆蓋雲端備份嗎？`;
+            if (!window.confirm(text)) {
+              this.openInfoModal('已取消上傳', '雲端資料沒有被修改。請先確認哪台裝置的資料最完整。');
+              return;
+            }
+          }
+        }
         const boundary = '-------314159265358979323846';
 
         const buildMultipartBody = (metadata) =>
@@ -501,15 +538,10 @@
         const modifiedTime = (uploadInfo && uploadInfo.modifiedTime) ? uploadInfo.modifiedTime : nowIso;
         const finalFileId = (uploadInfo && uploadInfo.id) ? uploadInfo.id : (fileId || '');
 
-        // Enforce one canonical backup file in this Google account/app space.
-        // Older versions or simultaneous first uploads can leave duplicate files;
-        // keeping only the file just updated prevents different devices from
-        // selecting different copies later.
-        let removedDuplicates = 0;
-        if (finalFileId) {
-          const duplicateCandidates = fileInfo && Array.isArray(fileInfo.files) ? fileInfo.files : [];
-          removedDuplicates = await this._removeDuplicateBackupFiles(accessToken, finalFileId, duplicateCandidates);
-        }
+        // 不自動刪除舊同名備份：其他裝置可能仍需那些版本救回資料。
+        // 查找時會依 modifiedTime 選最新檔，刪除只能由使用者手動操作。
+        const knownDuplicates = fileInfo && fileInfo.files ? fileInfo.files.length : 0;
+        const resultingCount = Math.max(1, knownDuplicates + (fileId ? 0 : 1));
 
         this._writeCloudMeta({
           lastCloudUploadAt: nowIso,
@@ -517,7 +549,7 @@
           cloudFileExists: true,
           cloudFileId: finalFileId,
           cloudFileModifiedTime: modifiedTime,
-          cloudDuplicateCount: 1,
+          cloudDuplicateCount: resultingCount,
           cloudBackupExportedAt: summary.exportedAt || payload.exportedAt || nowIso,
           cloudBackupDeviceName: summary.deviceName || this._getDeviceName(),
           cloudBackupDeviceId: summary.deviceId || this._getDeviceId(),
@@ -529,11 +561,12 @@
           lastCloudErrorAt: '',
           lastCloudErrorMessage: ''
         });
-        const msgInfo = Object.assign({}, fileInfo || {}, { id: finalFileId, modifiedTime, duplicateCount: 1 });
+        const msgInfo = Object.assign({}, fileInfo || {}, { id: finalFileId, modifiedTime, duplicateCount: resultingCount });
         const prefix = recreatedCloudFile
           ? '原 Google Drive 備份檔已不存在，系統已自動重新建立新備份。'
           : '已將目前這台裝置的資料備份到 Google 雲端。';
-        const msg = buildSummaryMessage(prefix + (removedDuplicates ? `\n並已自動清理 ${removedDuplicates} 個舊的重複備份。` : ''), msgInfo, summary);
+        const email = this._readCloudMeta().googleAccountEmail || '無法確認';
+        const msg = buildSummaryMessage(`Google 帳號：${email}\n${prefix}`, msgInfo, summary);
         this.openInfoModal('上傳成功', msg);
       } catch (e) {
         this._writeCloudMeta({ lastCloudErrorAt: new Date().toISOString(), lastCloudErrorMessage: e?.message || String(e || '上傳失敗') });
@@ -635,7 +668,8 @@
         const fileInfo = await this._findBackupFileId(accessToken);
         const fileId = fileInfo && fileInfo.id ? fileInfo.id : null;
         if (!fileId) {
-          this.openInfoModal('回復失敗', `雲端找不到備份檔案（${BACKUP_FILE_NAME}）。請確認每台裝置使用同一個 Google 帳號與同一個 Client ID。`);
+          const email = this._readCloudMeta().googleAccountEmail || '無法確認';
+          this.openInfoModal('回復失敗', `目前授權 Google 帳號：${email}\n沒有找到此網站的雲端備份（${BACKUP_FILE_NAME}）。\n請確認電腦與手機都選同一個 Google 帳號，且使用更新後的同一個網站。Google AppDataFolder 是隱藏空間，無法在一般雲端硬碟畫面直接看到。`);
           return;
         }
         this.gdriveBusyText = '正在下載雲端最新備份…';
@@ -666,6 +700,13 @@
           throw downloadError;
         }
         const summary = this._summarizeBackupPayload(payload);
+        // 回復會取代本機交易資料；必須再次明確確認，不自動合併。
+        const email = this._readCloudMeta().googleAccountEmail || '目前授權帳號';
+        const approved = window.confirm(`Google 帳號：${email}\n即將從雲端回復「${summary.deviceName || '未知裝置'}」在 ${formatTime(summary.exportedAt || fileInfo.modifiedTime)} 建立的資料。\n交易 ${summary.txCount} 筆，資金 ${summary.cashBookCount} 筆。\n\n這會取代本機目前的交易、帳本與資金記錄，不會自動合併。\n請先在這台裝置按「下載本機備份」保存 JSON，再按確定繼續。\n\n確定要回復嗎？`);
+        if (!approved) {
+          this.openInfoModal('已取消回復', '本機資料未被修改，雲端備份也未被修改。');
+          return;
+        }
         window.StockStorage.applyBackupPayload(payload, this);
         try { this.recomputeAllTradesAndValidate(); } catch (_) {}
         const nowIso = new Date().toISOString();
@@ -687,7 +728,7 @@
           lastCloudErrorAt: '',
           lastCloudErrorMessage: ''
         });
-        this.openInfoModal('回復成功', buildSummaryMessage('已從 Google 雲端最新備份回復資料，將重新整理以套用所有狀態。', fileInfo, summary));
+        this.openInfoModal('回復成功', buildSummaryMessage(`Google 帳號：${email}\n已從 Google 雲端最新備份回復資料，將重新整理以套用所有狀態。`, fileInfo, summary));
         setTimeout(() => window.location.reload(), 900);
       } catch (e) {
         this._writeCloudMeta({ lastCloudErrorAt: new Date().toISOString(), lastCloudErrorMessage: e?.message || String(e || '回復失敗') });

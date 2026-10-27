@@ -866,8 +866,8 @@
 <script src="./services/chipService.js?v=20260922-v53-technical"></script>
 <script src="./services/stockRiskService.js?v=20260922-v53-technical"></script>
 <script src="./services/auditService.js?v=20260922-v53-technical"></script>
-<script src="./services/backupService.js?v=20260922-v53-technical"></script>
-<script src="./app.js?v=20260922-v53-technical"></script>
+<script src="./services/backupService.js?v=20261027-cloud-cross-device-fix"></script>
+<script src="./app.js?v=20261027-cloud-cross-device-fix"></script>
 
 <script>
   // PWA 離線 App：首次開啟需連線載入資源，之後可離線打開並讀取本機資料。
@@ -879,7 +879,7 @@
         swReloaded = true;
         window.location.reload();
       });
-      navigator.serviceWorker.register('./service-worker.js?v=20260922-v53-technical')
+      navigator.serviceWorker.register('./service-worker.js?v=20261027-cloud-cross-device-fix')
         .catch((err) => console.warn('Service worker registration failed:', err));
     });
   }
