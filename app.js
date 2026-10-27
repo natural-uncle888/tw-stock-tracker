@@ -166,15 +166,28 @@ createApp({
                     <div><div class="text-lg font-black text-slate-800">更多工具</div><div class="text-xs font-bold text-slate-400 mt-1">較少使用的設定集中在這裡</div></div>
                     <button @click="showMobileMoreTools=false" class="w-10 h-10 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center"><i class="fa-solid fa-xmark"></i></button>
                 </div>
+                <div class="flex justify-end mb-3"><button type="button" @click="showMobileMoreTools=false; showToolOrderModal=true" class="tool-sort-link"><i class="fa-solid fa-arrow-down-up-across-line mr-1"></i>自訂排列順序</button></div>
                 <div class="grid grid-cols-2 gap-3">
-                    <button @click="showMobileMoreTools=false; showSecurityModal=true" class="mobile-more-tool"><span class="mobile-more-tool__icon mobile-more-tool__icon--security"><i class="fa-solid fa-shield-halved"></i></span><span><strong>安全性設定</strong><small>登入與安全相關設定</small></span></button>
-                    <button @click="showMobileMoreTools=false; showSettings=true" class="mobile-more-tool"><span class="mobile-more-tool__icon mobile-more-tool__icon--fee"><i class="fa-solid fa-percent"></i></span><span><strong>費率設定</strong><small>手續費與證交稅</small></span></button>
-                    <button @click="showMobileMoreTools=false; openCategoryDbModal()" class="mobile-more-tool"><span class="mobile-more-tool__icon mobile-more-tool__icon--categorydb"><i class="fa-solid fa-layer-group"></i></span><span><strong>族群資料庫</strong><small>匯入與匯出分類</small></span></button>
-                    <button @click="showMobileMoreTools=false; openCategoryManagerModal()" class="mobile-more-tool"><span class="mobile-more-tool__icon mobile-more-tool__icon--categorymgr"><i class="fa-solid fa-list-check"></i></span><span><strong>族群管理</strong><small>管理產業與題材</small></span></button>
-                    <button @click="showMobileMoreTools=false; openTechnicalAnalysis()" class="mobile-more-tool"><span class="mobile-more-tool__icon" style="background:#eef2ff;color:#4f46e5"><i class="fa-solid fa-chart-column"></i></span><span><strong>K棒技術判讀</strong><small>K棒・均線・量價・支撐壓力</small></span></button>
-                    <button @click="showMobileMoreTools=false; showHelpModal=true" class="mobile-more-tool"><span class="mobile-more-tool__icon mobile-more-tool__icon--help"><i class="fa-solid fa-circle-question"></i></span><span><strong>使用說明</strong><small>查看操作方式與備份說明</small></span></button>
+                    <button v-for="tool in orderedMoreTools" :key="tool.id" @click="showMobileMoreTools=false; launchIndependentTool(tool.id)" class="mobile-more-tool">
+                        <span class="mobile-more-tool__icon" :style="{ background: tool.bg, color: tool.color }"><i :class="tool.icon"></i></span>
+                        <span><strong>{{ tool.label }}</strong><small>{{ tool.desc }}</small></span>
+                    </button>
                 </div>
             </div>
+        </div>
+
+        <div v-if="showToolOrderModal" class="tool-order-overlay" @click.self="showToolOrderModal=false">
+            <section class="tool-order-panel" role="dialog" aria-modal="true" aria-label="自訂獨立工具順序">
+                <div class="tool-order-heading"><div><h2><i class="fa-solid fa-grip-vertical mr-2 text-indigo-500"></i>自訂工具排列</h2><p>電腦可拖曳卡片；手機可使用上下按鈕調整。</p></div><button class="tool-order-close" @click="showToolOrderModal=false" aria-label="關閉"><i class="fa-solid fa-xmark"></i></button></div>
+                <div class="tool-order-list">
+                    <div v-for="(tool,index) in orderedIndependentTools" :key="tool.id" class="tool-order-item" :class="{'is-dragging':toolDragId===tool.id}" draggable="true" @dragstart="startToolDrag($event,tool.id)" @dragover.prevent @drop.prevent="dropToolOrder(tool.id)" @dragend="toolDragId=null">
+                        <i class="fa-solid fa-grip-vertical tool-order-handle"></i><span class="tool-order-icon" :style="{ background:tool.bg,color:tool.color }"><i :class="tool.icon"></i></span><span class="tool-order-name">{{tool.label}}</span>
+                        <div class="tool-order-controls"><button type="button" @click="moveIndependentTool(tool.id,-1)" :disabled="index===0" :aria-label="'上移'+tool.label"><i class="fa-solid fa-chevron-up"></i></button><button type="button" @click="moveIndependentTool(tool.id,1)" :disabled="index===orderedIndependentTools.length-1" :aria-label="'下移'+tool.label"><i class="fa-solid fa-chevron-down"></i></button></div>
+                    </div>
+                </div>
+                <div class="tool-order-footer"><button class="tool-order-reset" @click="resetIndependentTools">恢復預設</button><button class="tool-order-done" @click="showToolOrderModal=false"><i class="fa-solid fa-check mr-2"></i>完成</button></div>
+                <p class="tool-order-note"><i class="fa-solid fa-circle-info mr-1"></i>排列將保存在目前瀏覽器，不影響交易與帳務資料。手機頂部快捷按鈕維持原位置。</p>
+            </section>
         </div>
 
         <header class="desktop-header hidden md:flex flex-col mb-8 gap-4 bg-white/80 backdrop-blur-xl rounded-[2rem] p-6 shadow-[0_20px_60px_-24px_rgba(15,23,42,0.28)] border border-white/90">
@@ -213,15 +226,8 @@ createApp({
                 </div>
 
                 <div class="header-actions">
-                    <button @click="showSecurityModal = true" class="btn btn-secondary toolbar-action toolbar-action--security !h-12 !w-12 !p-0 !rounded-2xl" title="安全性設定" aria-label="安全性設定"><i class="fa-solid fa-shield-halved"></i></button>
-                <button @click="showSettings = true" class="btn btn-secondary toolbar-action toolbar-action--fee !h-12 !w-12 !p-0 !rounded-2xl" title="費率設定" aria-label="費率設定"><i class="fa-solid fa-percent"></i></button>
-                <button @click="exportData" class="btn btn-secondary toolbar-action toolbar-action--backup !h-12 !w-12 !p-0 !rounded-2xl" title="備份" aria-label="備份"><i class="fa-solid fa-file-arrow-down"></i></button>
-                <button @click="openCategoryDbModal" class="btn btn-secondary toolbar-action toolbar-action--categorydb !h-12 !w-12 !p-0 !rounded-2xl" title="族群資料庫" aria-label="族群資料庫"><i class="fa-solid fa-layer-group"></i></button>
-                <button @click="openCategoryManagerModal" class="btn btn-secondary toolbar-action toolbar-action--categorymgr !h-12 !w-12 !p-0 !rounded-2xl" title="族群管理" aria-label="族群管理"><i class="fa-solid fa-list-check"></i></button>
-                <button @click="openTechnicalAnalysis()" class="btn btn-secondary toolbar-action !h-12 !w-12 !p-0 !rounded-2xl" title="K棒技術判讀" aria-label="K棒技術判讀"><i class="fa-solid fa-chart-column"></i></button>
-                <button @click="openCommodityModal" class="btn btn-secondary toolbar-action toolbar-action--commodity !h-12 !w-12 !p-0 !rounded-2xl" title="商品期貨" aria-label="商品期貨"><i class="fa-solid fa-chart-line"></i></button>
-                <button @click="openDividendManagerModal" class="btn btn-secondary toolbar-action toolbar-action--dividend !h-12 !w-12 !p-0 !rounded-2xl" title="除息與增資" aria-label="除息與增資"><i class="fa-solid fa-gift"></i></button>
-                    <button @click="showHelpModal = true" class="btn btn-secondary toolbar-action toolbar-action--help !h-12 !w-12 !p-0 !rounded-2xl" title="使用說明" aria-label="使用說明"><i class="fa-solid fa-circle-question"></i></button>
+                    <button v-for="tool in orderedIndependentTools" :key="tool.id" type="button" @click="launchIndependentTool(tool.id)" class="btn btn-secondary toolbar-action !h-12 !w-12 !p-0 !rounded-2xl" :title="tool.label" :aria-label="tool.label"><i :class="tool.icon"></i></button>
+                    <button type="button" @click="showToolOrderModal=true" class="btn btn-secondary toolbar-action tool-order-trigger !h-12 !rounded-2xl" title="自訂獨立工具順序" aria-label="自訂獨立工具順序"><i class="fa-solid fa-arrow-down-up-across-line"></i><span>排列</span></button>
                 </div>
             </div>
         </header>
@@ -2295,10 +2301,61 @@ createApp({
             </section>
         </div>
         
+        <!-- 雲端歷史版本與資料救援：與 Google 雲端設定共用同一組帳號。 -->
+        <div v-if="showGDriveHistoryModal" class="fixed inset-0 z-[150] bg-slate-950/75 backdrop-blur-sm flex items-center justify-center p-3 md:p-6" @click.self="!gdriveBusy && (showGDriveHistoryModal = false)">
+            <section role="dialog" aria-modal="true" aria-label="雲端歷史版本與資料救援" class="w-full max-w-3xl max-h-[calc(100dvh-1.5rem)] md:max-h-[calc(100dvh-3rem)] rounded-[1.75rem] md:rounded-[2rem] bg-white shadow-2xl overflow-hidden flex flex-col relative">
+                <header class="bg-gradient-to-r from-slate-950 via-indigo-950 to-violet-900 px-5 md:px-8 py-6 flex items-start justify-between gap-4 shrink-0 text-white">
+                    <div class="flex gap-3 min-w-0"><div class="w-12 h-12 rounded-2xl bg-white/15 flex items-center justify-center shrink-0"><i class="fa-solid fa-clock-rotate-left text-xl text-violet-200"></i></div>
+                        <div class="min-w-0"><div class="text-xl md:text-2xl font-black">雲端歷史版本</div><p class="text-xs md:text-sm text-violet-200 mt-1 leading-relaxed">找回過去的投資帳本・回復前自動建立救援快照</p></div>
+                    </div>
+                    <button type="button" @click="showGDriveHistoryModal=false" :disabled="gdriveBusy" class="shrink-0 w-10 h-10 rounded-full bg-white/15 hover:bg-white/25 disabled:opacity-50" aria-label="關閉歷史版本"><i class="fa-solid fa-xmark"></i></button>
+                </header>
+                <div class="overflow-y-auto flex-1 px-4 md:px-8 py-5 space-y-4">
+                    <div class="rounded-2xl bg-blue-50 border border-blue-200 p-4 text-sm font-bold text-blue-900 leading-relaxed">
+                        <div class="flex items-center gap-2"><i class="fa-solid fa-shield-heart text-blue-600"></i> 你的資料會先被保護</div>
+                        <p class="text-xs font-medium mt-2 text-blue-800">每次上傳新版備份前，系統先將舊版獨立保存；每次回復前，再將本機當下資料保存成「救援快照」。若保存失敗，就不會覆蓋原資料。不同裝置的交易<b>不會自動合併</b>。</p>
+                    </div>
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                        <div class="min-w-0"><div class="text-sm font-black text-slate-900">已找到 {{ gdriveHistory.length }} 份雲端版本</div><p class="text-xs text-slate-500 break-all mt-1">本次確認的帳號：{{ gdriveHistoryAccountEmail || '尚未確認' }}</p></div>
+                        <button @click="loadGDriveHistory" :disabled="gdriveBusy" class="h-10 px-4 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 text-sm font-black text-slate-700 disabled:opacity-50 shrink-0"><i class="fa-solid fa-rotate mr-1" :class="{'fa-spin': gdriveBusy}"></i> 重新載入</button>
+                    </div>
+                    <div v-if="gdriveHistoryError" class="rounded-xl bg-rose-50 border border-rose-200 px-4 py-3 text-sm text-rose-700 font-bold break-words">{{ gdriveHistoryError }}</div>
+                    <div v-if="!gdriveHistory.length && !gdriveHistoryError && !gdriveBusy" class="text-center rounded-2xl border-2 border-dashed border-slate-200 p-10 text-slate-500"><i class="fa-solid fa-box-open text-3xl text-slate-300"></i><p class="font-bold mt-3">目前沒有可回復的雲端版本</p><p class="text-xs mt-2">第一次上傳會建立「最新備份」；第二次上傳前才會把原有最新版保存進歷史。</p></div>
+                    <div v-for="row in gdriveHistory.slice(0, gdriveHistoryVisibleCount)" :key="row.id" class="rounded-2xl border border-slate-200 bg-white shadow-sm p-4 md:p-5">
+                        <div class="flex flex-col md:flex-row gap-3 md:items-start md:justify-between">
+                            <div class="min-w-0 flex-1">
+                                <div class="flex flex-wrap items-center gap-2">
+                                    <span class="px-2.5 py-1 rounded-lg text-xs font-black" :class="row.kind==='latest' ? 'bg-emerald-100 text-emerald-700' : row.kind==='checkpoint' ? 'bg-amber-100 text-amber-800' : 'bg-indigo-100 text-indigo-700'">{{ row.kind==='latest' ? '目前最新' : row.kind==='checkpoint' ? '回復前救援快照' : row.kind==='legacy' ? '舊版同名備份' : '歷史版本' }}</span>
+                                    <span class="text-xs text-slate-400 font-semibold">{{ row.kind==='latest' ? '可正常雲端回復' : '獨立保留的資料' }}</span>
+                                </div>
+                                <div class="mt-2 text-base md:text-lg font-black text-slate-900">{{ formatDateTime(row.time) }}</div>
+                                <div class="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-slate-500 font-bold">
+                                    <span v-if="row.deviceName"><i class="fa-solid fa-laptop mr-1"></i>{{ row.deviceName }}</span>
+                                    <span v-if="row.txCount!==null">交易 {{ row.txCount }} 筆</span>
+                                    <span v-if="row.cashBookCount!==null">資金 {{ row.cashBookCount }} 筆</span>
+                                    <span v-if="row.txCount===null">內容將在操作時驗證</span>
+                                </div>
+                            </div>
+                            <div class="flex gap-2 shrink-0 flex-wrap">
+                                <button @click="downloadGDriveHistoryVersion(row)" :disabled="gdriveBusy" class="h-10 px-3 rounded-xl border border-slate-200 bg-slate-50 text-slate-700 text-xs font-black hover:bg-slate-100 disabled:opacity-50"><i class="fa-solid fa-file-arrow-down mr-1"></i>下載 JSON</button>
+                                <button @click="restoreGDriveHistoryVersion(row)" :disabled="gdriveBusy" class="h-10 px-3 rounded-xl bg-indigo-600 text-white text-xs font-black hover:bg-indigo-700 disabled:opacity-50"><i class="fa-solid fa-rotate-left mr-1"></i>回復這版</button>
+                            </div>
+                        </div>
+                    </div>
+                    <button v-if="gdriveHistoryVisibleCount < gdriveHistory.length" @click="gdriveHistoryVisibleCount += 20" class="w-full h-11 rounded-xl border border-slate-200 bg-slate-50 text-sm font-bold text-slate-700">顯示更多舊版本（尚有 {{ gdriveHistory.length - gdriveHistoryVisibleCount }} 份）</button>
+                    <div class="rounded-xl bg-amber-50 border border-amber-200 p-3 text-xs font-semibold text-amber-900 leading-relaxed"><i class="fa-solid fa-circle-info mr-1"></i>所有歷史版本都保存在 Google Drive 的隱藏 AppDataFolder；本版不自動刪除舊版本。若跨裝置操作，請使用相同 Google 帳號與同一個網站。</div>
+                </div>
+                <footer class="shrink-0 border-t border-slate-100 bg-white px-4 md:px-8 py-4 flex items-center justify-between gap-2">
+                    <span class="text-xs text-slate-500" v-if="gdriveBusy"><i class="fa-solid fa-spinner fa-spin mr-2"></i>{{ gdriveBusyText || '正在處理…' }}</span><span v-else class="text-xs text-slate-400">操作前會再次確認</span>
+                    <button @click="showGDriveHistoryModal=false" :disabled="gdriveBusy" class="h-11 px-6 rounded-xl font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 disabled:opacity-50">關閉</button>
+                </footer>
+            </section>
+        </div>
+
         <div v-if="showGDriveModal" class="fixed inset-0 bg-slate-900/70 backdrop-blur-sm flex justify-center items-center z-[85] p-4">
             <div class="bg-white w-full max-w-xl rounded-3xl shadow-2xl shadow-slate-900/20 overflow-hidden relative flex flex-col max-h-[calc(100dvh-2rem)]">
                 <div class="p-6 md:p-8 border-b border-slate-100 shrink-0 sticky top-0 bg-white z-10"><div class="flex items-start justify-between gap-4"><div class="flex items-center gap-3"><div class="w-12 h-12 rounded-2xl bg-blue-50 flex items-center justify-center text-blue-600"><i class="fa-solid fa-cloud text-xl"></i></div><div><div class="text-xl font-extrabold text-slate-900">Google 雲端備份</div><div class="text-sm text-slate-500 mt-1">將資料備份到 Google Drive（AppDataFolder）或從雲端回復。</div></div></div><button @click="showGDriveModal = false" class="w-10 h-10 rounded-full bg-slate-100 text-slate-600 flex items-center justify-center hover:bg-slate-200 active:scale-95"><i class="fa-solid fa-xmark"></i></button></div></div>
-                <div class="flex-1 overflow-y-auto"><div class="p-4 md:p-8 space-y-6 pb-32"><div class="rounded-2xl border border-slate-200 bg-slate-50 p-4"><div class="flex items-start justify-between gap-3 mb-3"><div><div class="text-sm font-bold text-slate-700">Google OAuth Client ID（Web）</div><div class="text-xs font-bold text-slate-500 mt-1">跨裝置備份會固定使用網站內建 Client ID；兩台裝置仍需選擇相同的 Google 帳號，並手動上傳與回復。</div></div><div class="shrink-0 rounded-full px-3 py-1 text-xs font-black" :class="gdriveClientIdSource === 'none' ? 'bg-amber-100 text-amber-700' : 'bg-emerald-100 text-emerald-700'">{{ gdriveClientIdStatusText }}</div></div><div class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4"><div class="rounded-xl bg-white border border-slate-200 p-3"><div class="text-xs font-bold text-slate-400">網站預設 Client ID</div><div class="mt-1 text-sm font-black text-slate-700">{{ gdriveDefaultClientId ? '已內建，可直接使用' : '尚未內建' }}</div></div><div class="rounded-xl bg-white border border-slate-200 p-3"><div class="text-xs font-bold text-slate-400">目前實際使用</div><div class="mt-1 text-sm font-black text-slate-700">{{ gdriveClientIdStatusText }}</div></div></div><input v-model="gdriveClientIdInput" type="text" placeholder="備用設定：僅自架且沒有網站預設 Client ID 時使用..." class="w-full h-12 px-4 rounded-xl bg-white border border-slate-200 focus:outline-none focus:ring-4 focus:ring-blue-200 focus:border-blue-400" /><div class="flex flex-wrap gap-3 mt-3"><button @click="saveGDriveClientId" :disabled="gdriveBusy" class="h-11 px-4 rounded-xl font-bold text-white bg-blue-600 hover:bg-blue-700 active:scale-[0.98] disabled:opacity-60 disabled:cursor-not-allowed">儲存自訂 Client ID</button><button @click="clearGDriveClientId" :disabled="gdriveBusy" class="h-11 px-4 rounded-xl font-bold bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 active:scale-[0.98] disabled:opacity-60 disabled:cursor-not-allowed">清除自訂</button><div class="text-xs text-slate-500 flex items-center">自訂：<span class="ml-1 font-mono text-slate-600">{{ gdriveClientId ? '已設定' : '未設定' }}</span></div></div><div v-if="!gdriveDefaultClientId && !gdriveClientId" class="mt-3 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-bold text-amber-700">提醒：目前尚未在 index.html 內放入網站預設 Client ID，因此仍需先輸入自訂 Client ID 才能使用 Google 備份。</div></div><div class="rounded-2xl border border-slate-200 bg-white p-4"><div class="flex items-center justify-between gap-3"><div class="text-sm font-extrabold text-slate-700">備份狀態</div><button @click="refreshGDriveCloudMeta" :disabled="gdriveBusy" class="h-9 px-3 rounded-xl text-xs font-extrabold bg-slate-50 border border-slate-200 text-slate-700 hover:bg-slate-100 active:scale-[0.98] disabled:opacity-60 disabled:cursor-not-allowed flex items-center gap-2"><i class="fa-solid fa-rotate" :class="{'fa-spin': gdriveBusy}"></i> 刷新雲端狀態</button></div><div class="mt-3 rounded-2xl border p-4 flex items-center gap-3" :class="cloudBackupStatusClass"><div class="w-10 h-10 rounded-2xl bg-white/70 flex items-center justify-center shrink-0"><i :class="cloudBackupStatusIcon"></i></div><div class="min-w-0"><div class="text-sm font-black truncate">{{ cloudBackupStatusText }}</div><div class="text-xs font-bold opacity-80 truncate">{{ cloudBackupStatusSubtext }}</div><div v-if="gdriveCloudMeta && gdriveCloudMeta.lastCloudErrorMessage" class="mt-1 text-xs font-bold opacity-80 truncate">{{ gdriveCloudMeta.lastCloudErrorMessage }}</div></div></div><div class="mt-3 grid grid-cols-1 md:grid-cols-2 gap-3 text-xs"><div class="rounded-xl bg-slate-50 border border-slate-200 p-3"><div class="font-bold text-slate-500">雲端檔案最後修改</div><div class="mt-1 font-extrabold text-slate-800">{{ formatDateTime(gdriveCloudMeta.cloudFileModifiedTime) }}</div></div><div class="rounded-xl bg-slate-50 border border-slate-200 p-3"><div class="font-bold text-slate-500">最後操作來源</div><div class="mt-1 font-extrabold text-slate-800">{{ gdriveLastActionLabel }}</div></div><div class="rounded-xl bg-slate-50 border border-slate-200 p-3"><div class="font-bold text-slate-500">最後雲端上傳</div><div class="mt-1 font-extrabold text-slate-800">{{ formatDateTime(gdriveCloudMeta.lastCloudUploadAt) }}</div></div><div class="rounded-xl bg-slate-50 border border-slate-200 p-3"><div class="font-bold text-slate-500">最後雲端回復</div><div class="mt-1 font-extrabold text-slate-800">{{ formatDateTime(gdriveCloudMeta.lastCloudRestoreAt) }}</div></div><div class="rounded-xl bg-slate-50 border border-slate-200 p-3"><div class="font-bold text-slate-500">最新備份來源</div><div class="mt-1 font-extrabold text-slate-800">{{ gdriveCloudMeta.cloudBackupDeviceName || '—' }}</div></div><div class="rounded-xl bg-slate-50 border border-slate-200 p-3"><div class="font-bold text-slate-500">目前 Google 帳號</div><div class="mt-1 font-extrabold text-slate-800 truncate">{{ gdriveCloudMeta.googleAccountEmail || '尚未授權確認' }}</div></div><div class="rounded-xl bg-slate-50 border border-slate-200 p-3"><div class="font-bold text-slate-500">備份內容</div><div class="mt-1 font-extrabold text-slate-800">交易 {{ gdriveCloudMeta.cloudBackupTxCount || 0 }} 筆 / 資金 {{ gdriveCloudMeta.cloudBackupCashBookCount || 0 }} 筆</div></div><div class="rounded-xl bg-slate-50 border border-slate-200 p-3"><div class="font-bold text-slate-500">同名備份檔</div><div class="mt-1 font-extrabold text-slate-800">{{ gdriveCloudMeta.cloudDuplicateCount ? gdriveCloudMeta.cloudDuplicateCount + ' 個' : '—' }}</div></div></div></div></div></div><div class="sticky bottom-0 z-20 bg-white/95 backdrop-blur border-t border-slate-100 shrink-0"><div class="p-4 md:px-8 md:py-6 space-y-3"><div class="grid grid-cols-1 sm:grid-cols-3 gap-4"><button @click="uploadToGDrive" :disabled="gdriveBusy" class="h-14 rounded-2xl font-extrabold text-white bg-emerald-500 shadow-lg shadow-emerald-500/25 hover:bg-emerald-600 active:scale-[0.98] disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"><i class="fa-solid fa-cloud-arrow-up"></i> 上傳資料到雲端</button><button @click="restoreFromGDrive" :disabled="gdriveBusy" class="h-14 rounded-2xl font-extrabold text-white bg-indigo-500 shadow-lg shadow-indigo-500/25 hover:bg-indigo-600 active:scale-[0.98] disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"><i class="fa-solid fa-cloud-arrow-down"></i> 從雲端回復資料</button><button @click="triggerDeleteGDriveBackup" :disabled="gdriveBusy" class="h-14 rounded-2xl font-extrabold text-white bg-rose-500 shadow-lg shadow-rose-500/25 hover:bg-rose-600 active:scale-[0.98] disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"><i class="fa-solid fa-trash-can"></i> 移除雲端備份</button></div><button @click="showGDriveModal = false" :disabled="gdriveBusy" class="w-full h-12 rounded-2xl font-bold bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 active:scale-[0.98] disabled:opacity-60 disabled:cursor-not-allowed">關閉</button></div></div>
+                <div class="flex-1 overflow-y-auto"><div class="p-4 md:p-8 space-y-6 pb-32"><div class="rounded-2xl border border-slate-200 bg-slate-50 p-4"><div class="flex items-start justify-between gap-3 mb-3"><div><div class="text-sm font-bold text-slate-700">Google OAuth Client ID（Web）</div><div class="text-xs font-bold text-slate-500 mt-1">跨裝置備份會固定使用網站內建 Client ID；兩台裝置仍需選擇相同的 Google 帳號，並手動上傳與回復。</div></div><div class="shrink-0 rounded-full px-3 py-1 text-xs font-black" :class="gdriveClientIdSource === 'none' ? 'bg-amber-100 text-amber-700' : 'bg-emerald-100 text-emerald-700'">{{ gdriveClientIdStatusText }}</div></div><div class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4"><div class="rounded-xl bg-white border border-slate-200 p-3"><div class="text-xs font-bold text-slate-400">網站預設 Client ID</div><div class="mt-1 text-sm font-black text-slate-700">{{ gdriveDefaultClientId ? '已內建，可直接使用' : '尚未內建' }}</div></div><div class="rounded-xl bg-white border border-slate-200 p-3"><div class="text-xs font-bold text-slate-400">目前實際使用</div><div class="mt-1 text-sm font-black text-slate-700">{{ gdriveClientIdStatusText }}</div></div></div><input v-model="gdriveClientIdInput" type="text" placeholder="備用設定：僅自架且沒有網站預設 Client ID 時使用..." class="w-full h-12 px-4 rounded-xl bg-white border border-slate-200 focus:outline-none focus:ring-4 focus:ring-blue-200 focus:border-blue-400" /><div class="flex flex-wrap gap-3 mt-3"><button @click="saveGDriveClientId" :disabled="gdriveBusy" class="h-11 px-4 rounded-xl font-bold text-white bg-blue-600 hover:bg-blue-700 active:scale-[0.98] disabled:opacity-60 disabled:cursor-not-allowed">儲存自訂 Client ID</button><button @click="clearGDriveClientId" :disabled="gdriveBusy" class="h-11 px-4 rounded-xl font-bold bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 active:scale-[0.98] disabled:opacity-60 disabled:cursor-not-allowed">清除自訂</button><div class="text-xs text-slate-500 flex items-center">自訂：<span class="ml-1 font-mono text-slate-600">{{ gdriveClientId ? '已設定' : '未設定' }}</span></div></div><div v-if="!gdriveDefaultClientId && !gdriveClientId" class="mt-3 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-bold text-amber-700">提醒：目前尚未在 index.html 內放入網站預設 Client ID，因此仍需先輸入自訂 Client ID 才能使用 Google 備份。</div></div><div class="rounded-2xl border border-slate-200 bg-white p-4"><div class="flex items-center justify-between gap-3"><div class="text-sm font-extrabold text-slate-700">備份狀態</div><button @click="refreshGDriveCloudMeta" :disabled="gdriveBusy" class="h-9 px-3 rounded-xl text-xs font-extrabold bg-slate-50 border border-slate-200 text-slate-700 hover:bg-slate-100 active:scale-[0.98] disabled:opacity-60 disabled:cursor-not-allowed flex items-center gap-2"><i class="fa-solid fa-rotate" :class="{'fa-spin': gdriveBusy}"></i> 刷新雲端狀態</button></div><div class="mt-3 rounded-2xl border p-4 flex items-center gap-3" :class="cloudBackupStatusClass"><div class="w-10 h-10 rounded-2xl bg-white/70 flex items-center justify-center shrink-0"><i :class="cloudBackupStatusIcon"></i></div><div class="min-w-0"><div class="text-sm font-black truncate">{{ cloudBackupStatusText }}</div><div class="text-xs font-bold opacity-80 truncate">{{ cloudBackupStatusSubtext }}</div><div v-if="gdriveCloudMeta && gdriveCloudMeta.lastCloudErrorMessage" class="mt-1 text-xs font-bold opacity-80 truncate">{{ gdriveCloudMeta.lastCloudErrorMessage }}</div></div></div><div class="mt-3 grid grid-cols-1 md:grid-cols-2 gap-3 text-xs"><div class="rounded-xl bg-slate-50 border border-slate-200 p-3"><div class="font-bold text-slate-500">雲端檔案最後修改</div><div class="mt-1 font-extrabold text-slate-800">{{ formatDateTime(gdriveCloudMeta.cloudFileModifiedTime) }}</div></div><div class="rounded-xl bg-slate-50 border border-slate-200 p-3"><div class="font-bold text-slate-500">最後操作來源</div><div class="mt-1 font-extrabold text-slate-800">{{ gdriveLastActionLabel }}</div></div><div class="rounded-xl bg-slate-50 border border-slate-200 p-3"><div class="font-bold text-slate-500">最後雲端上傳</div><div class="mt-1 font-extrabold text-slate-800">{{ formatDateTime(gdriveCloudMeta.lastCloudUploadAt) }}</div></div><div class="rounded-xl bg-slate-50 border border-slate-200 p-3"><div class="font-bold text-slate-500">最後雲端回復</div><div class="mt-1 font-extrabold text-slate-800">{{ formatDateTime(gdriveCloudMeta.lastCloudRestoreAt) }}</div></div><div class="rounded-xl bg-slate-50 border border-slate-200 p-3"><div class="font-bold text-slate-500">最新備份來源</div><div class="mt-1 font-extrabold text-slate-800">{{ gdriveCloudMeta.cloudBackupDeviceName || '—' }}</div></div><div class="rounded-xl bg-slate-50 border border-slate-200 p-3"><div class="font-bold text-slate-500">目前 Google 帳號</div><div class="mt-1 font-extrabold text-slate-800 truncate">{{ gdriveCloudMeta.googleAccountEmail || '尚未授權確認' }}</div></div><div class="rounded-xl bg-slate-50 border border-slate-200 p-3"><div class="font-bold text-slate-500">備份內容</div><div class="mt-1 font-extrabold text-slate-800">交易 {{ gdriveCloudMeta.cloudBackupTxCount || 0 }} 筆 / 資金 {{ gdriveCloudMeta.cloudBackupCashBookCount || 0 }} 筆</div></div><div class="rounded-xl bg-slate-50 border border-slate-200 p-3"><div class="font-bold text-slate-500">同名備份檔</div><div class="mt-1 font-extrabold text-slate-800">{{ gdriveCloudMeta.cloudDuplicateCount ? gdriveCloudMeta.cloudDuplicateCount + ' 個' : '—' }}</div></div></div></div></div></div><div class="sticky bottom-0 z-20 bg-white/95 backdrop-blur border-t border-slate-100 shrink-0"><div class="p-4 md:px-8 md:py-6 space-y-3"><button @click="openGDriveHistory" :disabled="gdriveBusy" class="w-full h-12 rounded-xl font-extrabold text-violet-700 bg-violet-50 border border-violet-200 hover:bg-violet-100 disabled:opacity-60 flex items-center justify-center gap-2"><i class="fa-solid fa-clock-rotate-left"></i> 雲端歷史版本與資料救援</button><div class="grid grid-cols-1 sm:grid-cols-3 gap-4"><button @click="uploadToGDrive" :disabled="gdriveBusy" class="h-14 rounded-2xl font-extrabold text-white bg-emerald-500 shadow-lg shadow-emerald-500/25 hover:bg-emerald-600 active:scale-[0.98] disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"><i class="fa-solid fa-cloud-arrow-up"></i> 上傳資料到雲端</button><button @click="restoreFromGDrive" :disabled="gdriveBusy" class="h-14 rounded-2xl font-extrabold text-white bg-indigo-500 shadow-lg shadow-indigo-500/25 hover:bg-indigo-600 active:scale-[0.98] disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"><i class="fa-solid fa-cloud-arrow-down"></i> 從雲端回復資料</button><button @click="triggerDeleteGDriveBackup" :disabled="gdriveBusy" class="h-14 rounded-2xl font-extrabold text-white bg-rose-500 shadow-lg shadow-rose-500/25 hover:bg-rose-600 active:scale-[0.98] disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"><i class="fa-solid fa-trash-can"></i> 移除最新備份</button></div><button @click="showGDriveModal = false" :disabled="gdriveBusy" class="w-full h-12 rounded-2xl font-bold bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 active:scale-[0.98] disabled:opacity-60 disabled:cursor-not-allowed">關閉</button></div></div>
                 <div v-if="gdriveBusy" class="absolute inset-0 bg-white/75 backdrop-blur-sm flex items-center justify-center"><div class="flex items-center gap-3 bg-white rounded-2xl px-5 py-4 shadow-lg border border-slate-200"><i class="fa-solid fa-spinner fa-spin text-slate-600"></i><div class="text-sm font-bold text-slate-700">{{ gdriveBusyText || '處理中…' }}</div></div></div>
             </div>
         </div>
@@ -2869,6 +2926,7 @@ createApp({
                             <button @click="uploadToGDrive" :disabled="gdriveBusy" class="h-12 rounded-xl font-extrabold text-white bg-emerald-600 hover:bg-emerald-700 disabled:opacity-60 flex items-center justify-center gap-2"><i class="fa-solid fa-cloud-arrow-up"></i> 上傳到 Google 雲端</button>
                             <button @click="restoreFromGDrive" :disabled="gdriveBusy" class="h-12 rounded-xl font-extrabold text-white bg-indigo-600 hover:bg-indigo-700 disabled:opacity-60 flex items-center justify-center gap-2"><i class="fa-solid fa-cloud-arrow-down"></i> 從 Google 雲端回復</button>
                             <button @click="refreshGDriveCloudMeta" :disabled="gdriveBusy" class="h-11 rounded-xl font-extrabold text-slate-700 bg-slate-50 border border-slate-200 hover:bg-slate-100 disabled:opacity-60 flex items-center justify-center gap-2"><i class="fa-solid fa-rotate" :class="{'fa-spin': gdriveBusy}"></i> 刷新雲端狀態</button>
+                            <button @click="showExportModal=false; openGDriveHistory()" :disabled="gdriveBusy" class="h-12 rounded-xl font-extrabold text-violet-700 bg-violet-50 border border-violet-200 hover:bg-violet-100 disabled:opacity-60 flex items-center justify-center gap-2"><i class="fa-solid fa-clock-rotate-left"></i> 查看雲端歷史版本／資料救援</button>
                         </div>
                         <div class="rounded-2xl bg-blue-50 border border-blue-200 p-4">
                             <div class="text-sm font-black text-blue-800">Google 雲端進階設定</div>
@@ -3029,6 +3087,10 @@ createApp({
         const riskInitial = persisted.stockRiskCache?.stocks?.[persisted.stockRiskLastQuery || persisted.chipLastQuery] || {};
         return {
             showGDriveModal: false, gdriveBusy: false, gdriveBusyText: '', gdriveCloudMeta: persisted.gdriveCloudMeta,
+            showGDriveHistoryModal: false, gdriveHistory: [], gdriveHistoryError: '', gdriveHistoryAccountEmail: '', gdriveHistoryVisibleCount: 20,
+            showToolOrderModal: false,
+            toolDragId: null,
+            independentToolOrder: (() => { try { const v=JSON.parse(localStorage.getItem('tw_stock_independent_tool_order_v1') || '[]'); return Array.isArray(v) ? v : []; } catch { return []; } })(),
             showCommodityModal: false,
             showTechnicalAnalysisModal: false,
             technicalForm: { code: '', name: '' },
@@ -3235,6 +3297,25 @@ const savedCash = localStorage.getItem(window.StockStorage.KEYS.cashBook) || '';
     },
     beforeUnmount() { window.StockSaveStatus.clearTimer(this); this.stopFloatingControlDrag(); window.removeEventListener('click', this.handleGlobalClick, true); window.removeEventListener('resize', this.closeContextMenu); window.removeEventListener('scroll', this.closeContextMenu, true); window.removeEventListener('scroll', this.updateInventoryStickySummaryDocked); },
     computed: {
+        independentToolDefinitions() {
+            return [
+                { id:'security',label:'安全性設定',desc:'登入與安全相關設定',icon:'fa-solid fa-shield-halved',bg:'#eff6ff',color:'#2563eb' },
+                { id:'fee',label:'費率設定',desc:'手續費與證交稅',icon:'fa-solid fa-percent',bg:'#f0fdf4',color:'#16a34a' },
+                { id:'backup',label:'備份',desc:'備份與還原',icon:'fa-solid fa-file-arrow-down',bg:'#eef2ff',color:'#4f46e5' },
+                { id:'categorydb',label:'族群資料庫',desc:'匯入與匯出分類',icon:'fa-solid fa-layer-group',bg:'#fdf2f8',color:'#db2777' },
+                { id:'categorymgr',label:'族群管理',desc:'管理產業與題材',icon:'fa-solid fa-list-check',bg:'#fff7ed',color:'#ea580c' },
+                { id:'technical',label:'K棒技術判讀',desc:'K棒・均線・量價・支撐壓力',icon:'fa-solid fa-chart-column',bg:'#eef2ff',color:'#4f46e5' },
+                { id:'commodity',label:'商品期貨',desc:'即時商品行情',icon:'fa-solid fa-chart-line',bg:'#eff6ff',color:'#0284c7' },
+                { id:'dividend',label:'除息與增資',desc:'股利與增資管理',icon:'fa-solid fa-gift',bg:'#fdf2f8',color:'#be185d' },
+                { id:'help',label:'使用說明',desc:'查看操作與備份說明',icon:'fa-solid fa-circle-question',bg:'#f1f5f9',color:'#475569' }
+            ];
+        },
+        orderedIndependentTools() {
+            const defs=this.independentToolDefinitions;
+            const rank=this.independentToolOrder;
+            return [...defs].sort((a,b) => (rank.includes(a.id)?rank.indexOf(a.id):defs.indexOf(a)+rank.length)-(rank.includes(b.id)?rank.indexOf(b.id):defs.indexOf(b)+rank.length));
+        },
+        orderedMoreTools() { return this.orderedIndependentTools.filter(t=>!['backup','commodity','dividend'].includes(t.id)); },
         hotCategoryDbCount() { const db = window.StockCategoryService && window.StockCategoryService.HOT_STOCK_CATEGORY_DATABASE_2026; return db && db.stocks ? Object.keys(db.stocks).length : 0; },
         unclassifiedHoldingCount() { return (this.holdings || []).filter(s => this.getStockCategory(s.code).source === 'unclassified').length; },
         institutionalOiRows() { return Array.isArray(this.institutionalOiData?.rows) ? this.institutionalOiData.rows : []; },
@@ -4292,6 +4373,32 @@ const savedCash = localStorage.getItem(window.StockStorage.KEYS.cashBook) || '';
         showStockDetails() { this.$nextTick(() => this.updateInventoryStickySummaryDocked()); }
     },
     methods: {
+        launchIndependentTool(id) {
+            const actions={ security:()=>{this.showSecurityModal=true;},fee:()=>{this.showSettings=true;},backup:()=>this.exportData(),categorydb:()=>this.openCategoryDbModal(),categorymgr:()=>this.openCategoryManagerModal(),technical:()=>this.openTechnicalAnalysis(),commodity:()=>this.openCommodityModal(),dividend:()=>this.openDividendManagerModal(),help:()=>{this.showHelpModal=true;} };
+            if(actions[id]) actions[id]();
+        },
+        saveIndependentToolOrder(ids) {
+            this.independentToolOrder=[...ids];
+            try { localStorage.setItem('tw_stock_independent_tool_order_v1',JSON.stringify(ids)); } catch(e) { console.warn('無法儲存工具順序',e); }
+        },
+        moveIndependentTool(id,offset) {
+            const ids=this.orderedIndependentTools.map(t=>t.id),from=ids.indexOf(id),to=from+offset;
+            if(from<0||to<0||to>=ids.length)return;
+            ids.splice(to,0,ids.splice(from,1)[0]); this.saveIndependentToolOrder(ids);
+        },
+        startToolDrag(event,id) {
+            this.toolDragId=id;
+            if(event.dataTransfer) { event.dataTransfer.effectAllowed='move'; event.dataTransfer.setData('text/plain',id); }
+        },
+        dropToolOrder(targetId) {
+            const source=this.toolDragId;
+            this.toolDragId=null;
+            if(!source||source===targetId)return;
+            const ids=this.orderedIndependentTools.map(t=>t.id),from=ids.indexOf(source),to=ids.indexOf(targetId);
+            if(from<0||to<0)return;
+            ids.splice(to,0,ids.splice(from,1)[0]);this.saveIndependentToolOrder(ids);
+        },
+        resetIndependentTools() { this.saveIndependentToolOrder(this.independentToolDefinitions.map(t=>t.id)); },
         resolveStockName(code, fallbackName = '') {
             return window.resolveTwStockName ? window.resolveTwStockName(code, fallbackName, this.nameMap) : String(fallbackName || '').trim();
         },
@@ -5538,6 +5645,16 @@ ${picked.date} 收盤價：${close}`);
         _getDeviceName() { return window.StockBackupService._getDeviceName.call(this); },
         _summarizeBackupPayload(payload) { return window.StockBackupService._summarizeBackupPayload.call(this, payload); },
         _decorateBackupPayload(payload) { return window.StockBackupService._decorateBackupPayload.call(this, payload); },
+        _validateCloudRestorePayload(payload) { return window.StockBackupService._validateCloudRestorePayload.call(this, payload); },
+        _downloadBackupJson(payload, fileName) { return window.StockBackupService._downloadBackupJson.call(this, payload, fileName); },
+        async _listDriveBackupEntries(accessToken) { return window.StockBackupService._listDriveBackupEntries.call(this, accessToken); },
+        async _archiveBackupPayload(accessToken, payload, reason, info) { return window.StockBackupService._archiveBackupPayload.call(this, accessToken, payload, reason, info); },
+        async openGDriveHistory() { return window.StockBackupService.openGDriveHistory.call(this); },
+        async loadGDriveHistory() { return window.StockBackupService.loadGDriveHistory.call(this); },
+        async _authorizeHistoryAction() { return window.StockBackupService._authorizeHistoryAction.call(this); },
+        async downloadGDriveHistoryVersion(row) { return window.StockBackupService.downloadGDriveHistoryVersion.call(this, row); },
+        async restoreGDriveHistoryVersion(row) { return window.StockBackupService.restoreGDriveHistoryVersion.call(this, row); },
+        async _performCloudRestore(token, payload, info, source) { return window.StockBackupService._performCloudRestore.call(this, token, payload, info, source); },
         async _findAllBackupFiles(accessToken) { return window.StockBackupService._findAllBackupFiles.call(this, accessToken); },
         async _findBackupFileId(accessToken) { return window.StockBackupService._findBackupFileId.call(this, accessToken); },
         _buildBackupPayload() { return window.StockBackupService._buildBackupPayload.call(this); },
@@ -5548,7 +5665,7 @@ ${picked.date} 收盤價：${close}`);
         async restoreFromGDrive() { return window.StockBackupService.restoreFromGDrive.call(this); },
         triggerDeleteGDriveBackup() {
             this.confirmTitle = '移除雲端備份';
-            this.confirmMessage = '確定要刪除 Google Drive AppDataFolder 內的雲端備份資料嗎？此動作只會移除雲端備份檔，不會刪除目前手機/瀏覽器內的本機資料，但刪除後將無法從雲端回復。';
+            this.confirmMessage = '確定要移除雲端的「最新備份檔」嗎？這不會移除另外保存的歷史版本或本機資料。移除後仍可從「雲端歷史版本」選擇舊版本救援，但若沒有歷史版本就無法雲端回復。';
             this.confirmCallback = () => this.deleteGDriveBackup();
             this.showConfirmModal = true;
         },
