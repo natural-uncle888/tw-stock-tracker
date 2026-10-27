@@ -423,7 +423,21 @@
         .desktop-header .tab-switch { flex: 0 1 auto; min-width: 0; }
         .desktop-header-bottom .tab-switch { justify-content: flex-start; }
         .header-actions { display: flex; flex-wrap: nowrap; justify-content: flex-end; align-items: center; gap: 0.55rem; min-width: 0; max-width: none; }
-        .header-actions .btn { flex: 0 0 3rem; }
+        /* Desktop independent tools: fit their full labels instead of forcing 48px wide buttons.
+           This only affects the desktop header; mobile tool cards keep their existing layout. */
+        .header-actions .btn {
+            flex: 0 0 auto;
+            width: auto;
+            min-width: max-content;
+            white-space: nowrap;
+            gap: .5rem !important;
+            padding-left: .8rem !important;
+            padding-right: .8rem !important;
+        }
+        .header-actions .toolbar-action > i { flex: 0 0 2.05rem; }
+        .header-actions .tool-order-trigger > i { background: linear-gradient(135deg, #818cf8, #4f46e5); }
+        /* If the browser window becomes too narrow, keep controls on a clean line. */
+        .desktop-header-bottom { flex-wrap: wrap; row-gap: .75rem; }
         .portfolio-header-btn { flex: 0 1 auto; min-width: 0; max-width: min(42vw, 260px); justify-content: center !important; gap: 0; }
         .portfolio-header-name, .portfolio-name-truncate { display: inline-block; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; line-height: 1.15; }
         .portfolio-header-name { max-width: 175px; }
@@ -845,8 +859,8 @@
         .sub-tab-item:hover:not(.active) { @apply text-slate-700 bg-slate-200/50; }
 
     </style>
-<link rel="stylesheet" href="./styles/tool-order.css?v=20261027-phase2-areas" />
-<link rel="stylesheet" href="./styles/workspaces.css?v=20261027-phase2-areas" />
+<link rel="stylesheet" href="./styles/tool-order.css?v=20261027-desktop-tool-fix" />
+<link rel="stylesheet" href="./styles/workspaces.css?v=20261027-desktop-tool-fix" />
 </head>
 <body>
 
@@ -871,7 +885,7 @@
 <script src="./services/auditService.js?v=20260922-v53-technical"></script>
 <script src="./services/dialogService.js?v=20261027-cloud-history"></script>
 <script src="./services/backupService.js?v=20261027-cloud-history"></script>
-<script src="./app.js?v=20261027-phase2-areas"></script>
+<script src="./app.js?v=20261027-desktop-tool-fix"></script>
 
 <script>
   // PWA 離線 App：首次開啟需連線載入資源，之後可離線打開並讀取本機資料。
@@ -883,7 +897,7 @@
         swReloaded = true;
         window.location.reload();
       });
-      navigator.serviceWorker.register('./service-worker.js?v=20261027-phase2-areas')
+      navigator.serviceWorker.register('./service-worker.js?v=20261027-desktop-tool-fix')
         .catch((err) => console.warn('Service worker registration failed:', err));
     });
   }

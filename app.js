@@ -245,7 +245,7 @@ createApp({
                 </div>
 
                 <div class="header-actions">
-                    <button v-for="tool in orderedPortfolioTools" :key="tool.id" type="button" @click="launchIndependentTool(tool.id)" class="btn btn-secondary toolbar-action !h-12 !rounded-2xl" :title="tool.label"><i :class="tool.icon" class="mr-2"></i>{{tool.label}}</button>
+                    <button v-for="tool in orderedPortfolioTools" :key="tool.id" type="button" @click="launchIndependentTool(tool.id)" class="btn btn-secondary toolbar-action !h-12 !rounded-2xl" :class="'toolbar-action--' + tool.id" :title="tool.label"><i :class="tool.icon" aria-hidden="true"></i><span>{{tool.label}}</span></button>
                     <button type="button" @click="openToolOrderModal('portfolio')" class="btn btn-secondary toolbar-action tool-order-trigger !h-12 !rounded-2xl" title="自訂投資管理工具順序"><i class="fa-solid fa-arrow-down-up-across-line"></i><span>排列</span></button>
                 </div>
             </div>
