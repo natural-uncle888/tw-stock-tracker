@@ -38,6 +38,18 @@
     }
   }
 
+  // 對 JSON 物件做穩定序列化，避免只因物件鍵值順序不同而誤判雲端內容不一致。
+  function stableJson(value) {
+    if (value === null || typeof value !== 'object') return JSON.stringify(value);
+    if (Array.isArray(value)) return `[${value.map(item => stableJson(item)).join(',')}]`;
+    const keys = Object.keys(value).filter(key => typeof value[key] !== 'undefined').sort();
+    return `{${keys.map(key => `${JSON.stringify(key)}:${stableJson(value[key])}`).join(',')}}`;
+  }
+
+  function wait(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+  }
+
   function makeId() {
     if (window.crypto && crypto.randomUUID) return crypto.randomUUID();
     return `device_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`;
@@ -641,6 +653,98 @@
       return await res.json();
     },
 
+    async _verifyUploadedBackup(accessToken, fileId, expectedPayload) {
+      if (!fileId) throw new Error('Google Drive 沒有回傳備份檔案 ID，無法驗證上傳結果。');
+
+      const expectedJson = stableJson(expectedPayload);
+      let lastReason = '尚未取得雲端檔案內容。';
+
+      // Drive 更新後立即讀取通常會成功；保留短暫重試，避免讀取索引延遲造成誤判。
+      for (let attempt = 0; attempt < 3; attempt += 1) {
+        try {
+          if (attempt > 0) await wait(500 * attempt);
+
+          let verifyId = fileId;
+          let metaRes = await fetch(
+            `https://www.googleapis.com/drive/v3/files/${encodeURIComponent(verifyId)}?fields=id,name,mimeType,modifiedTime,size,trashed`,
+            { headers: { Authorization: `Bearer ${accessToken}` } }
+          );
+          if (!metaRes.ok) {
+            const text = await metaRes.text().catch(() => '');
+            throw makeDriveHttpError('讀取上傳檔案資訊失敗', metaRes, text);
+          }
+          let metadata = await metaRes.json();
+          if (metadata.trashed || metadata.name !== BACKUP_FILE_NAME) {
+            throw new Error('雲端回傳的檔案名稱或狀態不正確。');
+          }
+
+          let downloaded = this._validateCloudRestorePayload(
+            await this._downloadBackupPayload(accessToken, verifyId)
+          );
+
+          // 若 AppDataFolder 中有同名檔，確認「其他裝置會找到的最新檔」
+          // 也確實是本次上傳內容，避免只更新到舊的重複檔案。
+          const latestInfo = await this._findBackupFileId(accessToken);
+          if (!latestInfo || !latestInfo.id) {
+            throw new Error('上傳後重新查詢時，找不到最新雲端備份檔。');
+          }
+          if (latestInfo.id !== verifyId) {
+            const latestPayload = this._validateCloudRestorePayload(
+              await this._downloadBackupPayload(accessToken, latestInfo.id)
+            );
+            if (stableJson(latestPayload) !== expectedJson) {
+              lastReason = '雲端存在另一個較新的同名備份，該檔案內容仍不是本次資料。';
+              continue;
+            }
+            verifyId = latestInfo.id;
+            downloaded = latestPayload;
+            metaRes = await fetch(
+              `https://www.googleapis.com/drive/v3/files/${encodeURIComponent(verifyId)}?fields=id,name,mimeType,modifiedTime,size,trashed`,
+              { headers: { Authorization: `Bearer ${accessToken}` } }
+            );
+            if (!metaRes.ok) {
+              const text = await metaRes.text().catch(() => '');
+              throw makeDriveHttpError('讀取最新備份資訊失敗', metaRes, text);
+            }
+            metadata = await metaRes.json();
+            if (metadata.trashed || metadata.name !== BACKUP_FILE_NAME) {
+              throw new Error('最新雲端備份檔名稱或狀態不正確。');
+            }
+          }
+
+          if (stableJson(downloaded) !== expectedJson) {
+            lastReason = '重新下載的雲端內容與本機準備上傳的資料不同。';
+            continue;
+          }
+
+          const summary = this._summarizeBackupPayload(downloaded);
+          const expectedSummary = this._summarizeBackupPayload(expectedPayload);
+          if (summary.deviceId !== expectedSummary.deviceId ||
+              summary.exportedAt !== expectedSummary.exportedAt ||
+              summary.txCount !== expectedSummary.txCount ||
+              summary.cashBookCount !== expectedSummary.cashBookCount ||
+              summary.portfolioCount !== expectedSummary.portfolioCount) {
+            lastReason = '雲端備份的裝置識別或資料筆數與本機不一致。';
+            continue;
+          }
+
+          return {
+            id: verifyId,
+            metadata,
+            summary,
+            verifiedAt: new Date().toISOString()
+          };
+        } catch (error) {
+          lastReason = error?.message || String(error || '雲端驗證失敗');
+          if (Number(error && error.status) === 401 || Number(error && error.status) === 403) throw error;
+        }
+      }
+
+      throw new Error(
+        `上傳請求已送出，但系統無法確認雲端最新檔案是否已完整更新：${lastReason}\n為避免誤覆蓋其他裝置資料，這次不會標示為「備份成功」。請先按「刷新雲端狀態」確認，不要連續重複上傳。`
+      );
+    },
+
     async uploadToGDrive() {
       this.gdriveBusy = true;
       this.gdriveBusyText = '正在授權／連線…';
@@ -688,47 +792,68 @@
           this.gdriveBusyText = '正在保存覆蓋前的歷史版本…';
           await this._archiveBackupPayload(accessToken, remotePayload, 'before-upload', fileInfo);
         }
-        const boundary = '-------314159265358979323846';
+        const boundary = `stockBackup_${Date.now()}_${Math.random().toString(36).slice(2)}`;
 
-        const buildMultipartBody = (metadata) =>
-          `--${boundary}\r\n` +
-          `Content-Type: application/json; charset=UTF-8\r\n\r\n` +
-          `${JSON.stringify(metadata)}\r\n` +
-          `--${boundary}\r\n` +
-          `Content-Type: application/json; charset=UTF-8\r\n\r\n` +
-          `${JSON.stringify(payload)}\r\n` +
-          `--${boundary}--`;
+        const sendCreate = async () => {
+          const metadata = { name: BACKUP_FILE_NAME, parents: ['appDataFolder'] };
+          // 新檔建立仍使用 multipart，將檔案 metadata 與 JSON 內容一次送出。
+          const body =
+            `--${boundary}\r\n` +
+            `Content-Type: application/json; charset=UTF-8\r\n\r\n` +
+            `${JSON.stringify(metadata)}\r\n` +
+            `--${boundary}\r\n` +
+            `Content-Type: application/json; charset=UTF-8\r\n\r\n` +
+            `${JSON.stringify(payload)}\r\n` +
+            `--${boundary}--\r\n`;
+          this.gdriveBusyText = '正在建立雲端備份…';
+          const res = await fetch(
+            'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id,name,modifiedTime,createdTime,size',
+            {
+              method: 'POST',
+              headers: {
+                Authorization: `Bearer ${accessToken}`,
+                'Content-Type': `multipart/related; boundary=${boundary}`
+              },
+              body
+            }
+          );
+          if (!res.ok) {
+            const text = await res.text().catch(() => '');
+            throw makeDriveHttpError('建立雲端備份失敗', res, text);
+          }
+          const result = await res.json().catch(() => null);
+          if (!result || !result.id) throw new Error('Google Drive 未回傳新備份檔案 ID。');
+          return result;
+        };
 
-        const sendUpload = async (targetFileId) => {
-          const metadata = targetFileId ? { name: BACKUP_FILE_NAME } : { name: BACKUP_FILE_NAME, parents: ['appDataFolder'] };
-          const uploadUrl = targetFileId
-            ? `https://www.googleapis.com/upload/drive/v3/files/${encodeURIComponent(targetFileId)}?uploadType=multipart&fields=id,name,modifiedTime,createdTime,size`
-            : `https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id,name,modifiedTime,createdTime,size`;
-          const method = targetFileId ? 'PATCH' : 'POST';
-          this.gdriveBusyText = targetFileId ? '正在更新雲端最新備份…' : '正在建立雲端備份…';
+        const sendUpdate = async (targetFileId) => {
+          // 更新既有檔案時只傳送媒體內容（JSON），避免 multipart PATCH
+          // 在部分瀏覽器／代理環境下出現 metadata 與內容未同步更新的情況。
+          this.gdriveBusyText = '正在更新雲端最新備份…';
+          const uploadUrl =
+            `https://www.googleapis.com/upload/drive/v3/files/${encodeURIComponent(targetFileId)}` +
+            '?uploadType=media&fields=id,name,modifiedTime,createdTime,size';
           const res = await fetch(uploadUrl, {
-            method,
+            method: 'PATCH',
             headers: {
               Authorization: `Bearer ${accessToken}`,
-              'Content-Type': `multipart/related; boundary=${boundary}`
+              'Content-Type': 'application/json; charset=UTF-8'
             },
-            body: buildMultipartBody(metadata)
+            body: JSON.stringify(payload)
           });
           if (!res.ok) {
-            const t = await res.text().catch(() => '');
-            throw makeDriveHttpError('上傳失敗', res, t);
+            const text = await res.text().catch(() => '');
+            throw makeDriveHttpError('更新雲端備份失敗', res, text);
           }
-          try { return await res.json(); } catch(_) { return null; }
+          return await res.json().catch(() => ({ id: targetFileId }));
         };
 
         let uploadInfo = null;
         let recreatedCloudFile = false;
         try {
-          uploadInfo = await sendUpload(fileId);
+          uploadInfo = fileId ? await sendUpdate(fileId) : await sendCreate();
         } catch (uploadError) {
-          // Google Drive AppDataFolder 的 fileId 可能因為使用者刪除雲端 App 資料、
-          // 更換 OAuth Client ID、或 Google 端索引短暫不一致而失效。若更新舊檔 404，
-          // 不應讓使用者卡住；改為清掉本機舊 fileId 並建立新的備份檔。
+          // 舊 fileId 已失效時，保留前面建立的歷史版本，再建立新備份檔。
           if (fileId && isDriveFileGoneError(uploadError)) {
             recreatedCloudFile = true;
             this._writeCloudMeta({
@@ -737,24 +862,29 @@
               cloudFileModifiedTime: '',
               cloudDuplicateCount: 0,
               lastCloudErrorAt: new Date().toISOString(),
-              lastCloudErrorMessage: '原 Google Drive 備份檔已不存在，已自動改為建立新備份。'
+              lastCloudErrorMessage: '原 Google Drive 備份檔已不存在，已改為重新建立新備份。'
             });
-            this.gdriveBusyText = '原雲端備份已不存在，正在重新建立備份…';
-            uploadInfo = await sendUpload(null);
+            this.gdriveBusyText = '原雲端備份已不存在，正在重新建立…';
+            uploadInfo = await sendCreate();
           } else {
             throw uploadError;
           }
         }
 
-        const nowIso = new Date().toISOString();
-        const modifiedTime = (uploadInfo && uploadInfo.modifiedTime) ? uploadInfo.modifiedTime : nowIso;
-        const finalFileId = (uploadInfo && uploadInfo.id) ? uploadInfo.id : (fileId || '');
+        const uploadedFileId = (uploadInfo && uploadInfo.id) ? uploadInfo.id : (fileId || '');
+        if (!uploadedFileId) throw new Error('上傳後沒有取得可驗證的雲端檔案 ID。');
 
-        // 不自動刪除舊同名備份：其他裝置可能仍需那些版本救回資料。
-        // 查找時會依 modifiedTime 選最新檔，刪除只能由使用者手動操作。
+        this.gdriveBusyText = '正在重新下載雲端資料，核對備份內容…';
+        const verified = await window.StockBackupService._verifyUploadedBackup.call(this, accessToken, uploadedFileId, payload);
+        const finalFileId = verified.id;
+        const modifiedTime = verified.metadata.modifiedTime || (uploadInfo && uploadInfo.modifiedTime) || new Date().toISOString();
+        const verifiedSummary = verified.summary;
+
+        // 只有重新下載、比對內容及確認它是雲端最新同名檔後，才寫入成功狀態。
         const knownDuplicates = fileInfo && fileInfo.files ? fileInfo.files.length : 0;
         const resultingCount = Math.max(1, knownDuplicates + (fileId ? 0 : 1));
 
+        const nowIso = new Date().toISOString();
         this._writeCloudMeta({
           lastCloudUploadAt: nowIso,
           lastAction: 'upload',
@@ -762,27 +892,39 @@
           cloudFileId: finalFileId,
           cloudFileModifiedTime: modifiedTime,
           cloudDuplicateCount: resultingCount,
-          cloudBackupExportedAt: summary.exportedAt || payload.exportedAt || nowIso,
-          cloudBackupDeviceName: summary.deviceName || this._getDeviceName(),
-          cloudBackupDeviceId: summary.deviceId || this._getDeviceId(),
-          cloudBackupClientIdSource: summary.clientIdSource || this.getGDriveClientIdSource(),
-          cloudBackupClientIdHint: summary.clientIdHint || shortClientId(this.getGDriveEffectiveClientId()),
-          cloudBackupTxCount: summary.txCount,
-          cloudBackupCashBookCount: summary.cashBookCount,
-          cloudBackupPortfolioCount: summary.portfolioCount,
+          cloudBackupExportedAt: verifiedSummary.exportedAt || payload.exportedAt || nowIso,
+          cloudBackupDeviceName: verifiedSummary.deviceName || this._getDeviceName(),
+          cloudBackupDeviceId: verifiedSummary.deviceId || this._getDeviceId(),
+          cloudBackupClientIdSource: verifiedSummary.clientIdSource || this.getGDriveClientIdSource(),
+          cloudBackupClientIdHint: verifiedSummary.clientIdHint || shortClientId(this.getGDriveEffectiveClientId()),
+          cloudBackupTxCount: verifiedSummary.txCount,
+          cloudBackupCashBookCount: verifiedSummary.cashBookCount,
+          cloudBackupPortfolioCount: verifiedSummary.portfolioCount,
+          lastCloudVerifiedAt: verified.verifiedAt,
+          lastCloudUploadVerified: true,
           lastCloudErrorAt: '',
           lastCloudErrorMessage: ''
         });
-        const msgInfo = Object.assign({}, fileInfo || {}, { id: finalFileId, modifiedTime, duplicateCount: resultingCount });
+        const msgInfo = Object.assign({}, fileInfo || {}, {
+          id: finalFileId, modifiedTime, duplicateCount: resultingCount
+        });
         const prefix = recreatedCloudFile
-          ? '原 Google Drive 備份檔已不存在，系統已自動重新建立新備份。'
-          : '已將目前這台裝置的資料備份到 Google 雲端。';
+          ? '原 Google Drive 備份檔已不存在，系統已重新建立備份，並完成重新下載核對。'
+          : '已將目前這台裝置的資料備份到 Google 雲端，且已重新下載核對內容一致。';
         const email = this._readCloudMeta().googleAccountEmail || '無法確認';
-        const msg = buildSummaryMessage(`Google 帳號：${email}\n${prefix}`, msgInfo, summary);
-        this.openInfoModal('上傳成功', msg);
+        const msg = buildSummaryMessage(
+          `Google 帳號：${email}\n${prefix}\n驗證時間：${formatTime(verified.verifiedAt)}`,
+          msgInfo,
+          verifiedSummary
+        );
+        this.openInfoModal('上傳並驗證成功', msg);
       } catch (e) {
-        this._writeCloudMeta({ lastCloudErrorAt: new Date().toISOString(), lastCloudErrorMessage: e?.message || String(e || '上傳失敗') });
-        this.openInfoModal('上傳失敗', `發生未預期錯誤：${e?.message || e}`);
+        this._writeCloudMeta({
+          lastCloudErrorAt: new Date().toISOString(),
+          lastCloudErrorMessage: e?.message || String(e || '上傳失敗'),
+          lastCloudUploadVerified: false
+        });
+        this.openInfoModal('雲端備份未完成確認', `這次沒有標示為備份成功。\n${e?.message || e}\n\n請先刷新雲端狀態，確認最新備份的時間與資料筆數，再決定是否重試。`);
       } finally {
         this.gdriveBusy = false;
         this.gdriveBusyText = '';

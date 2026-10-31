@@ -884,7 +884,7 @@
 <script src="./services/stockRiskService.js?v=20260922-v53-technical"></script>
 <script src="./services/auditService.js?v=20260922-v53-technical"></script>
 <script src="./services/dialogService.js?v=20261027-cloud-history"></script>
-<script src="./services/backupService.js?v=20261027-cloud-history"></script>
+<script src="./services/backupService.js?v=20261031-cloud-upload-verify"></script>
 <script src="./app.js?v=20261027-desktop-tool-fix"></script>
 
 <script>
@@ -897,7 +897,7 @@
         swReloaded = true;
         window.location.reload();
       });
-      navigator.serviceWorker.register('./service-worker.js?v=20261027-desktop-tool-fix')
+      navigator.serviceWorker.register('./service-worker.js?v=20261031-cloud-upload-verify')
         .catch((err) => console.warn('Service worker registration failed:', err));
     });
   }
