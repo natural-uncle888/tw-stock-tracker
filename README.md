@@ -230,3 +230,11 @@ window.STOCK_TRACKER_GOOGLE_CLIENT_ID = 'xxxxxxxxxxxx-xxxxxxxxxxxxxxxxxxxxxxxxxx
 - 更新 `backupService.js` 資源版本與 Service Worker 快取版本，避免 PWA 繼續使用舊版備份程式。
 
 > 本次修正尚需使用實際 Google 帳號及兩台裝置完成部署後驗證；本機語法與模擬流程測試不等於 Google Drive 實際帳號測試。
+
+## 2026-10-31｜Google Drive 備份驗證快取修正
+
+- 修正 Service Worker 將跨網域 GET 一律採用 cache-first，導致 Google Drive API 的檔案列表或 `alt=media` 下載可能讀到舊快取的問題。
+- `accounts.google.com` 與 `*.googleapis.com` 請求改為直接走網路，並使用 `cache: no-store`。
+- Google Drive 檔案列表、備份內容下載與上傳後驗證的 metadata 查詢均明確停用 HTTP 快取。
+- 更新 Service Worker 快取版本，讓舊版可能含有 Google API 回應的快取在啟用新版時清除。
+- 保留上傳後重新下載比對；只有雲端實際內容核對一致才顯示備份成功。

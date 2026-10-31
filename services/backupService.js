@@ -38,12 +38,23 @@
     }
   }
 
-  // 對 JSON 物件做穩定序列化，避免只因物件鍵值順序不同而誤判雲端內容不一致。
+  // 對 JSON 物件做穩定序列化，避免鍵值順序差異造成誤判；
+  // 同時依 JSON 傳輸規則將陣列中的 undefined 正規化為 null。
   function stableJson(value) {
-    if (value === null || typeof value !== 'object') return JSON.stringify(value);
-    if (Array.isArray(value)) return `[${value.map(item => stableJson(item)).join(',')}]`;
-    const keys = Object.keys(value).filter(key => typeof value[key] !== 'undefined').sort();
-    return `{${keys.map(key => `${JSON.stringify(key)}:${stableJson(value[key])}`).join(',')}}`;
+    const canonicalize = (item) => {
+      if (Array.isArray(item)) {
+        return item.map(value => typeof value === 'undefined' ? null : canonicalize(value));
+      }
+      if (item && typeof item === 'object') {
+        const result = {};
+        Object.keys(item).sort().forEach(key => {
+          if (typeof item[key] !== 'undefined') result[key] = canonicalize(item[key]);
+        });
+        return result;
+      }
+      return item;
+    };
+    return JSON.stringify(canonicalize(value));
   }
 
   function wait(ms) {
@@ -374,6 +385,7 @@
       // 舊帳號雲端狀態（不會刪除或改動任何帳號的 Drive 檔案）。
       try {
         const res = await fetch('https://openidconnect.googleapis.com/v1/userinfo', {
+          cache: 'no-store',
           headers: { Authorization: `Bearer ${token}` }
         });
         if (res.ok) {
@@ -439,7 +451,10 @@
       do {
         const pagePart = pageToken ? `&pageToken=${encodeURIComponent(pageToken)}` : '';
         const url = `https://www.googleapis.com/drive/v3/files?spaces=appDataFolder&fields=${fields}&pageSize=100${pagePart}`;
-        const res = await fetch(url, { headers: { Authorization: `Bearer ${accessToken}` }});
+        const res = await fetch(url, {
+          cache: 'no-store',
+          headers: { Authorization: `Bearer ${accessToken}` }
+        });
         if (!res.ok) throw makeDriveHttpError('Drive 版本查詢失敗', res, await res.text().catch(() => ''));
         const j = await res.json();
         if (j.incompleteSearch) throw new Error('Drive 檔案查詢不完整，請稍後重試。');
@@ -645,7 +660,10 @@
 
     async _downloadBackupPayload(accessToken, fileId) {
       const url = `https://www.googleapis.com/drive/v3/files/${encodeURIComponent(fileId)}?alt=media`;
-      const res = await fetch(url, { headers: { Authorization: `Bearer ${accessToken}` }});
+      const res = await fetch(url, {
+        cache: 'no-store',
+        headers: { Authorization: `Bearer ${accessToken}` }
+      });
       if (!res.ok) {
         const text = await res.text().catch(() => '');
         throw makeDriveHttpError('下載失敗', res, text);
@@ -667,7 +685,7 @@
           let verifyId = fileId;
           let metaRes = await fetch(
             `https://www.googleapis.com/drive/v3/files/${encodeURIComponent(verifyId)}?fields=id,name,mimeType,modifiedTime,size,trashed`,
-            { headers: { Authorization: `Bearer ${accessToken}` } }
+            { cache: 'no-store', headers: { Authorization: `Bearer ${accessToken}` } }
           );
           if (!metaRes.ok) {
             const text = await metaRes.text().catch(() => '');
@@ -700,7 +718,7 @@
             downloaded = latestPayload;
             metaRes = await fetch(
               `https://www.googleapis.com/drive/v3/files/${encodeURIComponent(verifyId)}?fields=id,name,mimeType,modifiedTime,size,trashed`,
-              { headers: { Authorization: `Bearer ${accessToken}` } }
+              { cache: 'no-store', headers: { Authorization: `Bearer ${accessToken}` } }
             );
             if (!metaRes.ok) {
               const text = await metaRes.text().catch(() => '');

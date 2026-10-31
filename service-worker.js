@@ -1,5 +1,5 @@
 /* 台股損益管理 PWA Service Worker */
-const CACHE_VERSION = 'stock-tracker-pwa-v47-20261031-cloud-upload-verify';
+const CACHE_VERSION = 'stock-tracker-pwa-v48-20261031-drive-api-no-cache';
 const APP_SHELL_CACHE = `${CACHE_VERSION}-shell`;
 const RUNTIME_CACHE = `${CACHE_VERSION}-runtime`;
 
@@ -84,6 +84,14 @@ self.addEventListener('fetch', (event) => {
   if (request.method !== 'GET') return;
 
   const url = new URL(request.url);
+
+  // Google Drive / Google Identity API 是即時資料來源，絕不可套用
+  // cacheFirst。否則上傳後的 alt=media GET 可能讀到舊快取，讓備份驗證
+  // 誤判為雲端內容未更新。這類請求一律直接走網路且不使用 HTTP 快取。
+  if (url.hostname === 'accounts.google.com' || url.hostname.endsWith('.googleapis.com')) {
+    event.respondWith(fetch(request, { cache: 'no-store' }));
+    return;
+  }
 
   // 單頁應用：離線重新整理時回傳 index.html。
   if (request.mode === 'navigate') {
